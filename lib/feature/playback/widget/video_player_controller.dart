@@ -1,0 +1,41 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/utils/api.dart';
+import 'package:video_player/video_player.dart';
+
+class VideoControllerManager {
+  late final VideoPlayerController controller;
+
+  VideoControllerManager(String videoUrl) {
+    controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+  }
+
+  Future<void> initializeAll() async {
+    await controller.initialize();
+    await controller.seekTo(Duration.zero);
+  }
+
+  void play() {
+    controller.play();
+  }
+
+  void pause() {
+    controller.pause();
+  }
+
+  void dispose() {
+    controller.dispose();
+  }
+
+  void seek(Duration position) {
+    controller.seekTo(position);
+  }
+}
+
+final videoManagerProvider =
+    FutureProvider.family<VideoControllerManager, String>((ref, id) async {
+      final urls = API.getRunSessionVideo(id)[1];
+
+      final manager = VideoControllerManager(urls);
+      await manager.initializeAll();
+      return manager;
+    });

@@ -1,0 +1,161 @@
+import 'package:dio/dio.dart';
+import 'package:frontend/backend/backend_interface.dart';
+import 'package:frontend/entities/graph_data.dart';
+import 'package:frontend/entities/runner_info.dart';
+import 'package:frontend/entities/unanalyzed_run_session_info.dart';
+import 'package:frontend/entities/upload_seperately_status.dart';
+import 'package:frontend/entities/upload_video_file.dart';
+import 'package:frontend/entities/run_session_info.dart';
+import 'package:frontend/utils/api.dart';
+import 'package:frontend/utils/net_utils.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
+
+class RestBackendRepo implements BackendInterface {
+  @override
+  Future<List<RunnerInfo>> getRunners() async {
+    final List response = await NetUtils().reqeustData<List>(
+      API.getRunner[1],
+      method: API.getRunner[0],
+    );
+    return response.map((e) => RunnerInfo.fromJson(e)).toList();
+  }
+
+  @override
+  Future<List<GraphData>> getGraphData(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getGraphData(runSessionId)[1],
+      method: API.getGraphData(runSessionId)[0],
+    );
+    return (response as List).map((e) => GraphData.fromJson(e)).toList();
+  }
+
+  @override
+  Future<RunSessionInfo> getRunSessionInfo(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getRunSessionInfo(runSessionId)[1],
+      method: API.getRunSessionInfo(runSessionId)[0],
+    );
+    return RunSessionInfo.fromJson(response);
+  }
+
+  @override
+  Future<List<RunSessionInfo>> getRunnerHistory(String runnerId) async {
+    final response = await NetUtils().reqeustData(
+      API.getRunnerHistory(runnerId)[1],
+      method: API.getRunnerHistory(runnerId)[0],
+    );
+    return (response as List).map((e) => RunSessionInfo.fromJson(e)).toList();
+  }
+
+  @override
+  Future<String> uploadVideo(int index, UploadVideoFile file) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        file.bytes,
+        filename: file.filename,
+        contentType: MediaType.parse(file.mimeType),
+      ),
+    });
+
+    final response = await NetUtils().reqeustData(
+      API.uploadVideo(index)[1],
+      method: API.uploadVideo(index)[0],
+      postData: formData,
+    );
+    return response['tempVideoId'];
+  }
+
+  @override
+  Future<String> uploadAllInfo(
+    String runnerId,
+    DateTime date,
+    int cameraCount,
+    int fps,
+    String note,
+    List<String> tempVideoIds,
+  ) async {
+    final response = await NetUtils().reqeustData(
+      API.uploadAllInfo[1],
+      method: API.uploadAllInfo[0],
+      postData: {
+        "runnerId": runnerId,
+        "date": DateFormat('yyyy-MM-dd HH:mm:ss').format(date),
+        "cameraCount": cameraCount,
+        "fps": fps,
+        "note": note,
+        "tempVideoIds": tempVideoIds,
+      },
+    );
+    return response['runSessionId'];
+  }
+
+  @override
+  Future<List<UnanalyzedRunSessionInfo>> getRunnerUnanalyzedHistory(
+    String runnerId,
+  ) async {
+    final response = await NetUtils().reqeustData(
+      API.getRunnerUnanalyzedHistory(runnerId)[1],
+      method: API.getRunnerUnanalyzedHistory(runnerId)[0],
+    );
+    return (response as List)
+        .map((e) => UnanalyzedRunSessionInfo.fromJson(e))
+        .toList();
+  }
+
+  @override
+  Future<UploadSeperatelyStatus> uploadSeperatelyNew(
+    String runnerId,
+    DateTime date,
+    int cameraCount,
+    int fps,
+    String note,
+    int cameraIndex,
+    String tempVideoId,
+  ) async {
+    final response = await NetUtils().reqeustData(
+      API.uploadSeperatelyNew[1],
+      method: API.uploadSeperatelyNew[0],
+      postData: {
+        "runnerId": runnerId,
+        "date": DateFormat('yyyy-MM-dd HH:mm:ss').format(date),
+        "cameraCount": cameraCount,
+        "fps": fps,
+        "note": note,
+        "cameraIndex": cameraIndex,
+        "tempVideoId": tempVideoId,
+      },
+    );
+    return UploadSeperatelyStatus.fromJson(response);
+  }
+
+  @override
+  Future<UploadSeperatelyStatus> uploadSeperatelySelect(
+    String runnerId,
+    String runSessionId,
+    int cameraIndex,
+    String tempVideoId,
+  ) async {
+    final response = await NetUtils().reqeustData(
+      API.uploadSeperatelySelect[1],
+      method: API.uploadSeperatelySelect[0],
+      postData: {
+        "runnerId": runnerId,
+        "runSessionId": runSessionId,
+        "cameraIndex": cameraIndex,
+        "tempVideoId": tempVideoId,
+      },
+    );
+    return UploadSeperatelyStatus.fromJson(response);
+  }
+
+  @override
+  Future<String> addRunner(String name) async {
+    final response = await NetUtils().reqeustData(
+      API.addRunner[1],
+      method: API.addRunner[0],
+      postData: {"name": name},
+    );
+    return response['id'];
+  }
+}
