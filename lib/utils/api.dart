@@ -1,7 +1,7 @@
 import 'package:frontend/utils/net_utils.dart';
 
 class API {
-  static const baseUrl = "https://catslab.ee.ncku.edu.tw:9130/api";
+  static const baseUrl = "https://catslab.ee.ncku.edu.tw/running_analysis/api";
 
   static List getRunner = [DioMethod.get, "$baseUrl/runner"];
   static List addRunner = [DioMethod.post, "$baseUrl/runner"];

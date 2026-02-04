@@ -53,171 +53,158 @@ class _UploadPageState extends ConsumerState<UploadPage> {
               Wrap(
                 alignment: WrapAlignment.center,
                 runSpacing: 16,
-                spacing: 32,
+                spacing: 16,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 16,
-                    children: [
-                      CustomSlidingSegmentedControl<RunnerSource>(
-                        initialValue: selectedRunnerSource,
-                        customSegmentSettings: CustomSegmentSettings(
-                          borderRadius: BorderRadius.all(Radius.circular(25)),
-                        ),
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.tertiarySystemFill,
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        thumbDecoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        onValueChanged: (RunnerSource? value) {
-                          if (value == null) return;
-                          sourceNotifier.state = value;
-                        },
-                        children: <RunnerSource, Widget>{
-                          RunnerSource.select: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              '選擇選手',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight:
-                                    selectedRunnerSource == RunnerSource.select
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
+                  CustomSlidingSegmentedControl<RunnerSource>(
+                    initialValue: selectedRunnerSource,
+                    customSegmentSettings: CustomSegmentSettings(
+                      borderRadius: BorderRadius.all(Radius.circular(25)),
+                    ),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.tertiarySystemFill,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    thumbDecoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    onValueChanged: (RunnerSource? value) {
+                      if (value == null) return;
+                      sourceNotifier.state = value;
+                    },
+                    children: <RunnerSource, Widget>{
+                      RunnerSource.select: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '選擇選手',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight:
+                                selectedRunnerSource == RunnerSource.select
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
-                          RunnerSource.add: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              '新增選手',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight:
-                                    selectedRunnerSource == RunnerSource.add
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        },
+                        ),
                       ),
-                      if (selectedRunnerSource == RunnerSource.select)
-                        AsyncValueWidget(
-                          value: runners,
-                          loading: Shimmer.fromColors(
-                            baseColor: Theme.of(context).primaryColorDark,
-                            highlightColor: Theme.of(
-                              context,
-                            ).primaryColor.withValues(alpha: 0.3),
-                            child: Container(
-                              width: 100,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                border: Border(bottom: BorderSide()),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '選擇選手',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'NotoSansTC',
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_forward_ios_outlined,
-                                    size: 12,
-                                  ),
-                                ],
-                              ),
-                            ),
+                      RunnerSource.add: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '新增選手',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: selectedRunnerSource == RunnerSource.add
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
-                          data: (List<RunnerInfo> items) {
-                            return DropdownButtonHideUnderline(
-                              child: DropdownButton2<String>(
-                                hint: const Row(
-                                  children: [
-                                    Text(
-                                      '選擇選手',
-                                      style: TextStyle(
+                        ),
+                      ),
+                    },
+                  ),
+                  if (selectedRunnerSource == RunnerSource.select)
+                    AsyncValueWidget(
+                      value: runners,
+                      loading: Shimmer.fromColors(
+                        baseColor: Theme.of(context).primaryColorDark,
+                        highlightColor: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.3),
+                        child: Container(
+                          width: 100,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide()),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '選擇選手',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'NotoSansTC',
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios_outlined, size: 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                      data: (List<RunnerInfo> items) {
+                        return DropdownButtonHideUnderline(
+                          child: DropdownButton2<String>(
+                            hint: const Row(
+                              children: [
+                                Text(
+                                  '選擇選手',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'NotoSansTC',
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            items: items
+                                .map(
+                                  (RunnerInfo item) => DropdownMenuItem<String>(
+                                    value: item.id,
+                                    child: Text(
+                                      item.name,
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'NotoSansTC',
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
-                                ),
-                                items: items
-                                    .map(
-                                      (RunnerInfo item) =>
-                                          DropdownMenuItem<String>(
-                                            value: item.id,
-                                            child: Text(
-                                              item.name,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'NotoSansTC',
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                    )
-                                    .toList(),
-                                value: selectedRunnerId,
-                                onChanged: (value) {
-                                  ref
-                                          .read(
-                                            uploadSelectedRunnerIdProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      value;
-                                },
-                                buttonStyleData: ButtonStyleData(
-                                  width: 100,
-                                  overlayColor: WidgetStateProperty.all(
-                                    Colors.transparent,
                                   ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                    ),
+                                )
+                                .toList(),
+                            value: selectedRunnerId,
+                            onChanged: (value) {
+                              ref
+                                      .read(
+                                        uploadSelectedRunnerIdProvider.notifier,
+                                      )
+                                      .state =
+                                  value;
+                            },
+                            buttonStyleData: ButtonStyleData(
+                              width: 100,
+                              overlayColor: WidgetStateProperty.all(
+                                Colors.transparent,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Theme.of(context).primaryColor,
                                   ),
-                                ),
-                                iconStyleData: const IconStyleData(
-                                  icon: Icon(Icons.arrow_forward_ios_outlined),
-                                  iconSize: 12,
-                                ),
-                                dropdownStyleData: DropdownStyleData(
-                                  maxHeight: 200,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  scrollbarTheme: ScrollbarThemeData(
-                                    radius: const Radius.circular(40),
-                                  ),
-                                ),
-                                menuItemStyleData: const MenuItemStyleData(
-                                  height: 40,
-                                  padding: EdgeInsets.only(left: 12, right: 12),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
+                            ),
+                            iconStyleData: const IconStyleData(
+                              icon: Icon(Icons.arrow_forward_ios_outlined),
+                              iconSize: 12,
+                            ),
+                            dropdownStyleData: DropdownStyleData(
+                              maxHeight: 200,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              scrollbarTheme: ScrollbarThemeData(
+                                radius: const Radius.circular(40),
+                              ),
+                            ),
+                            menuItemStyleData: const MenuItemStyleData(
+                              height: 40,
+                              padding: EdgeInsets.only(left: 12, right: 12),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
               if (selectedRunnerSource == RunnerSource.add)

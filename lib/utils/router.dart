@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/feature/home_page.dart';
 import 'package:frontend/feature/playback/playback_page.dart';
 import 'package:frontend/feature/upload/upload_page.dart';
+import 'package:frontend/feature/record/record_page.dart';
 import 'package:go_router/go_router.dart';
 
-enum AppRoute { playback, upload }
+enum AppRoute { playback, upload, record }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -31,7 +32,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/upload',
             name: AppRoute.upload.name,
             pageBuilder: (context, state) {
-              return NoTransitionPage(child: const UploadPage());
+              return const NoTransitionPage(child: UploadPage());
+            },
+          ),
+          GoRoute(
+            path: '/record',
+            name: AppRoute.record.name,
+            pageBuilder: (context, state) {
+              return const NoTransitionPage(child: RecordPage());
             },
           ),
         ],

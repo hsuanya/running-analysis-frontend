@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
       final index = _controller.selectedIndex;
       if (index == 0) context.goNamed(AppRoute.playback.name);
       if (index == 1) context.goNamed(AppRoute.upload.name);
+      if (index == 2) context.goNamed(AppRoute.record.name);
     });
   }
 
@@ -37,6 +38,8 @@ class _HomePageState extends State<HomePage> {
       _controller.selectIndex(0);
     } else if (location.startsWith('/upload')) {
       _controller.selectIndex(1);
+    } else if (location.startsWith('/record')) {
+      _controller.selectIndex(2);
     }
     _isSidebarOpen = false;
     _updatingFromRouter = false;
@@ -47,8 +50,15 @@ class _HomePageState extends State<HomePage> {
     final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
       appBar: AppBar(
-        title: Text(_controller.selectedIndex == 0 ? "回放" : "上傳"),
+        title: Text(
+          _controller.selectedIndex == 0
+              ? "回放"
+              : _controller.selectedIndex == 1
+              ? "上傳"
+              : "錄影",
+        ),
         backgroundColor: Theme.of(context).primaryColor,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () {
@@ -71,6 +81,7 @@ class _HomePageState extends State<HomePage> {
                 items: [
                   SidebarXItem(icon: Icons.play_arrow, label: "回放"),
                   SidebarXItem(icon: Icons.upload, label: "上傳"),
+                  SidebarXItem(icon: Icons.videocam, label: "錄影"),
                 ],
               ),
             ),
