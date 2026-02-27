@@ -47,7 +47,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -86,17 +85,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: KeyedSubtree(key: ValueKey(location), child: widget.child),
-            ),
-          ),
+          Expanded(child: widget.child),
         ],
       ),
     );

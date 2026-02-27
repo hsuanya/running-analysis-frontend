@@ -16,12 +16,18 @@ class RecordController extends StateNotifier<RecordState> {
 
   String get _wsUrl {
     final baseUrl = API.baseUrl;
-    return baseUrl.replaceFirst('http', 'ws').replaceFirst('/api', '/ws');
+    final url =
+        '${baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://')}/ws';
+
+    return url;
   }
 
   void _connect() {
     _channel?.sink.close();
     _channel = WebSocketChannel.connect(Uri.parse(_wsUrl));
+    _channel!.ready.catchError((e) {
+      _onError(e);
+    });
     _channel!.stream.listen(_listen, onError: _onError, onDone: _onDone);
   }
 
