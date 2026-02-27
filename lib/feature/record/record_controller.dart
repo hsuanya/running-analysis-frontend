@@ -108,15 +108,33 @@ class RecordController extends StateNotifier<RecordState> {
     );
 
     if (state.status == RecordStatus.ready) {
+      // 1. 回報加入/離開為相機身分
       final msg = RecordMessage(
         type: RecordMessageType.joinRoom,
         data: {
           'roomId': state.roomId,
-          'cameraIndex': enabled ? index : null, // Send null if disabled
+          'cameraIndex': enabled ? index : null,
           'isMaster': true,
         },
       );
       _channel?.sink.add(jsonEncode(msg.toJson()));
+
+      // 2. 如果是正在加入且目前設備已橫放，則立即主動補送 Ready 狀態
+      if (enabled && state.isPhysicallyReady) {
+        updateReadyStatus(true);
+      }
+    }
+  }
+
+  /// 更新本機端的物理轉向狀態，並視情況向後端同步
+  void updatePhysicallyReady(bool isReady) {
+    if (state.isPhysicallyReady == isReady) return;
+
+    state = state.copyWith(isPhysicallyReady: isReady);
+
+    // 只有在已分配相機編號（正式參與錄影）時才需要發送給後端
+    if (state.myCameraIndex != null) {
+      updateReadyStatus(isReady);
     }
   }
 

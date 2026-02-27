@@ -29,7 +29,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   int _createExpectedCount = 1;
   String _newRunnerName = '';
   final ExpansibleController _expansionController = ExpansibleController();
-  bool? _lastReportedReady;
 
   @override
   void dispose() {
@@ -74,24 +73,16 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       }
     });
 
-    // 監聽轉向與相機狀態，同步 Readiness 到後端
+    // 同步本機物理轉向狀態到控制器
     final orientation = MediaQuery.of(context).orientation;
-    final isPortrait = orientation == Orientation.portrait;
-    // 如果不參與錄影 (myCameraIndex == null)，則視為就緒
-    // 如果參與錄影，則必須是橫放 (!isPortrait) 才視為就緒
-    final currentIsReady = state.myCameraIndex == null || !isPortrait;
+    final isPhysicallyReady = orientation != Orientation.portrait;
 
-    if (_lastReportedReady != currentIsReady) {
-      // 延遲一下確保 WebSocket 可能已連線（如果是剛進入房間）
-      Future.microtask(() {
-        if (mounted) {
-          controller.updateReadyStatus(currentIsReady);
-          setState(() {
-            _lastReportedReady = currentIsReady;
-          });
-        }
-      });
-    }
+    // 使用 microtask 避免在 build 期間直接呼叫 state 更新
+    Future.microtask(() {
+      if (mounted) {
+        controller.updatePhysicallyReady(isPhysicallyReady);
+      }
+    });
 
     return state.status == RecordStatus.idle ||
             state.status == RecordStatus.connecting

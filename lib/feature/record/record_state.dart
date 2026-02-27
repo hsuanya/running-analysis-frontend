@@ -12,6 +12,7 @@ class RecordState {
   final String? sharedRunSessionId; // Synced after first upload
   final int expectedCameraCount;
   final bool isRecordingEnabled; // For Master
+  final bool isPhysicallyReady; // Track local physical orientation (landscape)
 
   // Upload Parameters
   final RunnerSource runnerSource;
@@ -31,6 +32,7 @@ class RecordState {
     this.sharedRunSessionId,
     this.expectedCameraCount = 0,
     this.isRecordingEnabled = false,
+    this.isPhysicallyReady = false,
     this.runnerSource = RunnerSource.select,
     this.runnerId,
     this.runnerName,
@@ -49,6 +51,7 @@ class RecordState {
     String? sharedRunSessionId,
     int? expectedCameraCount,
     bool? isRecordingEnabled,
+    bool? isPhysicallyReady,
     RunnerSource? runnerSource,
     String? runnerId,
     String? runnerName,
@@ -66,6 +69,7 @@ class RecordState {
       sharedRunSessionId: sharedRunSessionId ?? this.sharedRunSessionId,
       expectedCameraCount: expectedCameraCount ?? this.expectedCameraCount,
       isRecordingEnabled: isRecordingEnabled ?? this.isRecordingEnabled,
+      isPhysicallyReady: isPhysicallyReady ?? this.isPhysicallyReady,
       runnerSource: runnerSource ?? this.runnerSource,
       runnerId: runnerId ?? this.runnerId,
       runnerName: runnerName ?? this.runnerName,
