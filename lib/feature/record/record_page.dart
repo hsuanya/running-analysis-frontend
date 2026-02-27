@@ -1,4 +1,3 @@
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,6 +14,7 @@ import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:toastification/toastification.dart';
 
 class RecordPage extends ConsumerStatefulWidget {
   const RecordPage({super.key});
@@ -58,17 +58,34 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       next,
     ) {
       if (next != null && next != prev) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: AwesomeSnackbarContent(
-              title: 'Success',
-              message: '影片上傳成功！',
-              contentType: ContentType.success,
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
+        toastification.show(
+          context: context,
+          title: const Text(
+            'Success',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
+          description: const Text('影片上傳成功！'),
+          type: ToastificationType.success,
+          style: ToastificationStyle.minimal,
+          alignment: Alignment.bottomCenter,
+          autoCloseDuration: const Duration(seconds: 4),
+        );
+      }
+    });
+
+    ref.listen(recordControllerProvider.select((s) => s.error), (prev, next) {
+      if (next != null && next != prev) {
+        toastification.show(
+          context: context,
+          title: const Text(
+            'Error',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          description: Text(next),
+          type: ToastificationType.error,
+          style: ToastificationStyle.minimal,
+          alignment: Alignment.bottomCenter,
+          autoCloseDuration: const Duration(seconds: 4),
         );
       }
     });
@@ -260,11 +277,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           ],
                         ),
                       ),
-                      if (state.error != null)
-                        Text(
-                          state.error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
                     ],
                   ),
                 ),
@@ -570,51 +582,56 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             ),
                             onPressed: () {
                               if (state.runnerId == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: AwesomeSnackbarContent(
-                                      title: 'Error',
-                                      message: '請先選擇選手才能開始錄影',
-                                      contentType: ContentType.failure,
+                                toastification.show(
+                                  context: context,
+                                  title: const Text(
+                                    'Error',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.transparent,
-                                    elevation: 0,
                                   ),
+                                  description: const Text('請先選擇選手才能開始錄影'),
+                                  type: ToastificationType.error,
+                                  style: ToastificationStyle.minimal,
+                                  alignment: Alignment.bottomCenter,
+                                  autoCloseDuration: const Duration(seconds: 4),
                                 );
                                 return;
                               }
                               if (!areAllCamerasConnected) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: AwesomeSnackbarContent(
-                                      title: 'Error',
-                                      message:
-                                          '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
-                                      contentType: ContentType.failure,
+                                toastification.show(
+                                  context: context,
+                                  title: const Text(
+                                    'Error',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.transparent,
-                                    duration: const Duration(seconds: 2),
-                                    elevation: 0,
                                   ),
+                                  description: Text(
+                                    '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
+                                  ),
+                                  type: ToastificationType.error,
+                                  style: ToastificationStyle.minimal,
+                                  alignment: Alignment.bottomCenter,
+                                  autoCloseDuration: const Duration(seconds: 4),
                                 );
                                 return;
                               }
 
                               if (!areAllParticipatingReady) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: AwesomeSnackbarContent(
-                                      title: 'Warning',
-                                      message: '部分相機尚未橫放裝置 (未就緒)',
-                                      contentType: ContentType.warning,
+                                toastification.show(
+                                  context: context,
+                                  title: Text(
+                                    'Warning',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.transparent,
-                                    duration: const Duration(seconds: 2),
-                                    elevation: 0,
                                   ),
+                                  description: Text('部分相機尚未橫放裝置 (未就緒)'),
+                                  alignment: Alignment.bottomCenter,
+                                  type: ToastificationType.warning,
+                                  style: ToastificationStyle.minimal,
+                                  autoCloseDuration: const Duration(seconds: 4),
                                 );
                                 return;
                               }
@@ -726,7 +743,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       baseColor: Theme.of(context).primaryColorDark,
                       highlightColor: Theme.of(
                         context,
-                      ).primaryColor.withOpacity(0.3),
+                      ).primaryColor.withValues(alpha: 0.3),
                       child: Container(
                         height: 40,
                         decoration: const BoxDecoration(

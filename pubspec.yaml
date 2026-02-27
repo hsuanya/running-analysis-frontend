@@ -50,7 +50,6 @@ dependencies:
   mime: ^2.0.0
   date_field: ^6.0.3+1
   tuple: ^2.0.2
-  awesome_snackbar_content: ^0.1.7
   flutter_spinkit: ^5.2.2
   video_player_web: ^2.4.0
   http_parser: ^4.1.2
@@ -59,6 +58,7 @@ dependencies:
   camera: ^0.11.1
   lottie: ^3.3.1
   convex_bottom_bar: ^3.2.0
+  toastification: ^3.0.3
 
 dev_dependencies:
   flutter_test:

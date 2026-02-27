@@ -1,4 +1,3 @@
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
@@ -8,6 +7,7 @@ import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/runner_history_shimmer.dart';
 import 'package:intl/intl.dart';
+import 'package:toastification/toastification.dart';
 
 class RunnerHistoryView extends ConsumerWidget {
   const RunnerHistoryView({super.key});
@@ -45,11 +45,11 @@ class RunnerHistoryView extends ConsumerWidget {
 
         return Table(
           border: TableBorder(
-            horizontalInside: BorderSide(
+            horizontalInside: const BorderSide(
               width: 3,
               color: Colors.white,
             ), // 只要橫向分隔線
-            verticalInside: BorderSide(width: 3, color: Colors.white),
+            verticalInside: const BorderSide(width: 3, color: Colors.white),
             top: BorderSide.none, // 不要最上面
             bottom: BorderSide.none, // 不要最下面
             left: BorderSide.none, // 不要最左邊
@@ -86,17 +86,17 @@ class RunnerHistoryView extends ConsumerWidget {
                       onTap: () {
                         final video = videos[i];
                         if (video.status == 'failed') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: AwesomeSnackbarContent(
-                                title: "分析失敗！",
-                                message: "此次影片分析失敗，請重新上傳或聯繫開發者",
-                                contentType: ContentType.failure,
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.transparent,
-                              elevation: 0,
+                          toastification.show(
+                            context: context,
+                            title: const Text(
+                              "分析失敗！",
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
+                            description: const Text("此次影片分析失敗，請重新上傳或聯繫開發者"),
+                            type: ToastificationType.error,
+                            style: ToastificationStyle.minimal,
+                            alignment: Alignment.bottomCenter,
+                            autoCloseDuration: const Duration(seconds: 4),
                           );
                           return;
                         }

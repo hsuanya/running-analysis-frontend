@@ -10,7 +10,7 @@ import 'package:frontend/feature/record/record_controller.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/widget/loading_icon.dart';
 import 'package:mime/mime.dart';
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:toastification/toastification.dart';
 import 'package:shimmer/shimmer.dart';
 
 class RecordCameraView extends ConsumerStatefulWidget {
@@ -113,9 +113,18 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
         print('相機初始化失敗: $e');
       }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('無法存取相機: $e')));
+        toastification.show(
+          context: context,
+          title: const Text(
+            'Error',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          description: Text('無法存取相機: $e'),
+          type: ToastificationType.error,
+          style: ToastificationStyle.minimal,
+          alignment: Alignment.bottomCenter,
+          autoCloseDuration: const Duration(seconds: 4),
+        );
       }
     }
   }
@@ -508,51 +517,50 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                 } else {
                   // 開始錄影前的檢查
                   if (state.runnerId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: AwesomeSnackbarContent(
-                          title: 'Error',
-                          message: '請先選擇選手才能開始錄影',
-                          contentType: ContentType.failure,
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
+                    toastification.show(
+                      context: context,
+                      title: const Text(
+                        'Error',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      description: const Text('請先選擇選手才能開始錄影'),
+                      type: ToastificationType.error,
+                      style: ToastificationStyle.minimal,
+                      alignment: Alignment.bottomCenter,
+                      autoCloseDuration: const Duration(seconds: 4),
                     );
                     return;
                   }
                   if (!areAllCamerasConnected) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: AwesomeSnackbarContent(
-                          title: 'Error',
-                          message:
-                              '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
-                          contentType: ContentType.failure,
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.transparent,
-                        duration: const Duration(seconds: 2),
-                        elevation: 0,
+                    toastification.show(
+                      context: context,
+                      title: const Text(
+                        'Error',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      description: Text(
+                        '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
+                      ),
+                      type: ToastificationType.error,
+                      style: ToastificationStyle.minimal,
+                      alignment: Alignment.bottomCenter,
+                      autoCloseDuration: const Duration(seconds: 4),
                     );
                     return;
                   }
 
                   if (!areAllParticipatingReady) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: AwesomeSnackbarContent(
-                          title: 'Warning',
-                          message: '部分相機尚未橫放裝置 (未就緒)',
-                          contentType: ContentType.warning,
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.transparent,
-                        duration: const Duration(seconds: 2),
-                        elevation: 0,
+                    toastification.show(
+                      context: context,
+                      title: const Text(
+                        'Warning',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      description: const Text('部分相機尚未橫放裝置 (未就緒)'),
+                      type: ToastificationType.warning,
+                      style: ToastificationStyle.minimal,
+                      alignment: Alignment.bottomCenter,
+                      autoCloseDuration: const Duration(seconds: 4),
                     );
                     return;
                   }
