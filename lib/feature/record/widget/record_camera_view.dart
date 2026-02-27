@@ -84,14 +84,24 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
       await _controller!.initialize();
 
       // 取得縮放範圍並更新狀態
-      _minZoom = await _controller!.getMinZoomLevel();
-      _maxZoom = min(await _controller!.getMaxZoomLevel(), 10.0);
+      try {
+        _minZoom = await _controller!.getMinZoomLevel();
+        _maxZoom = min(await _controller!.getMaxZoomLevel(), 10.0);
 
-      // 嘗試設定目標倍率，如果是第一次切換，盡量接近 0.5 或之前的值
-      if (_currentZoom < _minZoom) _currentZoom = _minZoom;
-      if (_currentZoom > _maxZoom) _currentZoom = _maxZoom;
+        // 嘗試設定目標倍率，如果是第一次切換，盡量接近 0.5 或之前的值
+        if (_currentZoom < _minZoom) _currentZoom = _minZoom;
+        if (_currentZoom > _maxZoom) _currentZoom = _maxZoom;
 
-      await _controller!.setZoomLevel(_currentZoom);
+        if (_maxZoom > _minZoom) {
+          await _controller!.setZoomLevel(_currentZoom);
+        }
+      } catch (e) {
+        if (kDebugMode) print('此裝置不支援縮放功能: $e');
+        // 發生錯誤時保留預設值 (1.0)，並確保不中斷初始化程序
+        _minZoom = 1.0;
+        _maxZoom = 1.0;
+        _currentZoom = 1.0;
+      }
 
       if (mounted) {
         setState(() {
@@ -386,7 +396,11 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                               _currentZoom = value;
                             });
                             notifyListeners();
-                            await _controller?.setZoomLevel(value);
+                            try {
+                              await _controller?.setZoomLevel(value);
+                            } catch (e) {
+                              if (kDebugMode) print('無法設定縮放倍率: $e');
+                            }
                           },
                         ),
                       ),
