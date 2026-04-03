@@ -6,6 +6,7 @@ import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/utils/combine_date_and_time.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 
 class UploadController extends StateNotifier<AsyncValue<void>> {
   UploadController({required this.backend})
@@ -21,9 +22,9 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     String note,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) async {
     try {
-      print('cameraIndex: $cameraIndex');
       state = const AsyncLoading();
       final status = await backend.uploadSeperatelyNew(
         runnerId,
@@ -33,6 +34,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         note,
         cameraIndex,
         tempVideoId,
+        anchors,
       );
       state = const AsyncValue.data(null);
       return status;
@@ -47,6 +49,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     String runSessionId,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) async {
     try {
       state = const AsyncLoading();
@@ -55,6 +58,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         runSessionId,
         cameraIndex,
         tempVideoId,
+        anchors,
       );
       state = const AsyncValue.data(null);
       return status;
@@ -71,7 +75,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     int cameraCount,
     int fps,
     String note,
-    List<String> tempVideoIds,
+    List<Map<String, dynamic>> videos,
   ) async {
     try {
       state = const AsyncLoading();
@@ -81,7 +85,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         cameraCount,
         fps,
         note,
-        tempVideoIds,
+        videos,
       );
       state = const AsyncValue.data(null);
       return videoId;

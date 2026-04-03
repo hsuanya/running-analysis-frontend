@@ -7,6 +7,7 @@ import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/entities/run_session_info.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/test_data.dart';
 
 class FakeBackendRepo implements BackendInterface {
@@ -98,7 +99,7 @@ class FakeBackendRepo implements BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<String> tempVideoIds,
+    List<Map<String, dynamic>> videos,
   ) async {
     final videoId = 'videoId${kVideos.length}';
     kVideos.add(
@@ -116,7 +117,7 @@ class FakeBackendRepo implements BackendInterface {
         progress: 100,
       ),
     );
-    return Future.delayed(const Duration(seconds: 100), () => videoId);
+    return Future.delayed(const Duration(seconds: 1), () => videoId);
   }
 
   @override
@@ -161,6 +162,7 @@ class FakeBackendRepo implements BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) {
     return Future.delayed(
       const Duration(seconds: 1),
@@ -179,6 +181,7 @@ class FakeBackendRepo implements BackendInterface {
     String runSessionId,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) {
     return Future.delayed(
       const Duration(seconds: 1),

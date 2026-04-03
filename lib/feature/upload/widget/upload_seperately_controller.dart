@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_video_file.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/api.dart';
 
 class UploadSeperatelyState {
@@ -9,12 +10,14 @@ class UploadSeperatelyState {
   final String? tempVideoId;
   final bool isUploading;
   final String? error;
+  final AnchorResult? anchorResult;
 
   UploadSeperatelyState({
     required this.thumbnail,
     required this.tempVideoId,
     this.isUploading = false,
     this.error,
+    this.anchorResult,
   });
 
   factory UploadSeperatelyState.initial() =>
@@ -25,12 +28,15 @@ class UploadSeperatelyState {
     String? tempVideoId,
     bool? isUploading,
     String? error,
+    AnchorResult? anchorResult,
+    bool clearAnchor = false,
   }) {
     return UploadSeperatelyState(
       thumbnail: thumbnail ?? this.thumbnail,
       tempVideoId: tempVideoId ?? this.tempVideoId,
       isUploading: isUploading ?? this.isUploading,
       error: error,
+      anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
     );
   }
 }
@@ -59,6 +65,14 @@ class UploadSeperatelyController extends StateNotifier<UploadSeperatelyState> {
 
   void resetState() {
     state = UploadSeperatelyState.initial();
+  }
+
+  void setAnchor(AnchorResult? result) {
+    if (result == null) {
+      state = state.copyWith(clearAnchor: true);
+    } else {
+      state = state.copyWith(anchorResult: result);
+    }
   }
 }
 

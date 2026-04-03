@@ -26,6 +26,7 @@ enum RecordMessageType {
   stopRecording,
   uploadComplete,
   updateReady,
+  cameraPreview,
   error,
 }
 

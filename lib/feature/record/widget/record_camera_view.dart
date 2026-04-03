@@ -3,11 +3,13 @@ import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/record/record_controller.dart';
 import 'package:frontend/feature/record/record_enums.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/widget/loading_icon.dart';
 import 'package:mime/mime.dart';
 import 'package:toastification/toastification.dart';
@@ -34,6 +36,9 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
   double _minZoom = 1.0;
   double _maxZoom = 1.0;
   double _currentZoom = 1.0;
+
+  // Timer? _previewTimer;
+  // bool _previewTimerStarted = false;
 
   @override
   void initState() {
@@ -181,6 +186,68 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
     });
   }
 
+  // void _startPreviewTimer() {
+  //   print('start preview timer');
+  //   _previewTimer?.cancel();
+
+  //   // 定義傳送預覽圖的邏輯
+  //   Future<void> captureAndSend() async {
+  //     print('Preview tick...');
+  //     if (_controller == null) {
+  //       print('Controller is null');
+  //       return;
+  //     }
+  //     if (!_controller!.value.isInitialized) {
+  //       print('Controller is not initialized');
+  //       return;
+  //     }
+  //     if (_controller!.value.isTakingPicture) {
+  //       print('Controller is currently taking a picture');
+  //       return;
+  //     }
+
+  //     try {
+  //       final xFile = await _controller!.takePicture();
+  //       final bytes = await xFile.readAsBytes();
+  //       print('Took picture: \${bytes.length} bytes');
+
+  //       final base64String = await compute(_compressAndEncodeImage, bytes);
+  //       print('Compressed picture to base64: \${base64String?.length ?? 0} characters');
+
+  //       if (base64String != null && mounted) {
+  //         ref
+  //             .read(recordControllerProvider.notifier)
+  //             .sendCameraPreview("data:image/jpeg;base64,$base64String");
+  //         print('Successfully sent preview to backend.');
+  //       }
+  //     } catch (e, stack) {
+  //       print('Failed to capture or send preview: $e\\n$stack');
+  //     }
+  //   }
+
+  //   // 第一張馬上傳送，然後設定每五秒傳送
+  //   captureAndSend();
+  //   _previewTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+  //     captureAndSend();
+  //   });
+  // }
+
+  // static String? _compressAndEncodeImage(Uint8List bytes) {
+  //   try {
+  //     final originalImage = img.decodeImage(bytes);
+  //     if (originalImage == null) return null;
+
+  //     // 由於只要確認有沒有錄歪，解析度可以縮小到 320x240，保持長寬比
+  //     final resizedImage = img.copyResize(originalImage, width: 320);
+
+  //     // 低品質 JPEG 壓縮，降低網路頻寬使用
+  //     final jpgBytes = img.encodeJpg(resizedImage, quality: 30);
+  //     return base64Encode(jpgBytes);
+  //   } catch (e) {
+  //     return null;
+  //   }
+  // }
+
   Future<void> _processUpload() async {
     if (_recordedFile == null || _isUploading) return;
 
@@ -261,6 +328,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
           state.note,
           state.myCameraIndex!,
           tempVideoId,
+          state.anchorResult,
         );
         controller.notifyUploadComplete(status.runSessionId);
       } else {
@@ -269,6 +337,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
           state.sharedRunSessionId!,
           state.myCameraIndex!,
           tempVideoId,
+          state.anchorResult,
         );
       }
 
@@ -289,6 +358,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
 
   @override
   void dispose() {
+    // _previewTimer?.cancel();
     _controller?.dispose();
     super.dispose();
   }
@@ -296,6 +366,15 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
   @override
   Widget build(BuildContext context) {
     _listenToRecordingStatus();
+
+    // final state = ref.watch(recordControllerProvider);
+    // if (state.role == RecordRole.slave && !_previewTimerStarted) {
+    //   _previewTimerStarted = true;
+    //   _startPreviewTimer();
+    // } else if (state.role != RecordRole.slave && _previewTimerStarted) {
+    //   _previewTimerStarted = false;
+    //   _previewTimer?.cancel();
+    // }
 
     if (!_isInitialized ||
         _controller == null ||
@@ -313,9 +392,19 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
 
   void _enterFullscreen() async {
     if (_controller == null) return;
+
+    // Flutter Web: CameraPreview is an HtmlElementView (<video> element).
+    // Detaching it from the widget tree breaks the stream connection.
+    // Re-initializing the controller before showing fullscreen ensures the
+    // fullscreen dialog gets a fresh, properly attached video element.
     setState(() {
       _isShowingFullscreen = true;
+      _isInitialized = false; // show shimmer while re-initing
     });
+    await _controller?.dispose();
+    await _initializeCamera(); // sets _isInitialized = true when done
+
+    if (!mounted) return;
 
     // 使用 rootNavigator: true 以確保對話框覆蓋整個 App（包括主頁的 AppBar 與 Sidebar）
     await Navigator.of(context, rootNavigator: true).push(
@@ -325,13 +414,22 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
     );
 
     if (mounted) {
+      // Re-initialize again so the normal view also gets a fresh camera element.
       setState(() {
         _isShowingFullscreen = false;
+        _isInitialized = false;
       });
+      await _controller?.dispose();
+      await _initializeCamera();
     }
   }
 
-  Widget _buildCameraPreviewStack({required bool isFullscreen}) {
+
+  Widget _buildCameraPreviewStack({
+    required bool isFullscreen,
+    bool isAnchorMode = false,
+    Widget? anchorOverlay,
+  }) {
     final state = ref.watch(recordControllerProvider);
     final controller = ref.read(recordControllerProvider.notifier);
 
@@ -375,13 +473,20 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
       children: [
         AspectRatio(
           aspectRatio: containerAspectRatio,
-          child: RotatedBox(
-            quarterTurns: quarterTurns,
-            child: CameraPreview(_controller!),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              RotatedBox(
+                quarterTurns: quarterTurns,
+                child: CameraPreview(_controller!),
+              ),
+              // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
+              if (anchorOverlay != null) anchorOverlay,
+            ],
           ),
         ),
-        // 縮放控制拉桿
-        if (_maxZoom > _minZoom)
+        // 縮放控制拉桿（錨點模式時隱藏）
+        if (!isAnchorMode && _maxZoom > _minZoom)
           Positioned(
             left: 16,
             bottom: 24,
@@ -433,8 +538,8 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
               ],
             ),
           ),
-        // 底部更換鏡頭按鈕
-        if (_allBackCameras.length > 1)
+        // 底部更換鏡頭按鈕（錨點模式時隱藏）
+        if (!isAnchorMode && _allBackCameras.length > 1)
           Positioned(
             bottom: 24,
             left: 0,
@@ -470,30 +575,31 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
               ),
             ),
           ),
-        // 右上角縮放按鈕
-        Positioned(
-          top: 16,
-          right: 16,
-          child: GestureDetector(
-            onTap: isFullscreen
-                ? () => Navigator.of(context, rootNavigator: true).pop()
-                : _enterFullscreen,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                color: Colors.white,
-                size: 28,
+        // 右上角縮放按鈕（錨點模式時隱藏）
+        if (!isAnchorMode)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: isFullscreen
+                  ? () => Navigator.of(context, rootNavigator: true).pop()
+                  : _enterFullscreen,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
           ),
-        ),
-        // 全螢幕模式下的主控端開始/結束錄影按鈕
-        if (isFullscreen && state.role == RecordRole.master)
+        // 全螢幕模式下的主控端開始/結束錄影按鈕（錨點模式時隱藏）
+        if (!isAnchorMode && isFullscreen && state.role == RecordRole.master)
           Positioned(
             bottom: 24,
             right: 24,
@@ -607,7 +713,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Column(
@@ -628,6 +734,57 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                             offset: Offset(0, 2),
                           ),
                         ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        // 錨點狀態 badge（僅非全螢幕）
+        if (!isFullscreen)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: GestureDetector(
+              onTap: _enterFullscreen, // 引導進入全螢幕設定
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: state.anchorIsSet
+                      ? const Color(0xFF00BFA5).withValues(alpha: 0.88)
+                      : Colors.deepOrange.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: state.anchorIsSet
+                        ? const Color(0xFF00BFA5)
+                        : Colors.deepOrangeAccent,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      state.anchorIsSet
+                          ? Icons.my_location
+                          : Icons.warning_amber_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      state.anchorIsSet
+                          ? '錨點已設定'
+                          : '請進入全螢幕設定錨點',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'NotoSansTC',
                       ),
                     ),
                   ],
@@ -656,43 +813,742 @@ class _FullScreenCameraDialog extends ConsumerStatefulWidget {
       _FullScreenCameraDialogState();
 }
 
+// ── Anchor overlay constants ────────────────────────────────────
+const _kAnchorLabels = ['左上', '右上', '右下', '左下'];
+const _kAnchorColors = [
+  Color(0xFF4FC3F7),
+  Color(0xFF81C784),
+  Color(0xFFFFB74D),
+  Color(0xFFE57373),
+];
+const _kAnchorHitRadius = 12.0;
+const _kAnchorMagRadius = 60.0;
+const _kAnchorMagZoom = 2.8;
+
 class _FullScreenCameraDialogState
     extends ConsumerState<_FullScreenCameraDialog> {
-  // 定義一個局部方法，用於在收到通知時強制重繪
+  // ── Camera state listener ───────────────────────────────────
   void _handleStateChange() {
     if (mounted) setState(() {});
   }
 
+  // ── Anchor mode state ───────────────────────────────────────
+  bool _anchorMode = false;
+  final List<Offset> _pts = []; // normalised 0–1
+  int? _draggingIdx;
+  Offset? _magPos;
+  Offset? _pendingTapNorm;
+
+  // Cached image size (set in LayoutBuilder inside the anchor overlay)
+  double _imgW = 1.0;
+  double _imgH = 1.0;
+
+  // Distance text controllers
+  final _topCtrl = TextEditingController();
+  final _botCtrl = TextEditingController();
+
+  // Distance panel expand/collapse state
+  bool _distanceExpanded = false;
+
+  // Snapshot taken when entering anchor mode (for magnifier)
+  Uint8List? _snapshotBytes;
+  bool _isCapturing = false;
+
   @override
   void initState() {
     super.initState();
-    // 監聽父組件的更新，確保全螢幕下的 local variable (如 _currentZoom) 更新時，此頁面也會重繪
     widget.cameraViewState.addListener(_handleStateChange);
+
+    // Pre-load existing anchor if already set
+    final existing = ref.read(recordControllerProvider).anchorResult;
+    if (existing != null) {
+      _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
+      _topCtrl.text = existing.topDistanceM.toString();
+      _botCtrl.text = existing.bottomDistanceM.toString();
+    }
   }
 
   @override
   void dispose() {
-    // 退出時移除監聽，避免記憶體洩漏
     widget.cameraViewState.removeListener(_handleStateChange);
+    _topCtrl.dispose();
+    _botCtrl.dispose();
     super.dispose();
   }
 
+  // ── Anchor helpers ──────────────────────────────────────────
+  bool get _full => _pts.length == 4;
+  int get _nextIdx => _pts.length;
+
+  Offset _norm(Offset local) => Offset(
+        (local.dx / _imgW).clamp(0.0, 1.0),
+        (local.dy / _imgH).clamp(0.0, 1.0),
+      );
+
+  int? _nearestIdx(Offset normPos) {
+    int? best;
+    double bestDist = double.infinity;
+    for (int i = 0; i < _pts.length; i++) {
+      final dx = (normPos.dx - _pts[i].dx) * _imgW;
+      final dy = (normPos.dy - _pts[i].dy) * _imgH;
+      final d = dx * dx + dy * dy;
+      if (d < _kAnchorHitRadius * _kAnchorHitRadius && d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  bool get _canConfirm {
+    if (!_full) return false;
+    final t = double.tryParse(_topCtrl.text);
+    final b = double.tryParse(_botCtrl.text);
+    return t != null && t > 0 && b != null && b > 0;
+  }
+
+  void _confirmAnchor() {
+    final result = AnchorResult(
+      points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
+      topDistanceM: double.parse(_topCtrl.text),
+      bottomDistanceM: double.parse(_botCtrl.text),
+    );
+    ref.read(recordControllerProvider.notifier).setAnchor(result);
+    setState(() => _anchorMode = false);
+  }
+
+  void _enterAnchorMode() async {
+    if (_isCapturing) return;
+
+    // Pre-load current anchor if any
+    final existing = ref.read(recordControllerProvider).anchorResult;
+
+    setState(() => _isCapturing = true);
+
+    try {
+      // 1. Take a snapshot of the current view for the magnifier
+      final xFile = await widget.cameraViewState._controller?.takePicture();
+      final bytes = await xFile?.readAsBytes();
+
+      if (mounted) {
+        setState(() {
+          _pts.clear();
+          if (existing != null) {
+            _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
+            _topCtrl.text = existing.topDistanceM.toString();
+            _botCtrl.text = existing.bottomDistanceM.toString();
+          } else {
+            _topCtrl.clear();
+            _botCtrl.clear();
+          }
+          _snapshotBytes = bytes;
+          _anchorMode = true;
+          _isCapturing = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('擷取設定錨點預覽圖失敗: $e');
+      if (mounted) {
+        setState(() {
+          _anchorMode = true; // Still enter mode even if snapshot fails
+          _isCapturing = false;
+        });
+      }
+    }
+  }
+
+  // ── Gesture handlers ────────────────────────────────────────
+  void _onTapDown(TapDownDetails d) {
+    _pendingTapNorm = _norm(d.localPosition);
+  }
+
+  void _onTap() {
+    final pos = _pendingTapNorm;
+    _pendingTapNorm = null;
+    if (pos == null || _full) return;
+    if (_nearestIdx(pos) != null) return;
+    setState(() => _pts.add(pos));
+  }
+
+  void _onPanStart(DragStartDetails d) {
+    if (_pts.isEmpty) return;
+    final norm = _norm(d.localPosition);
+    final idx = _nearestIdx(norm);
+    if (idx != null) {
+      setState(() {
+        _draggingIdx = idx;
+        _magPos = _pts[idx];
+      });
+    }
+  }
+
+  void _onPanUpdate(DragUpdateDetails d) {
+    if (_draggingIdx == null) return;
+    final norm = _norm(d.localPosition);
+    setState(() {
+      _pts[_draggingIdx!] = norm;
+      _magPos = norm;
+    });
+  }
+
+  void _onPanEnd(DragEndDetails _) {
+    setState(() {
+      _draggingIdx = null;
+      _magPos = null;
+    });
+  }
+
+  // ── Build ───────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    // 監聽 Riverpod 控制器狀態 (如錄影狀態)，確保按鈕文字會切換
     ref.watch(recordControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        // 直接呼叫父組件的 build 方法來渲染內容
-        child: widget.cameraViewState._buildCameraPreviewStack(
-          isFullscreen: true,
+      body: Stack(
+        children: [
+          // 影像本體
+          Center(
+            child: RepaintBoundary(
+              child: widget.cameraViewState._buildCameraPreviewStack(
+                isFullscreen: true,
+                isAnchorMode: _anchorMode,
+                anchorOverlay: _anchorMode ? _buildAnchorOverlay() : null,
+              ),
+            ),
+          ),
+          
+          // ── 距離輸入欄位 (在全螢幕的最上方) ──────────────────────
+          if (_anchorMode && _full)
+            Positioned(
+              top: 16,
+              left: 20,
+              right: 20,
+              child: SafeArea(
+                child: _buildCollapsibleDistanceRow(),
+              ),
+            ),
+
+          // 切換按鈕（當不在錨點模式時顯示）
+          if (!_anchorMode)
+            _isCapturing
+                ? const Positioned(
+                    top: 16,
+                    left: 16,
+                    child: SafeArea(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  )
+                : _buildAnchorToggleButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnchorToggleButton() {
+    final isSet = ref.watch(
+      recordControllerProvider.select((s) => s.anchorIsSet),
+    );
+    return Positioned(
+      top: 16,
+      left: 16,
+      child: SafeArea(
+        child: GestureDetector(
+          onTap: _enterAnchorMode,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSet
+                  ? const Color(0xFF00BFA5).withValues(alpha: 0.85)
+                  : Colors.black54,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isSet ? const Color(0xFF00BFA5) : Colors.white24,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isSet ? Icons.my_location : Icons.location_off_outlined,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isSet ? '錨點已設定' : '設定錨點',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'NotoSansTC',
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildAnchorOverlay() {
+    return Positioned.fill(
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          _imgW = constraints.maxWidth;
+          _imgH = constraints.maxHeight;
+
+          return GestureDetector(
+            onTapDown: _onTapDown,
+            onTap: _onTap,
+            onPanStart: _onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.35),
+              child: Stack(
+                children: [
+                  // ── Quadrilateral ──────────────────────────
+                  if (_pts.length >= 2)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _AnchorQuadPainter(
+                          points: _pts,
+                          width: _imgW,
+                          height: _imgH,
+                          draggingIdx: _draggingIdx,
+                        ),
+                      ),
+                    ),
+
+                  // ── Anchor markers ─────────────────────────
+                  ..._pts.asMap().entries.map((e) {
+                    final i = e.key;
+                    final pt = e.value;
+                    final isDragging = i == _draggingIdx;
+                    return Positioned(
+                      left: pt.dx * _imgW - 18,
+                      top: pt.dy * _imgH - 18,
+                      child: AnimatedScale(
+                        scale: isDragging ? 1.35 : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: _AnchorMarkerOverlay(
+                          label: _kAnchorLabels[i],
+                          color: _kAnchorColors[i],
+                          index: i + 1,
+                          isDragging: isDragging,
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // ── Next-point badge（獨立 widget 持有動畫，不影響父層 build）
+                  if (!_full && _draggingIdx == null)
+                    Positioned(
+                      top: 20,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: _PulsingBadge(
+                          color: _kAnchorColors[_nextIdx],
+                          label: '點 ${_nextIdx + 1}：${_kAnchorLabels[_nextIdx]}',
+                        ),
+                      ),
+                    ),
+
+                  // ── Magnifier ──────────────────────────────
+                  if (_draggingIdx != null && _magPos != null)
+                    _buildMagnifier(),
+
+                  // ── Action bar (bottom) ────────────────────
+                  Positioned(
+                    bottom: 20,
+                    left: 16,
+                    right: 16,
+                    child: _buildActionBar(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMagnifier() {
+    final norm = _magPos!;
+    final cx = norm.dx * _imgW;
+    final cy = norm.dy * _imgH;
+    const r = _kAnchorMagRadius;
+    const zoom = _kAnchorMagZoom;
+
+    double left = cx - r;
+    double top = cy - r * 2.4 - 10;
+    left = left.clamp(0.0, _imgW - r * 2);
+    top = top.clamp(0.0, _imgH - r * 2);
+
+    final tx = r - cx * zoom;
+    final ty = r - cy * zoom;
+    final dragColor = _kAnchorColors[_draggingIdx!];
+
+    return Positioned(
+      left: left,
+      top: top,
+      child: Container(
+        width: r * 2,
+        height: r * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: dragColor, width: 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: dragColor.withValues(alpha: 0.45),
+              blurRadius: 14,
+              spreadRadius: 3,
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // ── Background snapshot ────────────────────────
+            if (_snapshotBytes != null)
+              Positioned(
+                left: tx,
+                top: ty,
+                width: _imgW * zoom,
+                height: _imgH * zoom,
+                child: Image.memory(
+                  _snapshotBytes!,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
+                ),
+              )
+            else
+              Container(color: Colors.black87),
+
+            // ── Crosshair and markers ──────────────────────
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _LiveMagnifierPainter(
+                  normPos: norm,
+                  imgW: _imgW,
+                  imgH: _imgH,
+                  zoom: zoom,
+                  tx: tx,
+                  ty: ty,
+                  points: _pts,
+                  draggingIdx: _draggingIdx!,
+                  color: dragColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Compact chip bar when collapsed; full text fields when expanded.
+  Widget _buildCollapsibleDistanceRow() {
+    final topVal = _topCtrl.text.isEmpty ? '--' : '${_topCtrl.text} m';
+    final botVal = _botCtrl.text.isEmpty ? '--' : '${_botCtrl.text} m';
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: _distanceExpanded
+          // ── Expanded: full input fields ──────────────────────
+          ? Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header row with collapse button
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.straighten,
+                        size: 14,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        '實際距離',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontFamily: 'NotoSansTC',
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => setState(() => _distanceExpanded = false),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Two text fields side by side
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _distanceField(
+                          controller: _topCtrl,
+                          label: '上邊 (m)',
+                          color: _kAnchorColors[0],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _distanceField(
+                          controller: _botCtrl,
+                          label: '下邊 (m)',
+                          color: _kAnchorColors[3],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )
+          // ── Collapsed: summary chip ──────────────────────────
+          : InkWell(
+              onTap: () => setState(() => _distanceExpanded = true),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.straighten,
+                      size: 14,
+                      color: Colors.white54,
+                    ),
+                    const SizedBox(width: 8),
+                    // Top edge
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _kAnchorColors[0],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      topVal,
+                      style: TextStyle(
+                        color: _topCtrl.text.isEmpty
+                            ? Colors.white38
+                            : Colors.white,
+                        fontSize: 13,
+                        fontFamily: 'NotoSansTC',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Bottom edge
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _kAnchorColors[3],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      botVal,
+                      style: TextStyle(
+                        color: _botCtrl.text.isEmpty
+                            ? Colors.white38
+                            : Colors.white,
+                        fontSize: 13,
+                        fontFamily: 'NotoSansTC',
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.edit,
+                      size: 14,
+                      color: Colors.white38,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+
+  Widget _distanceField({
+    required TextEditingController controller,
+    required String label,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                fontFamily: 'NotoSansTC',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          onChanged: (_) => setState(() {}),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: '例如 1.22',
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+            suffixText: 'm',
+            suffixStyle: const TextStyle(color: Colors.white54),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.08),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: color, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionBar() {
+    return Row(
+      children: [
+        // Cancel
+        OutlinedButton.icon(
+          onPressed: () => setState(() {
+            _anchorMode = false;
+            _draggingIdx = null;
+            _magPos = null;
+          }),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white70,
+            side: const BorderSide(color: Colors.white30),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.close, size: 16),
+          label: const Text(
+            '取消',
+            style: TextStyle(fontFamily: 'NotoSansTC'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Undo
+        OutlinedButton.icon(
+          onPressed: _pts.isEmpty
+              ? null
+              : () => setState(() => _pts.removeLast()),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white60,
+            side: const BorderSide(color: Colors.white24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.undo, size: 16),
+          label: const Text(
+            '復原',
+            style: TextStyle(fontFamily: 'NotoSansTC'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Reset
+        OutlinedButton.icon(
+          onPressed: _pts.isEmpty
+              ? null
+              : () => setState(() => _pts.clear()),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white38,
+            side: const BorderSide(color: Colors.white12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.refresh, size: 16),
+          label: const Text(
+            '重設',
+            style: TextStyle(fontFamily: 'NotoSansTC'),
+          ),
+        ),
+        const Spacer(),
+        // Confirm
+        AnimatedOpacity(
+          opacity: _canConfirm ? 1.0 : 0.4,
+          duration: const Duration(milliseconds: 200),
+          child: ElevatedButton.icon(
+            onPressed: _canConfirm ? _confirmAnchor : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BFA5),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.check_circle_outline, size: 18),
+            label: const Text(
+              '確認錨點',
+              style: TextStyle(
+                fontFamily: 'NotoSansTC',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
+
 
 class _CameraLoadingShimmer extends StatelessWidget {
   const _CameraLoadingShimmer();
@@ -725,3 +1581,272 @@ class _CameraLoadingShimmer extends StatelessWidget {
     );
   }
 }
+
+// ── Anchor marker overlay ─────────────────────────────────────
+
+class _AnchorMarkerOverlay extends StatelessWidget {
+  final String label;
+  final Color color;
+  final int index;
+  final bool isDragging;
+
+  const _AnchorMarkerOverlay({
+    required this.label,
+    required this.color,
+    required this.index,
+    this.isDragging = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = isDragging ? 36.0 : 30.0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+            border: Border.all(
+              color: isDragging ? Colors.white : Colors.white70,
+              width: isDragging ? 2.5 : 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: isDragging ? 0.85 : 0.55),
+                blurRadius: isDragging ? 16 : 8,
+                spreadRadius: isDragging ? 3 : 1,
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$index',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isDragging ? 15 : 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDragging ? 1.0 : 0.85),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'NotoSansTC',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Quad painter for live overlay ────────────────────────────
+
+class _AnchorQuadPainter extends CustomPainter {
+  final List<Offset> points;
+  final double width;
+  final double height;
+  final int? draggingIdx;
+
+  const _AnchorQuadPainter({
+    required this.points,
+    required this.width,
+    required this.height,
+    this.draggingIdx,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.length < 2) return;
+    final pts =
+        points.map((p) => Offset(p.dx * width, p.dy * height)).toList();
+
+    final paint = Paint()
+      ..strokeWidth = 2.2
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < pts.length - 1; i++) {
+      final isDragEdge = draggingIdx != null &&
+          (i == draggingIdx || i + 1 == draggingIdx);
+      paint
+        ..color =
+            _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+        ..strokeWidth = isDragEdge ? 2.8 : 2.2;
+      canvas.drawLine(pts[i], pts[i + 1], paint);
+    }
+
+    if (pts.length == 4) {
+      final isDragEdge =
+          draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
+      paint
+        ..color =
+            _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+        ..strokeWidth = isDragEdge ? 2.8 : 2.2;
+      canvas.drawLine(pts[3], pts[0], paint);
+
+      final path = Path()..addPolygon(pts, true);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xFF2979FF).withValues(alpha: 0.12)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_AnchorQuadPainter old) =>
+      old.points != points ||
+      old.width != width ||
+      old.height != height ||
+      old.draggingIdx != draggingIdx;
+}
+
+// ── Live magnifier painter ────────────────────────────────────
+// Since we cannot clone the CameraPreview texture, we draw the anchor
+// positions at zoom scale inside the magnifier circle so the user can
+// at least see where the crosshair lands relative to the other points.
+
+class _LiveMagnifierPainter extends CustomPainter {
+  final Offset normPos;
+  final double imgW;
+  final double imgH;
+  final double zoom;
+  final double tx;
+  final double ty;
+  final List<Offset> points;
+  final int draggingIdx;
+  final Color color;
+
+  const _LiveMagnifierPainter({
+    required this.normPos,
+    required this.imgW,
+    required this.imgH,
+    required this.zoom,
+    required this.tx,
+    required this.ty,
+    required this.points,
+    required this.draggingIdx,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    // Draw other anchor point dots at zoomed positions
+    for (int i = 0; i < points.length; i++) {
+      if (i == draggingIdx) continue;
+      final px = points[i].dx * imgW * zoom + tx;
+      final py = points[i].dy * imgH * zoom + ty;
+      canvas.drawCircle(
+        Offset(px, py),
+        5,
+        Paint()..color = _kAnchorColors[i].withValues(alpha: 0.8),
+      );
+    }
+
+    // Crosshair lines (gap + line)
+    const gap = 6.0;
+    const lineLen = 16.0;
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(Offset(cx - gap - lineLen, cy), Offset(cx - gap, cy), linePaint);
+    canvas.drawLine(Offset(cx + gap, cy), Offset(cx + gap + lineLen, cy), linePaint);
+    canvas.drawLine(Offset(cx, cy - gap - lineLen), Offset(cx, cy - gap), linePaint);
+    canvas.drawLine(Offset(cx, cy + gap), Offset(cx, cy + gap + lineLen), linePaint);
+
+    // Center dot
+    canvas.drawCircle(Offset(cx, cy), 4, Paint()..color = color);
+    canvas.drawCircle(
+      Offset(cx, cy),
+      4,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_LiveMagnifierPainter old) => true;
+}
+
+// ── Pulsing badge ─────────────────────────────────────────────
+// Owns its own AnimationController so parent doesn't rebuild on every tick.
+
+class _PulsingBadge extends StatefulWidget {
+  final Color color;
+  final String label;
+
+  const _PulsingBadge({required this.color, required this.label});
+
+  @override
+  State<_PulsingBadge> createState() => _PulsingBadgeState();
+}
+
+class _PulsingBadgeState extends State<_PulsingBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.85, end: 1.15)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Transform.scale(
+        scale: _anim.value,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Text(
+            widget.label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'NotoSansTC',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

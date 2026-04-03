@@ -10,6 +10,7 @@ import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/upload_provider.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/date_time_selection_widget.dart';
 import 'package:frontend/feature/upload/widget/unanalyzed_history_view.dart';
 import 'package:frontend/feature/upload/widget/upload_seperately_controller.dart';
@@ -313,7 +314,27 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                             mimeType: lookupMimeType(file.name) ?? 'video/mp4',
                           );
 
-                          controller.uploadVideo(_index, uploadFile);
+                          await controller.uploadVideo(_index, uploadFile);
+
+                          // After upload, prompt anchor selection
+                          final updatedState =
+                              ref.read(uploadSeperatelyControllerProvider);
+                          final thumbnailUrl = updatedState.thumbnail;
+                          if (mounted && thumbnailUrl != null) {
+                            final anchor = await showAnchorPointDialog(
+                              context: context,
+                              thumbnailUrl: thumbnailUrl,
+                              cameraIndex: _index,
+                              initialAnchor: ref
+                                  .read(uploadSeperatelyControllerProvider)
+                                  .anchorResult,
+                            );
+                            ref
+                                .read(
+                                  uploadSeperatelyControllerProvider.notifier,
+                                )
+                                .setAnchor(anchor);
+                          }
                         },
                   child: SizedBox(
                     width: itemWidth,
@@ -326,18 +347,48 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                       child: state.isUploading
                           ? const LoadingIcon()
                           : state.thumbnail != null
-                          ? Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Container(
-                                clipBehavior: Clip.antiAlias,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Image.network(
+                                      state.thumbnail!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
-                                child: Image.network(
-                                  state.thumbnail!,
-                                  fit: BoxFit.cover,
+                                // Anchor status badge
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      final anchor =
+                                          await showAnchorPointDialog(
+                                        context: context,
+                                        thumbnailUrl: state.thumbnail!,
+                                        cameraIndex: _index,
+                                        initialAnchor: state.anchorResult,
+                                      );
+                                      ref
+                                          .read(
+                                            uploadSeperatelyControllerProvider
+                                                .notifier,
+                                          )
+                                          .setAnchor(anchor);
+                                    },
+                                    child: _AnchorBadge(
+                                      isSet: state.anchorResult != null,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             )
                           : Center(
                               child: Text(
@@ -402,6 +453,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                     formData.note,
                     _index,
                     state.tempVideoId!,
+                    state.anchorResult,
                   );
             }
             if (selectedRunnerSource == SperatedType.selectOne) {
@@ -412,6 +464,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                     selectedVideoId!,
                     _index,
                     state.tempVideoId!,
+                    state.anchorResult,
                   );
             }
             if (mounted && status != null) {
@@ -463,6 +516,50 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
           child: const Text('上傳'),
         ),
       ],
+    );
+  }
+}
+
+/// Badge shown on top of the thumbnail to indicate anchor status
+class _AnchorBadge extends StatelessWidget {
+  final bool isSet;
+
+  const _AnchorBadge({required this.isSet});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSet
+            ? const Color(0xFF00BFA5).withValues(alpha: 0.9)
+            : Colors.black54,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSet ? const Color(0xFF00BFA5) : Colors.white24,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSet ? Icons.my_location : Icons.location_off_outlined,
+            size: 12,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isSet ? '錨點已設定' : '點擊設定錨點',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'NotoSansTC',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

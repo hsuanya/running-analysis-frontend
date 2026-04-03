@@ -4,6 +4,7 @@ import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 import 'package:frontend/utils/api.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -126,6 +127,18 @@ class RecordController extends StateNotifier<RecordState> {
     }
   }
 
+  /// Sets the anchor calibration result and re-evaluates ready status.
+  void setAnchor(AnchorResult? anchor) {
+    state = state.copyWith(
+      anchorResult: anchor,
+      clearAnchor: anchor == null,
+    );
+    // Re-send ready status if we now have (or lost) the anchor
+    if (state.myCameraIndex != null) {
+      updateReadyStatus(state.isPhysicallyReady && state.anchorIsSet);
+    }
+  }
+
   /// 更新本機端的物理轉向狀態，並視情況向後端同步
   void updatePhysicallyReady(bool isReady) {
     if (state.isPhysicallyReady == isReady) return;
@@ -133,8 +146,9 @@ class RecordController extends StateNotifier<RecordState> {
     state = state.copyWith(isPhysicallyReady: isReady);
 
     // 只有在已分配相機編號（正式參與錄影）時才需要發送給後端
+    // 同時必須錨點也設定完畢，才算真正 Ready
     if (state.myCameraIndex != null) {
-      updateReadyStatus(isReady);
+      updateReadyStatus(isReady && state.anchorIsSet);
     }
   }
 
@@ -212,6 +226,15 @@ class RecordController extends StateNotifier<RecordState> {
     final msg = RecordMessage(
       type: RecordMessageType.updateReady,
       data: {'isReady': isReady},
+    );
+    _channel?.sink.add(jsonEncode(msg.toJson()));
+  }
+
+  void sendCameraPreview(String base64Image) {
+    if (state.role != RecordRole.slave) return;
+    final msg = RecordMessage(
+      type: RecordMessageType.cameraPreview,
+      data: {'image': base64Image},
     );
     _channel?.sink.add(jsonEncode(msg.toJson()));
   }

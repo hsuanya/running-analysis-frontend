@@ -4,6 +4,7 @@ import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/entities/run_session_info.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 
 abstract class BackendInterface {
   Future<List<RunnerInfo>> getRunners();
@@ -21,7 +22,7 @@ abstract class BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<String> tempVideoIds,
+    List<Map<String, dynamic>> videos,
   );
   Future<UploadSeperatelyStatus> uploadSeperatelyNew(
     String runnerId,
@@ -31,12 +32,14 @@ abstract class BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   );
   Future<UploadSeperatelyStatus> uploadSeperatelySelect(
     String runnerId,
     String runSessionId,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   );
   Future<String> uploadVideo(int index, UploadVideoFile file);
 }

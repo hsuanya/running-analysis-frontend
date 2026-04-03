@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_video_file.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/api.dart';
 
 class UploadThumbnailState {
@@ -9,12 +10,14 @@ class UploadThumbnailState {
   final String? tempVideoId;
   final bool isUploading;
   final String? error;
+  final AnchorResult? anchorResult;
 
   const UploadThumbnailState({
     this.thumbnailUrl,
     this.tempVideoId,
     this.isUploading = false,
     this.error,
+    this.anchorResult,
   });
 
   UploadThumbnailState copyWith({
@@ -22,12 +25,15 @@ class UploadThumbnailState {
     String? tempVideoId,
     bool? isUploading,
     String? error,
+    AnchorResult? anchorResult,
+    bool clearAnchor = false,
   }) {
     return UploadThumbnailState(
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       tempVideoId: tempVideoId ?? this.tempVideoId,
       isUploading: isUploading ?? this.isUploading,
       error: error,
+      anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
     );
   }
 }
@@ -115,6 +121,16 @@ class UploadAllController extends StateNotifier<UploadAllState> {
       );
       state = state.copyWith(tempVideoStates: updated);
     }
+  }
+  /// 設定某個相機的錨點結果
+  void setAnchor(int index, AnchorResult? result) {
+    final updated = [...state.tempVideoStates];
+    if (result == null) {
+      updated[index] = updated[index].copyWith(clearAnchor: true);
+    } else {
+      updated[index] = updated[index].copyWith(anchorResult: result);
+    }
+    state = state.copyWith(tempVideoStates: updated);
   }
 }
 

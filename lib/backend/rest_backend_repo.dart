@@ -6,6 +6,7 @@ import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/entities/run_session_info.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/api.dart';
 import 'package:frontend/utils/net_utils.dart';
 import 'package:http_parser/http_parser.dart';
@@ -73,7 +74,7 @@ class RestBackendRepo implements BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<String> tempVideoIds,
+    List<Map<String, dynamic>> videos,
   ) async {
     final response = await NetUtils().reqeustData(
       API.uploadAllInfo[1],
@@ -84,7 +85,7 @@ class RestBackendRepo implements BackendInterface {
         "cameraCount": cameraCount,
         "fps": fps,
         "note": note,
-        "tempVideoIds": tempVideoIds,
+        "videos": videos,
       },
     );
     return response['runSessionId'];
@@ -112,6 +113,7 @@ class RestBackendRepo implements BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) async {
     final response = await NetUtils().reqeustData(
       API.uploadSeperatelyNew[1],
@@ -124,6 +126,7 @@ class RestBackendRepo implements BackendInterface {
         "note": note,
         "cameraIndex": cameraIndex,
         "tempVideoId": tempVideoId,
+        "anchors": anchors?.toJson(),
       },
     );
     return UploadSeperatelyStatus.fromJson(response);
@@ -135,6 +138,7 @@ class RestBackendRepo implements BackendInterface {
     String runSessionId,
     int cameraIndex,
     String tempVideoId,
+    AnchorResult? anchors,
   ) async {
     final response = await NetUtils().reqeustData(
       API.uploadSeperatelySelect[1],
@@ -144,6 +148,7 @@ class RestBackendRepo implements BackendInterface {
         "runSessionId": runSessionId,
         "cameraIndex": cameraIndex,
         "tempVideoId": tempVideoId,
+        "anchors": anchors?.toJson(),
       },
     );
     return UploadSeperatelyStatus.fromJson(response);

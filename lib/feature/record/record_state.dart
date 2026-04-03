@@ -1,4 +1,5 @@
 import 'package:frontend/feature/record/record_enums.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 
 class RecordState {
@@ -21,6 +22,9 @@ class RecordState {
   final int fps;
   final String note;
 
+  // Calibration
+  final AnchorResult? anchorResult;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -38,7 +42,10 @@ class RecordState {
     this.runnerName,
     this.fps = 60,
     this.note = '',
+    this.anchorResult,
   });
+
+  bool get anchorIsSet => anchorResult != null;
 
   RecordState copyWith({
     RecordRole? role,
@@ -57,6 +64,8 @@ class RecordState {
     String? runnerName,
     int? fps,
     String? note,
+    AnchorResult? anchorResult,
+    bool clearAnchor = false,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -75,6 +84,7 @@ class RecordState {
       runnerName: runnerName ?? this.runnerName,
       fps: fps ?? this.fps,
       note: note ?? this.note,
+      anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
     );
   }
 }

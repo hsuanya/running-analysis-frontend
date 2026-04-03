@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/upload_provider.dart';
+import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_all_controller.dart';
 import 'package:frontend/feature/upload/widget/date_time_selection_widget.dart';
 import 'package:frontend/utils/router.dart';
@@ -104,6 +105,27 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                               await ref
                                   .read(uploadAllControllerProvider.notifier)
                                   .uploadVideo(index, uploadFile);
+
+                              // After upload, prompt anchor selection
+                              final updatedState =
+                                  ref.read(uploadAllControllerProvider);
+                              final thumbnailUrl = updatedState
+                                  .tempVideoStates[index]
+                                  .thumbnailUrl;
+                              if (mounted && thumbnailUrl != null) {
+                                final anchor = await showAnchorPointDialog(
+                                  context: context,
+                                  thumbnailUrl: thumbnailUrl,
+                                  cameraIndex: index,
+                                  initialAnchor: ref
+                                      .read(uploadAllControllerProvider)
+                                      .tempVideoStates[index]
+                                      .anchorResult,
+                                );
+                                ref
+                                    .read(uploadAllControllerProvider.notifier)
+                                    .setAnchor(index, anchor);
+                              }
                             },
                       child: SizedBox(
                         width: itemWidth,
@@ -117,20 +139,59 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                               ? const LoadingIcon()
                               : state.tempVideoStates[index].thumbnailUrl !=
                                     null
-                              ? Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Container(
-                                    clipBehavior: Clip.antiAlias,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
+                              ? Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Container(
+                                        clipBehavior: Clip.antiAlias,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                        ),
+                                        child: Image.network(
+                                          state
+                                              .tempVideoStates[index]
+                                              .thumbnailUrl!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
                                     ),
-                                    child: Image.network(
-                                      state
-                                          .tempVideoStates[index]
-                                          .thumbnailUrl!,
-                                      fit: BoxFit.cover,
+                                    // Anchor status badge
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final thumbnailUrl = state
+                                              .tempVideoStates[index]
+                                              .thumbnailUrl!;
+                                          final anchor =
+                                              await showAnchorPointDialog(
+                                            context: context,
+                                            thumbnailUrl: thumbnailUrl,
+                                            cameraIndex: index,
+                                            initialAnchor: state
+                                                .tempVideoStates[index]
+                                                .anchorResult,
+                                          );
+                                          ref
+                                              .read(
+                                                uploadAllControllerProvider
+                                                    .notifier,
+                                              )
+                                              .setAnchor(index, anchor);
+                                        },
+                                        child: _AnchorBadge(
+                                          isSet: state
+                                              .tempVideoStates[index]
+                                              .anchorResult !=
+                                              null,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 )
                               : Center(
                                   child: Text(
@@ -212,7 +273,10 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                       state.cameraCount,
                       formData.fps,
                       formData.note,
-                      state.tempVideoStates.map((e) => e.tempVideoId!).toList(),
+                      state.tempVideoStates.map((e) => {
+                        "tempVideoId": e.tempVideoId,
+                        "anchors": e.anchorResult?.toJson(),
+                      }).toList(),
                     );
 
                 if (mounted && videoId != null) {
@@ -235,6 +299,50 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Badge shown on top of the thumbnail to indicate anchor status
+class _AnchorBadge extends StatelessWidget {
+  final bool isSet;
+
+  const _AnchorBadge({required this.isSet});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSet
+            ? const Color(0xFF00BFA5).withValues(alpha: 0.9)
+            : Colors.black54,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSet ? const Color(0xFF00BFA5) : Colors.white24,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSet ? Icons.my_location : Icons.location_off_outlined,
+            size: 12,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isSet ? '錨點已設定' : '點擊設定錨點',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'NotoSansTC',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
