@@ -39,13 +39,14 @@ class UnanalyzedHistoryView extends ConsumerWidget {
           );
         }
 
-        final List<String> headers = ["日期時間", "攝影機數量", "備註"];
+        final List<String> headers = ["日期時間", "跑者", "攝影機數量", "備註"];
         final List<List<String>> values = [
           videos
               .map(
                 (video) => DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date),
               )
               .toList(),
+          videos.map((video) => video.runnerName).toList(),
           videos.map((video) => video.cameraCount.toString()).toList(),
           videos.map((video) => video.note).toList(),
         ];
@@ -58,86 +59,131 @@ class UnanalyzedHistoryView extends ConsumerWidget {
             } else {
               percentage = 0.5;
             }
+            const columnWidths = {
+              0: FlexColumnWidth(2),
+              1: FlexColumnWidth(1),
+              2: FlexColumnWidth(1),
+              3: FlexColumnWidth(2),
+            };
+
             return Container(
               width: constraints.maxWidth * percentage,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
                 color: Theme.of(context).primaryColor,
               ),
-              child: Table(
-                border: TableBorder(
-                  horizontalInside: BorderSide(
-                    width: 3,
-                    color: Colors.white,
-                  ), // 只要橫向分隔線
-                  verticalInside: BorderSide(width: 3, color: Colors.white),
-                  top: BorderSide.none, // 不要最上面
-                  bottom: BorderSide.none, // 不要最下面
-                  left: BorderSide.none, // 不要最左邊
-                  right: BorderSide.none, // 不要最右邊
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 表格標題
-                  TableRow(
-                    children: headers
-                        .map(
-                          (header) => Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Text(
-                              header,
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis, // 單行，不換行
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  // 表格內容
-                  for (int i = 0; i < videos.length; i++)
-                    TableRow(
-                      decoration: BoxDecoration(
-                        color: videoId == videos[i].runSessionId
-                            ? const Color.fromARGB(255, 80, 143, 232)
-                            : Colors.transparent,
+                  // 1. 固定標題 (加入底邊框)
+                  Table(
+                    columnWidths: columnWidths,
+                    border: const TableBorder(
+                      horizontalInside: BorderSide(
+                        width: 3,
+                        color: Colors.white,
                       ),
-                      children: [
-                        for (int j = 0; j < values.length; j++)
-                          TableRowInkWell(
-                            onTap: () {
-                              final video = videos[i];
-                              ref
-                                  .read(
-                                    uploadSelectedRunSessionIdProvider.notifier,
-                                  )
-                                  .state = video
-                                  .runSessionId;
-                              onVideoSelected(video);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Text(
-                                values[j][i],
-                                textAlign: TextAlign.center,
-                                softWrap: true, // 允許換行
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-
-                  TableRow(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: const Radius.circular(25),
-                        bottomRight: const Radius.circular(25),
-                      ),
+                      verticalInside: BorderSide(width: 3, color: Colors.white),
+                      bottom: BorderSide(width: 3, color: Colors.white),
                     ),
                     children: [
-                      for (int i = 0; i < headers.length; i++)
-                        Padding(padding: const EdgeInsets.all(12.0)),
+                      TableRow(
+                        children: headers
+                            .map(
+                              (header) => Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  header,
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                  // 2. 可捲動資料區
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 280),
+                    child: SingleChildScrollView(
+                      reverse: true,
+                      child: Table(
+                        columnWidths: columnWidths,
+                        border: const TableBorder(
+                          horizontalInside: BorderSide(
+                            width: 3,
+                            color: Colors.white,
+                          ),
+                          verticalInside: BorderSide(
+                            width: 3,
+                            color: Colors.white,
+                          ),
+                        ),
+                        children: [
+                          for (int i = 0; i < videos.length; i++)
+                            TableRow(
+                              decoration: BoxDecoration(
+                                color: videoId == videos[i].runSessionId
+                                    ? const Color.fromARGB(255, 80, 143, 232)
+                                    : Colors.transparent,
+                              ),
+                              children: [
+                                for (int j = 0; j < values.length; j++)
+                                  TableRowInkWell(
+                                    onTap: () {
+                                      final video = videos[i];
+                                      ref
+                                          .read(
+                                            uploadSelectedRunSessionIdProvider
+                                                .notifier,
+                                          )
+                                          .state = video
+                                          .runSessionId;
+                                      onVideoSelected(video);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Text(
+                                        values[j][i],
+                                        textAlign: TextAlign.center,
+                                        softWrap: true,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 3. 固定裝飾欄 (加入頂邊框)
+                  Table(
+                    columnWidths: columnWidths,
+                    border: const TableBorder(
+                      horizontalInside: BorderSide(
+                        width: 3,
+                        color: Colors.white,
+                      ),
+                      verticalInside: BorderSide(width: 3, color: Colors.white),
+                      top: BorderSide(width: 3, color: Colors.white),
+                    ),
+                    children: [
+                      TableRow(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: const Radius.circular(25),
+                            bottomRight: const Radius.circular(25),
+                          ),
+                        ),
+                        children: [
+                          for (int i = 0; i < headers.length; i++)
+                            const Padding(padding: EdgeInsets.all(12.0)),
+                        ],
+                      ),
                     ],
                   ),
                 ],

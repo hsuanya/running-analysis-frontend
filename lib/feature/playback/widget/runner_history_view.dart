@@ -43,90 +43,130 @@ class RunnerHistoryView extends ConsumerWidget {
           videos.map((video) => video.note).toList(),
         ];
 
-        return Table(
-          border: TableBorder(
-            horizontalInside: const BorderSide(
-              width: 3,
-              color: Colors.white,
-            ), // 只要橫向分隔線
-            verticalInside: const BorderSide(width: 3, color: Colors.white),
-            top: BorderSide.none, // 不要最上面
-            bottom: BorderSide.none, // 不要最下面
-            left: BorderSide.none, // 不要最左邊
-            right: BorderSide.none, // 不要最右邊
-          ),
-          children: [
-            // 表格標題
-            TableRow(
-              children: headers
-                  .map(
-                    (header) => Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Text(
-                        header,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis, // 單行，不換行
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            // 表格內容
-            for (int i = 0; i < videos.length; i++)
-              TableRow(
-                decoration: BoxDecoration(
-                  color: videoId == videos[i].runSessionId
-                      ? Theme.of(context).primaryColorDark
-                      : Colors.transparent,
-                ),
-                children: [
-                  for (int j = 0; j < values.length; j++)
-                    TableRowInkWell(
-                      onTap: () {
-                        final video = videos[i];
-                        if (video.status == 'failed') {
-                          toastification.show(
-                            context: context,
-                            title: const Text(
-                              "分析失敗！",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            description: const Text("此次影片分析失敗，請重新上傳或聯繫開發者"),
-                            type: ToastificationType.error,
-                            style: ToastificationStyle.minimal,
-                            alignment: Alignment.bottomCenter,
-                            autoCloseDuration: const Duration(seconds: 4),
-                          );
-                          return;
-                        }
-                        ref
-                            .read(playbackSelectedRunSessionIdProvider.notifier)
-                            .state = video
-                            .runSessionId;
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Text(
-                          values[j][i],
-                          textAlign: TextAlign.center,
-                          softWrap: true, // 允許換行
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+        const columnWidths = {
+          0: FlexColumnWidth(2),
+          1: FlexColumnWidth(1),
+          2: FlexColumnWidth(1),
+          3: FlexColumnWidth(2),
+        };
 
-            TableRow(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: const Radius.circular(25),
-                  bottomRight: const Radius.circular(25),
-                ),
+        return Column(
+          children: [
+            // 1. 固定標題欄 (加入底邊框與 Body 區隔)
+            Table(
+              columnWidths: columnWidths,
+              border: const TableBorder(
+                horizontalInside: BorderSide(width: 3, color: Colors.white),
+                verticalInside: BorderSide(width: 3, color: Colors.white),
+                bottom: BorderSide(width: 3, color: Colors.white),
               ),
               children: [
-                for (int i = 0; i < headers.length; i++)
-                  Padding(padding: const EdgeInsets.all(12.0)),
+                TableRow(
+                  children: headers
+                      .map(
+                        (header) => Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text(
+                            header,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
+            // 2. 可捲動資料區
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 280),
+              child: SingleChildScrollView(
+                reverse: true,
+                child: Table(
+                  columnWidths: columnWidths,
+                  border: const TableBorder(
+                    horizontalInside: BorderSide(width: 3, color: Colors.white),
+                    verticalInside: BorderSide(width: 3, color: Colors.white),
+                  ),
+                  children: [
+                    for (int i = 0; i < videos.length; i++)
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: videoId == videos[i].runSessionId
+                              ? Theme.of(context).primaryColorDark
+                              : Colors.transparent,
+                        ),
+                        children: [
+                          for (int j = 0; j < values.length; j++)
+                            TableRowInkWell(
+                              onTap: () {
+                                final video = videos[i];
+                                if (video.status == 'failed') {
+                                  toastification.show(
+                                    context: context,
+                                    title: const Text(
+                                      "分析失敗！",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    description: const Text(
+                                      "此次影片分析失敗，請重新上傳或聯繫開發者",
+                                    ),
+                                    type: ToastificationType.error,
+                                    style: ToastificationStyle.minimal,
+                                    alignment: Alignment.bottomCenter,
+                                    autoCloseDuration: const Duration(
+                                      seconds: 4,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                ref
+                                        .read(
+                                          playbackSelectedRunSessionIdProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    video.runSessionId;
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  values[j][i],
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            // 3. 固定裝飾欄 (Footer) (加入頂邊框與 Body 區隔)
+            Table(
+              columnWidths: columnWidths,
+              border: const TableBorder(
+                horizontalInside: BorderSide(width: 3, color: Colors.white),
+                verticalInside: BorderSide(width: 3, color: Colors.white),
+                top: BorderSide(width: 3, color: Colors.white),
+              ),
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: const Radius.circular(25),
+                      bottomRight: const Radius.circular(25),
+                    ),
+                  ),
+                  children: [
+                    for (int i = 0; i < headers.length; i++)
+                      const Padding(padding: EdgeInsets.all(12.0)),
+                  ],
+                ),
               ],
             ),
           ],
