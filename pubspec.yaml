@@ -60,6 +60,7 @@ dependencies:
   convex_bottom_bar: ^3.2.0
   toastification: ^3.0.3
   image: ^4.8.0
+  expansion_tile_group: ^2.3.0
 
 dev_dependencies:
   flutter_test:

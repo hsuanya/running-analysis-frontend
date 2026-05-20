@@ -200,7 +200,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                   ),
                   delegate: SliverChildListDelegate([
                     VideoPlayerView(),
-                    RoundedBoxWidget(child: GraphListView()),
+                    GraphListView(),
                     RoundedBoxWidget(child: VideoInfoView()),
                     RoundedBoxWidget(child: RunnerHistoryView()),
                   ]),

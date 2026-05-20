@@ -35,28 +35,22 @@ class VideoInfoView extends ConsumerWidget {
             ],
           );
         }
-        final List<String> headers = [
-          "選手姓名",
-          "日期時間",
-          "相機數量",
-          "fps",
-          "平均速度",
-          "平均加速度",
-          "平均步幅",
-          "總時間",
-          "備註",
+
+        final List<MapEntry<String, String>> allInfo = [
+          MapEntry("選手姓名", video.runnerName.toString()),
+          MapEntry("日期時間", DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date)),
+          MapEntry("相機數量", video.cameraCount.toString()),
+          MapEntry("fps", video.fps.toString()),
+          MapEntry("平均速度", video.avgVelocity.toString()),
+          MapEntry("平均加速度", video.avgAcceleration.toString()),
+          MapEntry("平均步幅", video.avgStepLength.toString()),
+          MapEntry("總時間", video.totalTime.toString()),
+          MapEntry("備註", video.note.toString()),
         ];
-        final List<String> values = [
-          video.runnerName,
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date),
-          video.cameraCount.toString(),
-          video.fps.toString(),
-          video.avgVelocity.toString(),
-          video.avgAcceleration.toString(),
-          video.avgStepLength.toString(),
-          video.totalTime.toString(),
-          video.note,
-        ];
+
+        final validInfo = allInfo.where((e) => e.value != 'null' && e.value.isNotEmpty).toList();
+        final List<String> headers = validInfo.map((e) => e.key).toList();
+        final List<String> values = validInfo.map((e) => e.value).toList();
 
         return Table(
           border: TableBorder(

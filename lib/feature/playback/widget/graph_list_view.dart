@@ -4,11 +4,15 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/backend/video_playback_state_provider.dart';
 import 'package:frontend/entities/graph_data.dart';
+import 'package:frontend/entities/video_playback.dart';
 import 'package:frontend/feature/playback/placeholder/graph_list_placeholder.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/graph_list_shimmer.dart';
 import 'package:frontend/widget/processing_progress_widget.dart';
+import 'package:frontend/widget/rounded_box_widget.dart';
+
+// ══════════════════════════════════════════════════════════════════════════════
 
 class GraphListView extends ConsumerWidget {
   const GraphListView({super.key});
@@ -44,206 +48,398 @@ class GraphListView extends ConsumerWidget {
           value: graphData,
           loading: const GraphListShimmer(),
           data: (List<GraphData> graphs) {
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: graphs.length,
-              itemBuilder: (context, index) {
-                final spots = List.generate(
-                  graphs[index].y.length,
-                  (i) =>
-                      FlSpot(graphs[index].x[i].toDouble(), graphs[index].y[i]),
-                );
-                final progress =
-                    videoPlayback.position / videoPlayback.duration;
-                final currentIndex = (progress * (spots.length - 1))
-                    .floor()
-                    .clamp(0, spots.length - 1);
+            final metricsGraphs = graphs
+                .where((g) => g.category == 'metrics')
+                .toList();
+            final anglesGraphs = graphs
+                .where((g) => g.category == 'angles')
+                .toList();
 
-                final playedSpots = spots.sublist(0, currentIndex + 1);
-
-                // 尚未播放的白線
-                final whiteLine = LineChartBarData(
-                  spots: spots,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  barWidth: 3,
-                  dotData: FlDotData(show: false),
-                );
-
-                // 已播放的紅線
-                final redLine = LineChartBarData(
-                  spots: playedSpots,
-                  color: Colors.red,
-                  barWidth: 5,
-                  dotData: FlDotData(show: false),
-                );
-
-                return Container(
-                  padding: const EdgeInsets.only(
-                    top: 8,
-                    bottom: 4,
-                    left: 12,
-                    right: 24,
+            return Column(
+              children: [
+                RoundedBoxWidget(
+                  child: _GraphSection(
+                    title: 'Distance, Velocity & Acceleration',
+                    icon: Icons.speed_rounded,
+                    graphs: metricsGraphs,
+                    videoPlayback: videoPlayback,
+                    initiallyExpanded: true,
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        graphs[index].title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 20,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 200,
-                        child: LineChart(
-                          LineChartData(
-                            lineTouchData: LineTouchData(
-                              touchTooltipData: LineTouchTooltipData(
-                                getTooltipColor: (_) =>
-                                    const Color.fromARGB(150, 48, 54, 47),
-                                getTooltipItems: (touchedSpots) {
-                                  return touchedSpots.map((spot) {
-                                    final isWhite =
-                                        spot.bar.color != Colors.red;
-                                    final spotIndex = spot.bar.spots.indexOf(
-                                      spot,
-                                    );
-                                    // 過濾不顯示的點
-                                    if (isWhite && spotIndex <= currentIndex)
-                                      return null;
-
-                                    return LineTooltipItem(
-                                      '${spot.y}',
-                                      TextStyle(
-                                        fontSize: 16,
-                                        color: isWhite
-                                            ? Colors.white
-                                            : Colors.red,
-                                      ),
-                                    );
-                                  }).toList();
-                                },
-                              ),
-                            ),
-                            lineBarsData: [whiteLine, redLine],
-                            minY: graphs[index].yMin,
-                            maxY: graphs[index].yMax,
-                            clipData: FlClipData.none(),
-                            extraLinesData: ExtraLinesData(
-                              verticalLines: [
-                                for (
-                                  double x = 1.0;
-                                  x <= (graphs[index].x.lastOrNull ?? 0);
-                                  x += 1.0
-                                )
-                                  VerticalLine(
-                                    x: x,
-                                    color: Theme.of(
-                                      context,
-                                    ).primaryColorDark.withAlpha(128),
-                                    strokeWidth: 2,
-                                    dashArray: [5, 5],
-                                  ),
-                              ],
-                            ),
-                            titlesData: FlTitlesData(
-                              topTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              bottomTitles: AxisTitles(
-                                axisNameSize: 32,
-                                axisNameWidget: const Text(
-                                  'Time',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                sideTitles: SideTitles(
-                                  interval: 1.0,
-                                  showTitles: true,
-                                  getTitlesWidget: (value, meta) {
-                                    return Text(
-                                      value.toStringAsFixed(1),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              leftTitles: AxisTitles(
-                                axisNameSize: 32,
-                                axisNameWidget: Text(
-                                  graphs[index].yLabel,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  interval: graphs[index].yMax > 10 ? 150 : 1,
-                                  reservedSize: 35,
-                                  getTitlesWidget: (value, meta) {
-                                    if (meta.min > 10) {
-                                      if ((meta.min - value).abs() < 1 &&
-                                          (meta.min - value).abs() != 0) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      if ((meta.max - value).abs() < 1 &&
-                                          (meta.max - value).abs() != 0) {
-                                        return const SizedBox.shrink();
-                                      }
-                                    } else {
-                                      if ((meta.min - value).abs() < 0.05 &&
-                                          (meta.min - value).abs() != 0) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      if ((meta.max - value).abs() < 0.05 &&
-                                          (meta.max - value).abs() != 0) {
-                                        return const SizedBox.shrink();
-                                      }
-                                    }
-                                    return Text(
-                                      meta.max > 10
-                                          ? value.toStringAsFixed(0)
-                                          : value.toStringAsFixed(2),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            borderData: FlBorderData(
-                              show: true,
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).primaryColorDark.withAlpha(128),
-                                  width: 3,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(height: 8),
+                RoundedBoxWidget(
+                  child: _GraphSection(
+                    title: 'Joint Angles',
+                    icon: Icons.accessibility_new_rounded,
+                    graphs: anglesGraphs,
+                    videoPlayback: videoPlayback,
+                    initiallyExpanded: false,
                   ),
-                );
-              },
+                ),
+              ],
             );
           },
         );
       },
+    );
+  }
+}
+
+// ─── Collapsible section ───────────────────────────────────────────────────
+
+class _GraphSection extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<GraphData> graphs;
+  final VideoPlayback videoPlayback;
+  final bool initiallyExpanded;
+
+  const _GraphSection({
+    required this.title,
+    required this.icon,
+    required this.graphs,
+    required this.videoPlayback,
+    required this.initiallyExpanded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (graphs.isEmpty) return const SizedBox.shrink();
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        collapsedBackgroundColor: Colors.transparent,
+        backgroundColor: Colors.transparent,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Icon(icon, color: Colors.white70, size: 22),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
+        ),
+        iconColor: Colors.white70,
+        collapsedIconColor: Colors.white54,
+        children: [
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: graphs.length,
+            // The backend decides how many series each graph has:
+            //   1 series  → single-line chart
+            //   2 series  → paired left/right chart
+            itemBuilder: (context, index) {
+              final g = graphs[index];
+              return g.series.length >= 2
+                  ? _buildPairedChart(context, g)
+                  : _buildSingleChart(context, g);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── shared helpers ──────────────────────────────────────────────────────
+
+  int _currentIndex(List<FlSpot> spots) {
+    final progress = videoPlayback.position / videoPlayback.duration;
+    return (progress * (spots.length - 1)).floor().clamp(0, spots.length - 1);
+  }
+
+  List<VerticalLine> _secondTicks(BuildContext context, List<double> xValues) =>
+      [
+        for (double x = 1.0; x <= (xValues.lastOrNull ?? 0); x += 1.0)
+          VerticalLine(
+            x: x,
+            color: Theme.of(context).primaryColorDark.withAlpha(128),
+            strokeWidth: 2,
+            dashArray: [5, 5],
+          ),
+      ];
+
+  SideTitles _leftTitles(double yMax) => SideTitles(
+    showTitles: true,
+    interval: yMax > 10 ? 150 : 1,
+    reservedSize: 35,
+    getTitlesWidget: (value, meta) {
+      if (meta.min > 10) {
+        if ((meta.min - value).abs() < 1 && (meta.min - value).abs() != 0) {
+          return const SizedBox.shrink();
+        }
+        if ((meta.max - value).abs() < 1 && (meta.max - value).abs() != 0) {
+          return const SizedBox.shrink();
+        }
+      } else {
+        if ((meta.min - value).abs() < 0.05 && (meta.min - value).abs() != 0) {
+          return const SizedBox.shrink();
+        }
+        if ((meta.max - value).abs() < 0.05 && (meta.max - value).abs() != 0) {
+          return const SizedBox.shrink();
+        }
+      }
+      return Text(
+        meta.max > 10 ? value.toStringAsFixed(0) : value.toStringAsFixed(2),
+        style: const TextStyle(color: Colors.white),
+      );
+    },
+  );
+
+  FlTitlesData _titlesData(BuildContext context, String yLabel, double yMax) =>
+      FlTitlesData(
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(
+          axisNameSize: 32,
+          axisNameWidget: const Text(
+            'Time',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          sideTitles: SideTitles(
+            interval: 1.0,
+            showTitles: true,
+            getTitlesWidget: (value, meta) => Text(
+              value.toStringAsFixed(1),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+        leftTitles: AxisTitles(
+          axisNameSize: 32,
+          axisNameWidget: Text(
+            yLabel,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          sideTitles: _leftTitles(yMax),
+        ),
+      );
+
+  FlBorderData _borderData(BuildContext context) => FlBorderData(
+    show: true,
+    border: Border(
+      bottom: BorderSide(
+        color: Theme.of(context).primaryColorDark.withAlpha(128),
+        width: 3,
+      ),
+    ),
+  );
+
+  Widget _chartContainer({
+    required BuildContext context,
+    required Widget titleWidget,
+    required Widget chart,
+  }) {
+    return Container(
+      padding: const EdgeInsets.only(top: 8, bottom: 4, left: 12, right: 24),
+      child: Column(
+        children: [
+          titleWidget,
+          SizedBox(height: 200, child: chart),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendDot(Color color) => Container(
+    width: 12,
+    height: 12,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
+
+  // ── 1 series → single-line chart ────────────────────────────────────────
+
+  Widget _buildSingleChart(BuildContext context, GraphData graph) {
+    final primaryColor = Theme.of(context).primaryColorDark;
+    final y = graph.series.first.y;
+    final spots = List.generate(
+      y.length,
+      (i) => FlSpot(graph.x[i].toDouble(), y[i]),
+    );
+    final ci = _currentIndex(spots);
+    final playedSpots = spots.sublist(0, ci + 1);
+
+    // barIndex 0 = faded (unplayed), barIndex 1 = played
+    final whiteLine = LineChartBarData(
+      spots: spots,
+      color: Colors.white.withValues(alpha: 0.5),
+      barWidth: 3,
+      dotData: FlDotData(show: false),
+    );
+    final redLine = LineChartBarData(
+      spots: playedSpots,
+      color: primaryColor,
+      barWidth: 4,
+      dotData: FlDotData(show: false),
+    );
+
+    return _chartContainer(
+      context: context,
+      titleWidget: Text(
+        graph.title,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 20,
+        ),
+      ),
+      chart: LineChart(
+        LineChartData(
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => const Color.fromARGB(150, 48, 54, 47),
+              getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                // barIndex 0 = faded (unplayed), 1 = played
+                final isFaded = spot.barIndex == 0;
+                // For the faded line, hide spots that are already played
+                if (isFaded && spot.bar.spots.indexOf(spot) <= ci) return null;
+                return LineTooltipItem(
+                  '${spot.y}',
+                  TextStyle(
+                    fontSize: 16,
+                    color: isFaded ? Colors.white : primaryColor,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          lineBarsData: [whiteLine, redLine],
+          minY: graph.yMin,
+          maxY: graph.yMax,
+          clipData: FlClipData.none(),
+          extraLinesData: ExtraLinesData(
+            verticalLines: _secondTicks(context, graph.x),
+          ),
+          titlesData: _titlesData(context, graph.yLabel, graph.yMax),
+          borderData: _borderData(context),
+        ),
+      ),
+    );
+  }
+
+  // ── 2 series → paired left/right chart ──────────────────────────────────
+
+  Widget _buildPairedChart(BuildContext context, GraphData graph) {
+    final primaryColor = Theme.of(context).primaryColorDark;
+    final leftY = graph.series[0].y; // name == "left"
+    final rightY = graph.series[1].y; // name == "right"
+
+    final leftSpots = List.generate(
+      leftY.length,
+      (i) => FlSpot(graph.x[i].toDouble(), leftY[i]),
+    );
+    final rightSpots = List.generate(
+      rightY.length,
+      (i) => FlSpot(graph.x[i].toDouble(), rightY[i]),
+    );
+
+    final leftCI = _currentIndex(leftSpots);
+    final rightCI = _currentIndex(rightSpots);
+
+    final leftPlayed = leftSpots.sublist(0, leftCI + 1);
+    final rightPlayed = rightSpots.sublist(0, rightCI + 1);
+
+    // Faded "future" lines
+    final leftFaded = primaryColor.withValues(alpha: 0.5);
+    final rightFaded = Colors.white.withValues(alpha: 0.5);
+    final leftFade = LineChartBarData(
+      spots: leftSpots,
+      color: leftFaded,
+      barWidth: 3,
+      dotData: FlDotData(show: false),
+    );
+    final rightFade = LineChartBarData(
+      spots: rightSpots,
+      color: rightFaded,
+      barWidth: 3,
+      dotData: FlDotData(show: false),
+    );
+    // Vivid "played" lines  (index 2 = leftLive, index 3 = rightLive in lineBarsData)
+    final leftLive = LineChartBarData(
+      spots: leftPlayed,
+      color: primaryColor,
+      barWidth: 4,
+      dotData: FlDotData(show: false),
+    );
+    final rightLive = LineChartBarData(
+      spots: rightPlayed,
+      color: Colors.white,
+      barWidth: 4,
+      dotData: FlDotData(show: false),
+    );
+
+    return _chartContainer(
+      context: context,
+      titleWidget: Column(
+        children: [
+          Text(
+            graph.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _legendDot(primaryColor),
+              const SizedBox(width: 4),
+              const Text(
+                'Left',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(width: 16),
+              _legendDot(Colors.white),
+              const SizedBox(width: 4),
+              const Text(
+                'Right',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+        ],
+      ),
+      chart: LineChart(
+        LineChartData(
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => const Color.fromARGB(150, 48, 54, 47),
+              getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                // barIndex: 0=leftFade, 1=rightFade, 2=leftLive, 3=rightLive
+                final idx = spot.barIndex;
+                final spotIdx = spot.bar.spots.indexOf(spot);
+
+                // Faded bars: only show tooltip for unplayed region
+                if (idx == 0 && spotIdx <= leftCI) return null;
+                if (idx == 1 && spotIdx <= rightCI) return null;
+
+                final isLeft = idx == 0 || idx == 2;
+                return LineTooltipItem(
+                  '${isLeft ? "L" : "R"}: ${spot.y.toStringAsFixed(1)}°',
+                  TextStyle(
+                    fontSize: 16,
+                    color: isLeft ? primaryColor : Colors.white,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          lineBarsData: [leftFade, rightFade, leftLive, rightLive],
+          minY: graph.yMin,
+          maxY: graph.yMax,
+          clipData: FlClipData.none(),
+          extraLinesData: ExtraLinesData(
+            verticalLines: _secondTicks(context, graph.x),
+          ),
+          titlesData: _titlesData(context, graph.yLabel, graph.yMax),
+          borderData: _borderData(context),
+        ),
+      ),
     );
   }
 }

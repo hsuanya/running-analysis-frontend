@@ -31,10 +31,15 @@ class FakeBackendRepo implements BackendInterface {
             final value = random.nextDouble() * 15;
             return (value * 1000).round() / 1000;
           }),
-          y: List.generate(100, (_) {
-            final value = random.nextDouble() * 100;
-            return (value * 1000).round() / 1000;
-          }),
+          series: [
+            GraphSeries(
+              name: 'main',
+              y: List.generate(100, (_) {
+                final value = random.nextDouble() * 100;
+                return (value * 1000).round() / 1000;
+              }),
+            ),
+          ],
         ),
         GraphData(
           title: 'Velocity',
@@ -45,10 +50,15 @@ class FakeBackendRepo implements BackendInterface {
             final value = random.nextDouble() * 15;
             return (value * 1000).round() / 1000;
           }),
-          y: List.generate(100, (_) {
-            final value = random.nextDouble() * 10;
-            return (value * 1000).round() / 1000;
-          }),
+          series: [
+            GraphSeries(
+              name: 'main',
+              y: List.generate(100, (_) {
+                final value = random.nextDouble() * 10;
+                return (value * 1000).round() / 1000;
+              }),
+            ),
+          ],
         ),
         GraphData(
           title: 'Acceleration',
@@ -59,10 +69,15 @@ class FakeBackendRepo implements BackendInterface {
             final value = random.nextDouble() * 15;
             return (value * 1000).round() / 1000;
           }),
-          y: List.generate(100, (_) {
-            final value = -2 + random.nextDouble() * 5;
-            return (value * 1000).round() / 1000;
-          }),
+          series: [
+            GraphSeries(
+              name: 'main',
+              y: List.generate(100, (_) {
+                final value = -2 + random.nextDouble() * 5;
+                return (value * 1000).round() / 1000;
+              }),
+            ),
+          ],
         ),
       ],
     );

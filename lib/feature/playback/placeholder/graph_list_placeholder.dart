@@ -11,19 +11,22 @@ class GraphListPlaceholder extends StatelessWidget {
     final titles = ["Distance", "Velocity", "Acceleration"];
     final yLabels = ["Distance(m)", "Velocity(m/s)", "Acceleration(m/s^2)"];
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: itemCount,
-      itemBuilder: (context, index) => Container(
-        padding: EdgeInsets.only(top: 8, bottom: 4, left: 12, right: 24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
-          color: Theme.of(context).primaryColor,
-        ),
-        child: OneGraphPlaceholderItem(
-          title: titles[index],
-          yLabel: yLabels[index],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25),
+        color: Theme.of(context).primaryColor,
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: itemCount,
+        itemBuilder: (context, index) => Container(
+          padding: EdgeInsets.only(top: 8, bottom: 4, left: 12, right: 24),
+          child: OneGraphPlaceholderItem(
+            title: titles[index],
+            yLabel: yLabels[index],
+          ),
         ),
       ),
     );

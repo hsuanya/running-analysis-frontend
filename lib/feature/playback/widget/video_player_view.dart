@@ -156,6 +156,32 @@ class _VideoContentPlayerState extends ConsumerState<_VideoContentPlayer> {
               child: AsyncValueWidget(
                 value: managerProvider,
                 loading: const VideoPlayerShimmer(),
+                error: (error, stack) {
+                  return Container(
+                    height: 250,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.close,
+                          size: 64,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                        Text(
+                          'Error loading video',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
                 data: (manager) {
                   return GestureDetector(
                     onTap: () {
