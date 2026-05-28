@@ -424,7 +424,6 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
     }
   }
 
-
   Widget _buildCameraPreviewStack({
     required bool isFullscreen,
     bool isAnchorMode = false,
@@ -777,9 +776,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      state.anchorIsSet
-                          ? '錨點已設定'
-                          : '請進入全螢幕設定錨點',
+                      state.anchorIsSet ? '錨點已設定' : '請進入全螢幕設定錨點',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -848,7 +845,7 @@ class _FullScreenCameraDialogState
   final _botCtrl = TextEditingController();
 
   // Distance panel expand/collapse state
-  bool _distanceExpanded = false;
+  bool _distanceExpanded = true;
 
   // Snapshot taken when entering anchor mode (for magnifier)
   Uint8List? _snapshotBytes;
@@ -881,9 +878,9 @@ class _FullScreenCameraDialogState
   int get _nextIdx => _pts.length;
 
   Offset _norm(Offset local) => Offset(
-        (local.dx / _imgW).clamp(0.0, 1.0),
-        (local.dy / _imgH).clamp(0.0, 1.0),
-      );
+    (local.dx / _imgW).clamp(0.0, 1.0),
+    (local.dy / _imgH).clamp(0.0, 1.0),
+  );
 
   int? _nearestIdx(Offset normPos) {
     int? best;
@@ -1017,16 +1014,14 @@ class _FullScreenCameraDialogState
               ),
             ),
           ),
-          
+
           // ── 距離輸入欄位 (在全螢幕的最上方) ──────────────────────
           if (_anchorMode && _full)
             Positioned(
               top: 16,
               left: 20,
               right: 20,
-              child: SafeArea(
-                child: _buildCollapsibleDistanceRow(),
-              ),
+              child: SafeArea(child: _buildCollapsibleDistanceRow()),
             ),
 
           // 切換按鈕（當不在錨點模式時顯示）
@@ -1153,7 +1148,8 @@ class _FullScreenCameraDialogState
                       child: Center(
                         child: _PulsingBadge(
                           color: _kAnchorColors[_nextIdx],
-                          label: '點 ${_nextIdx + 1}：${_kAnchorLabels[_nextIdx]}',
+                          label:
+                              '點 ${_nextIdx + 1}：${_kAnchorLabels[_nextIdx]}',
                         ),
                       ),
                     ),
@@ -1384,18 +1380,13 @@ class _FullScreenCameraDialogState
                       ),
                     ),
                     const Spacer(),
-                    const Icon(
-                      Icons.edit,
-                      size: 14,
-                      color: Colors.white38,
-                    ),
+                    const Icon(Icons.edit, size: 14, color: Colors.white38),
                   ],
                 ),
               ),
             ),
     );
   }
-
 
   Widget _distanceField({
     required TextEditingController controller,
@@ -1476,10 +1467,7 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.close, size: 16),
-          label: const Text(
-            '取消',
-            style: TextStyle(fontFamily: 'NotoSansTC'),
-          ),
+          label: const Text('取消', style: TextStyle(fontFamily: 'NotoSansTC')),
         ),
         const SizedBox(width: 8),
         // Undo
@@ -1495,17 +1483,12 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.undo, size: 16),
-          label: const Text(
-            '復原',
-            style: TextStyle(fontFamily: 'NotoSansTC'),
-          ),
+          label: const Text('復原', style: TextStyle(fontFamily: 'NotoSansTC')),
         ),
         const SizedBox(width: 8),
         // Reset
         OutlinedButton.icon(
-          onPressed: _pts.isEmpty
-              ? null
-              : () => setState(() => _pts.clear()),
+          onPressed: _pts.isEmpty ? null : () => setState(() => _pts.clear()),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white38,
             side: const BorderSide(color: Colors.white12),
@@ -1514,10 +1497,7 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.refresh, size: 16),
-          label: const Text(
-            '重設',
-            style: TextStyle(fontFamily: 'NotoSansTC'),
-          ),
+          label: const Text('重設', style: TextStyle(fontFamily: 'NotoSansTC')),
         ),
         const Spacer(),
         // Confirm
@@ -1548,7 +1528,6 @@ class _FullScreenCameraDialogState
     );
   }
 }
-
 
 class _CameraLoadingShimmer extends StatelessWidget {
   const _CameraLoadingShimmer();
@@ -1670,19 +1649,17 @@ class _AnchorQuadPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
-    final pts =
-        points.map((p) => Offset(p.dx * width, p.dy * height)).toList();
+    final pts = points.map((p) => Offset(p.dx * width, p.dy * height)).toList();
 
     final paint = Paint()
       ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < pts.length - 1; i++) {
-      final isDragEdge = draggingIdx != null &&
-          (i == draggingIdx || i + 1 == draggingIdx);
+      final isDragEdge =
+          draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
       paint
-        ..color =
-            _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+        ..color = _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
         ..strokeWidth = isDragEdge ? 2.8 : 2.2;
       canvas.drawLine(pts[i], pts[i + 1], paint);
     }
@@ -1691,8 +1668,7 @@ class _AnchorQuadPainter extends CustomPainter {
       final isDragEdge =
           draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
       paint
-        ..color =
-            _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+        ..color = _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
         ..strokeWidth = isDragEdge ? 2.8 : 2.2;
       canvas.drawLine(pts[3], pts[0], paint);
 
@@ -1767,10 +1743,26 @@ class _LiveMagnifierPainter extends CustomPainter {
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
 
-    canvas.drawLine(Offset(cx - gap - lineLen, cy), Offset(cx - gap, cy), linePaint);
-    canvas.drawLine(Offset(cx + gap, cy), Offset(cx + gap + lineLen, cy), linePaint);
-    canvas.drawLine(Offset(cx, cy - gap - lineLen), Offset(cx, cy - gap), linePaint);
-    canvas.drawLine(Offset(cx, cy + gap), Offset(cx, cy + gap + lineLen), linePaint);
+    canvas.drawLine(
+      Offset(cx - gap - lineLen, cy),
+      Offset(cx - gap, cy),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(cx + gap, cy),
+      Offset(cx + gap + lineLen, cy),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(cx, cy - gap - lineLen),
+      Offset(cx, cy - gap),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(cx, cy + gap),
+      Offset(cx, cy + gap + lineLen),
+      linePaint,
+    );
 
     // Center dot
     canvas.drawCircle(Offset(cx, cy), 4, Paint()..color = color);
@@ -1813,8 +1805,10 @@ class _PulsingBadgeState extends State<_PulsingBadge>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.85, end: 1.15)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _anim = Tween<double>(
+      begin: 0.85,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -1849,4 +1843,3 @@ class _PulsingBadgeState extends State<_PulsingBadge>
     );
   }
 }
-
