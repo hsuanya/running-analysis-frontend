@@ -282,6 +282,12 @@
       margin-bottom: 12px;
     }
 
+    .symbol svg {
+      width: 23px;
+      height: 23px;
+      fill: currentColor;
+    }
+
     h3 {
       margin: 0 0 8px;
       font-size: 22px;
@@ -391,6 +397,10 @@
       border: 1px solid #ededf0;
       border-radius: 16px;
       padding: 18px;
+    }
+
+    .two-col + .mini-panel {
+      margin-top: 18px;
     }
 
     .quick-links {
@@ -618,7 +628,11 @@
                 <p>選擇影片檔案，設定跑者、日期、FPS、備註與錨點後送出分析。</p>
               </div>
               <div class="feature-card">
-                <div class="symbol" aria-hidden="true">●</div>
+                <div class="symbol" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v1.6l3.8-2.1a.8.8 0 0 1 1.2.7v8.6a.8.8 0 0 1-1.2.7L16 14.9v1.6a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z"/>
+                  </svg>
+                </div>
                 <h3>現場錄影上傳</h3>
                 <p>讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳。</p>
               </div>
