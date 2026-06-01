@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>百米分析使用手冊</title>
+  <link rel="icon" href="assets/app-icon.png">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #d2d2d7;
+      --blue: #0066cc;
+      --blue-soft: #e8f2ff;
+      --app: #79a9ea;
+      --app-dark: #508fe8;
+      --green: #00856f;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+      color-scheme: light;
+      scroll-behavior: smooth;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.55;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.84);
+      border-bottom: 1px solid rgba(210, 210, 215, 0.8);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      min-height: 52px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .brand img {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .top-links a {
+      color: var(--muted);
+    }
+
+    .hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 72px 22px 58px;
+      text-align: center;
+    }
+
+    .hero-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 17px;
+      margin: 0 0 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 56px;
+      line-height: 1.05;
+      letter-spacing: 0;
+      font-weight: 760;
+    }
+
+    .intro {
+      max-width: 680px;
+      margin: 18px auto 0;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.48;
+    }
+
+    .guide-tools {
+      max-width: 980px;
+      margin: -28px auto 0;
+      padding: 0 22px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .search-card {
+      background: var(--surface);
+      border: 1px solid rgba(210, 210, 215, 0.85);
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.07);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .search-box {
+      min-height: 48px;
+      border: 0;
+      outline: 0;
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 17px;
+      color: var(--text);
+    }
+
+    .version {
+      min-height: 48px;
+      border: 0;
+      outline: 0;
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 0 36px 0 14px;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 22px 88px;
+      display: grid;
+      grid-template-columns: 252px minmax(0, 1fr);
+      gap: 42px;
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: 82px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .toc-title {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .toc a {
+      display: block;
+      padding: 8px 0;
+      border-top: 1px solid #ededf0;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .toc a:first-of-type {
+      border-top: 0;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .section {
+      scroll-margin-top: 82px;
+      margin-bottom: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 30px 34px;
+      border-bottom: 1px solid #ededf0;
+    }
+
+    .section-kicker {
+      color: var(--app-dark);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .section-header p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 760px;
+    }
+
+    .section-body {
+      padding: 30px 34px 34px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature-card {
+      background: #f5f5f7;
+      border: 1px solid #ededf0;
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 150px;
+    }
+
+    .symbol {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 21px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 26px 0 10px;
+      font-size: 19px;
+      line-height: 1.35;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 18px;
+      padding-left: 1.35rem;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+    }
+
+    .step-list li {
+      counter-increment: step;
+      position: relative;
+      padding: 12px 0 12px 44px;
+      border-top: 1px solid #ededf0;
+      margin: 0;
+    }
+
+    .step-list li:first-child {
+      border-top: 0;
+    }
+
+    .step-list li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--app);
+      color: white;
+      font-weight: 750;
+      font-size: 14px;
+    }
+
+    .callout {
+      margin: 20px 0;
+      padding: 18px 20px;
+      border-radius: 16px;
+      background: var(--blue-soft);
+      color: #123b66;
+      border: 1px solid #c7ddf8;
+    }
+
+    .callout strong {
+      color: #0b2f55;
+    }
+
+    .figure {
+      margin: 0 0 28px;
+      padding: 12px;
+      background: #f5f5f7;
+      border: 1px solid #ededf0;
+      border-radius: 18px;
+    }
+
+    .figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .figure figcaption {
+      margin: 12px 4px 2px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .mini-panel {
+      background: #f5f5f7;
+      border: 1px solid #ededf0;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .quick-links a {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text);
+      font-weight: 650;
+      min-height: 78px;
+      display: flex;
+      align-items: end;
+    }
+
+    details {
+      border-top: 1px solid #ededf0;
+      padding: 0;
+    }
+
+    details:first-child {
+      border-top: 0;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 18px 0;
+      font-size: 18px;
+      font-weight: 700;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "+";
+      float: right;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    details[open] summary::after {
+      content: "-";
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .no-results {
+      display: none;
+      padding: 34px;
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      color: var(--muted);
+    }
+
+    .no-results.show {
+      display: block;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      background: #ededf0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 22px;
+    }
+
+    @media (max-width: 900px) {
+      h1 {
+        font-size: 42px;
+      }
+
+      .intro {
+        font-size: 18px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .cards,
+      .quick-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-inner {
+        padding: 0 16px;
+      }
+
+      .top-links {
+        display: none;
+      }
+
+      .hero-inner {
+        padding: 52px 18px 46px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .search-card,
+      .two-col,
+      .cards,
+      .quick-links {
+        grid-template-columns: 1fr;
+      }
+
+      .layout,
+      .guide-tools {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .section-header,
+      .section-body {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      h2 {
+        font-size: 27px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#welcome" aria-label="回到百米分析使用手冊首頁">
+        <img src="assets/app-icon.png" alt="">
+        <span>百米分析使用手冊</span>
+      </a>
+      <nav class="top-links" aria-label="頁面導覽">
+        <a href="#playback">回放</a>
+        <a href="#upload">上傳</a>
+        <a href="#record">錄影</a>
+        <a href="#troubleshooting">常見狀況</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="welcome">
+    <section class="hero">
+      <div class="hero-inner">
+        <img class="hero-icon" src="assets/app-icon.png" alt="百米分析 App 圖示">
+        <p class="eyebrow">百米分析</p>
+        <h1>使用手冊</h1>
+        <p class="intro">瞭解如何上傳影片、同步錄影，並在分析完成後查看跑步影片、速度、加速度、步幅、關節角度與歷史紀錄。</p>
+      </div>
+    </section>
+
+    <div class="guide-tools" aria-label="手冊工具">
+      <div class="search-card">
+        <input id="manualSearch" class="search-box" type="search" placeholder="在手冊中搜尋" aria-label="在手冊中搜尋">
+        <select class="version" aria-label="選取版本">
+          <option>目前版本</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="toc" aria-label="目錄">
+        <p class="toc-title">目錄</p>
+        <a href="#start">開始使用</a>
+        <a href="#navigation">瀏覽 App</a>
+        <a href="#upload">上傳影片進行分析</a>
+        <a href="#record">現場錄影上傳</a>
+        <a href="#anchor">設定錨點</a>
+        <a href="#status">查看分析狀態</a>
+        <a href="#playback">查看分析結果</a>
+        <a href="#troubleshooting">常見狀況</a>
+      </aside>
+
+      <div class="content">
+        <nav class="quick-links" aria-label="快速前往">
+          <a href="#upload">上傳影片</a>
+          <a href="#record">現場錄影上傳</a>
+          <a href="#anchor">設定錨點</a>
+          <a href="#playback">查看分析結果</a>
+        </nav>
+
+        <div id="noResults" class="no-results">找不到符合搜尋的章節。</div>
+
+        <article id="start" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">開始使用</div>
+            <h2>關於百米分析</h2>
+            <p>百米分析提供兩種建立分析紀錄的方式：上傳既有影片，或在現場同步錄影並上傳。分析完成後，可在回放頁查看結果。</p>
+          </div>
+          <div class="section-body">
+            <figure class="figure">
+              <img src="assets/nav-options-annotated.png" alt="左側導覽列截圖，紅框標示回放、上傳與錄影三個圖示。">
+              <figcaption>左側導覽列提供三個主要入口：回放用來查看分析結果，上傳用來送出既有影片，錄影用來建立現場同步錄影房間。</figcaption>
+            </figure>
+
+            <div class="cards">
+              <div class="feature-card">
+                <div class="symbol" aria-hidden="true">↑</div>
+                <h3>上傳影片</h3>
+                <p>選擇影片檔案，設定跑者、日期、FPS、備註與錨點後送出分析。</p>
+              </div>
+              <div class="feature-card">
+                <div class="symbol" aria-hidden="true">●</div>
+                <h3>現場錄影上傳</h3>
+                <p>讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳。</p>
+              </div>
+              <div class="feature-card">
+                <div class="symbol" aria-hidden="true">▶</div>
+                <h3>查看結果</h3>
+                <p>分析完成後，在回放頁查看影片、圖表與歷史紀錄。</p>
+              </div>
+            </div>
+            <div class="callout">
+              <strong>提示：</strong>在手機直式畫面中，請使用底部圖示切換頁面。在平板、電腦或橫向畫面中，請點選左上角選單，再從側邊欄切換頁面。
+            </div>
+          </div>
+        </article>
+
+        <article id="navigation" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">瀏覽 App</div>
+            <h2>前往主要功能頁面</h2>
+            <p>先使用「上傳」或「錄影」建立分析紀錄，完成後再到「回放」查看結果。</p>
+          </div>
+          <div class="section-body">
+            <div class="two-col">
+              <div class="mini-panel">
+                <h3>前往上傳頁面</h3>
+                <p>點選 <strong>上傳</strong>。你可以選擇既有選手或新增選手，再選擇一起上傳或分別上傳影片。</p>
+              </div>
+              <div class="mini-panel">
+                <h3>前往錄影頁面</h3>
+                <p>點選 <strong>錄影</strong>。你可以建立錄影房間，或讓其他手機加入房間作為錄影裝置。</p>
+              </div>
+            </div>
+            <div class="mini-panel">
+              <h3>前往回放頁面</h3>
+              <p>點選 <strong>回放</strong>。你可以在這裡選擇選手，查看該選手的分析影片與紀錄。</p>
+            </div>
+          </div>
+        </article>
+
+        <article id="upload" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">上傳</div>
+            <h2>上傳影片進行分析</h2>
+            <p>先了解兩種上傳方式，再選擇選手、設定資料並上傳影片。影片上傳後會進入錨點設定。</p>
+          </div>
+          <div class="section-body">
+            <figure class="figure">
+              <img src="assets/upload-overview-annotated.png" alt="上傳頁面截圖，紅框標示選擇或新增選手、上傳方式、基本資料與相機影片上傳區。">
+              <figcaption>上傳頁面上方可切換選手與上傳方式，中間設定日期、時間、相機數量、FPS 與備註；下方相機區塊用來選擇對應影片。</figcaption>
+            </figure>
+
+            <h3>選擇上傳方式</h3>
+            <p>上傳方式分為 <strong>一起上傳</strong> 與 <strong>分別上傳</strong>。請先依照手上的影片情況選擇模式。</p>
+            <div class="two-col">
+              <div class="mini-panel">
+                <h4>一起上傳</h4>
+                <p>適合所有相機影片都已準備好時使用。選好相機數量後，依序上傳每個相機的影片，全部完成後一次送出分析。</p>
+              </div>
+              <div class="mini-panel">
+                <h4>分別上傳</h4>
+                <p>適合影片需要分批補齊時使用。你可以先建立一筆紀錄並上傳其中一支影片，之後再回來選擇同一筆紀錄補傳剩餘相機。</p>
+              </div>
+            </div>
+
+            <h3>選擇或新增選手</h3>
+            <figure class="figure">
+              <img src="assets/add-runner-annotated.png" alt="新增選手畫面截圖，紅框標示新增選手模式、選手姓名輸入欄與新增按鈕。">
+              <figcaption>切換到「新增選手」後，輸入選手姓名並點選「新增」。新增完成後，App 會回到選擇選手模式並選取剛建立的選手。</figcaption>
+            </figure>
+
+            <div class="two-col">
+              <div class="mini-panel">
+                <h4>選擇既有選手</h4>
+                <ol class="step-list">
+                  <li>選擇 <strong>選擇選手</strong>。</li>
+                  <li>從清單中選擇選手。</li>
+                </ol>
+              </div>
+              <div class="mini-panel">
+                <h4>建立新選手</h4>
+                <ol class="step-list">
+                  <li>選擇 <strong>新增選手</strong>。</li>
+                  <li>輸入選手姓名。</li>
+                  <li>點選 <strong>新增</strong>。</li>
+                </ol>
+              </div>
+            </div>
+
+            <h3>一起上傳所有影片</h3>
+            <p>如果所有相機影片都已準備好，請使用一起上傳。</p>
+            <ol class="step-list">
+              <li>在上傳方式中選擇 <strong>一起上傳</strong>。</li>
+              <li>設定日期、時間、相機數量、FPS 與備註。</li>
+              <li>依照畫面上的相機區塊，點選 <strong>相機 1 點擊上傳</strong>、<strong>相機 2 點擊上傳</strong> 等區塊。</li>
+              <li>從裝置中選擇對應相機的影片檔。</li>
+              <li>影片上傳完成後，依提示設定錨點。</li>
+              <li>每個相機影片都上傳完成後，點選 <strong>上傳</strong>。</li>
+            </ol>
+
+            <h3>分別上傳影片</h3>
+            <p>如果無法一次取得所有相機影片，請使用分別上傳。</p>
+            <figure class="figure">
+              <img src="assets/upload-separate-annotated.png" alt="分別上傳頁面截圖，紅框標示分別上傳、新增或選擇紀錄、基本資料、相機編號、單一影片上傳區與上傳按鈕。">
+              <figcaption>分別上傳模式可先建立一筆新紀錄，選擇本次要上傳的相機編號，再上傳該相機影片。其他相機影片可之後再補上。</figcaption>
+            </figure>
+            <ol class="step-list">
+              <li>在上傳方式中選擇 <strong>分別上傳</strong>。</li>
+              <li>選擇 <strong>新增紀錄</strong>。</li>
+              <li>設定日期、時間、相機數量、FPS 與備註。</li>
+              <li>在 <strong>第幾個相機</strong> 中選擇這次要上傳的相機編號。</li>
+              <li>點選影片區塊並選擇影片檔。</li>
+              <li>影片上傳完成後，設定錨點。</li>
+              <li>點選 <strong>上傳</strong>。</li>
+            </ol>
+
+            <div class="callout">
+              如果尚有其他相機影片未上傳，App 會提示還需要補上的相機。之後請選擇 <strong>選擇紀錄</strong>，從未分析紀錄表中選擇要補傳的紀錄，再補上剩餘影片。
+            </div>
+          </div>
+        </article>
+
+        <article id="record" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">錄影</div>
+            <h2>現場錄影上傳</h2>
+            <p>現場錄影上傳可讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳影片進行分析。</p>
+          </div>
+          <div class="section-body">
+            <h3>建立錄影房間</h3>
+            <ol class="step-list">
+              <li>在主控裝置前往 <strong>錄影</strong>。</li>
+              <li>在 <strong>主控裝置</strong> 區塊選擇預計連線裝置數。</li>
+              <li>點選 <strong>建立錄影房間</strong>。</li>
+              <li>將畫面上的房間號碼提供給其他錄影手機。</li>
+            </ol>
+            <figure class="figure">
+              <img src="assets/record-room-annotated.png" alt="建立錄影房間後的畫面截圖，紅框標示房間號碼、目前身份、錄影參數設定、本機參與錄影、已連線設備清單與開始同步錄影。">
+              <figcaption>建立房間後，畫面會顯示房間號碼、主控端身份、錄影參數設定、本機參與錄影選項與已連線設備清單。請將房間號碼提供給其他錄影手機加入。</figcaption>
+            </figure>
+
+            <h3>加入錄影房間</h3>
+            <ol class="step-list">
+              <li>在每一台錄影手機前往 <strong>錄影</strong>。</li>
+              <li>在 <strong>錄影手機</strong> 區塊輸入房間號碼。</li>
+              <li>選擇此手機負責的相機位置，例如相機 1、相機 2。</li>
+              <li>點選 <strong>加入錄影房間</strong>。</li>
+              <li>保持在此頁面，等待主控端開始錄影。</li>
+            </ol>
+
+            <h3>設定錄影參數</h3>
+            <ul>
+              <li>選手：可選擇既有選手，也可新增選手。</li>
+              <li>FPS：可選擇 30 或 60。</li>
+              <li>備註：可輸入本次測試說明。</li>
+            </ul>
+
+            <h3>讓主控裝置也參與錄影</h3>
+            <ol class="step-list">
+              <li>在房間畫面開啟 <strong>本機參與錄影</strong>。</li>
+              <li>選擇本機相機編號。</li>
+              <li>設定好鏡頭畫面與錨點。</li>
+            </ol>
+            <p>若主控裝置只負責控制錄影，請關閉 <strong>本機參與錄影</strong>。</p>
+
+            <h3>開始與停止同步錄影</h3>
+            <ol class="step-list">
+              <li>確認已選擇或新增選手。</li>
+              <li>確認所有預計相機都已連線。</li>
+              <li>確認所有參與錄影的裝置都已就緒。</li>
+              <li>點選 <strong>開始同步錄影</strong>。</li>
+              <li>錄影結束時，主控端點選 <strong>停止錄影並上傳</strong>。</li>
+            </ol>
+          </div>
+        </article>
+
+        <article id="anchor" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">錨點</div>
+            <h2>設定錨點</h2>
+            <p>錨點用來標記影片中跑道或校正區域的位置，協助系統判讀影像中的實際距離。</p>
+          </div>
+          <div class="section-body">
+            <figure class="figure">
+              <img src="assets/anchor-dialog.png" alt="設定錨點畫面截圖，左側可選取四個錨點並輸入實際距離，右側顯示上傳後預覽。">
+              <figcaption>設定錨點時，先在影像上依序點選四個角，再輸入實際距離。下方按鈕可復原、重設或確認錨點；右側會顯示上傳後的預覽畫面。</figcaption>
+            </figure>
+
+            <h3>選取四個錨點</h3>
+            <ol class="step-list">
+              <li>在縮圖上點選 <strong>左上</strong>。</li>
+              <li>接著點選 <strong>右上</strong>。</li>
+              <li>再點選 <strong>右下</strong>。</li>
+              <li>最後點選 <strong>左下</strong>。</li>
+            </ol>
+            <p>設定完成後，你可以拖曳任一錨點微調位置。拖曳時會顯示放大鏡，方便精準對齊。</p>
+
+            <h3>輸入實際距離</h3>
+            <p>在影像下方輸入 <strong>上邊實際距離（公尺）</strong> 與 <strong>下邊實際距離（公尺）</strong>。兩個距離都必須大於 0。完成後點選 <strong>確認錨點</strong>。</p>
+
+            <h3>修改或略過錨點</h3>
+            <ul>
+              <li>點選 <strong>復原</strong>，可移除上一個錨點。</li>
+              <li>點選 <strong>重設</strong>，可清除全部錨點。</li>
+              <li>點選右上角關閉按鈕，可略過本次錨點設定。</li>
+              <li>影片縮圖右上角顯示 <strong>錨點已設定</strong> 時，代表此相機已完成錨點設定。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article id="status" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">分析狀態</div>
+            <h2>查看分析進度</h2>
+            <p>分析可能需要一段時間。當紀錄仍在處理中，回放頁會顯示進度。</p>
+          </div>
+          <div class="section-body">
+            <p>你可以留在回放頁等待，App 會自動更新分析狀態。分析完成後，影片、圖表與數據會出現在畫面上。</p>
+          </div>
+        </article>
+
+        <article id="playback" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">回放</div>
+            <h2>查看分析結果</h2>
+            <p>選擇選手後，查看該選手的影片、分析圖表、影片資訊與歷史紀錄。</p>
+          </div>
+          <div class="section-body">
+            <figure class="figure">
+              <img src="assets/playback-overview-annotated.png" alt="回放頁面截圖，紅框標示選擇選手、影片播放與時間軸、分析圖表、影片資訊與歷史紀錄。">
+              <figcaption>回放頁面會把影片播放區、分析圖表、影片資訊與歷史紀錄放在同一個畫面中。選擇選手後，可從歷史紀錄切換不同分析結果。</figcaption>
+            </figure>
+
+            <h3>選擇選手</h3>
+            <ol class="step-list">
+              <li>點選頁面上方的 <strong>選擇選手</strong>。</li>
+              <li>從清單中選擇要查看的選手。</li>
+              <li>App 會自動載入該選手最近一次紀錄。</li>
+            </ol>
+            <p>如果此選手尚無紀錄，畫面會提示你先上傳影片。</p>
+
+            <h3>播放影片</h3>
+            <ul>
+              <li>點一下影片，可播放或暫停。</li>
+              <li>拖曳影片下方的滑桿，可跳到指定時間。</li>
+              <li>當影片播放時，圖表會跟著目前播放進度更新。</li>
+            </ul>
+
+            <h3>查看圖表</h3>
+            <p>回放頁會顯示 <strong>Distance, Velocity & Acceleration</strong> 與 <strong>Joint Angles</strong>。點選圖表區塊標題可以展開或收合。</p>
+
+            <h3>查看影片資訊與歷史紀錄</h3>
+            <p>影片資訊會顯示選手姓名、日期時間、相機數量、FPS、平均速度、平均加速度、平均步幅、總時間與備註。在歷史紀錄表中，點選任一列即可切換到該次紀錄。</p>
+          </div>
+        </article>
+
+        <article id="troubleshooting" class="section searchable">
+          <div class="section-header">
+            <div class="section-kicker">常見狀況</div>
+            <h2>取得協助</h2>
+            <p>遇到問題時，請先依照下列項目檢查。</p>
+          </div>
+          <div class="section-body">
+            <details open>
+              <summary>找不到選手</summary>
+              <p>請確認目前在正確頁面，並等待選手清單載入完成。若仍找不到，請使用 <strong>新增選手</strong> 建立。</p>
+            </details>
+            <details>
+              <summary>無法開始同步錄影</summary>
+              <ul>
+                <li>確認是否已選擇選手。</li>
+                <li>確認所有相機是否都已加入房間。</li>
+                <li>確認每台錄影裝置是否已橫放並顯示就緒。</li>
+                <li>確認裝置是否允許瀏覽器或 App 使用相機權限。</li>
+              </ul>
+            </details>
+            <details>
+              <summary>上傳時提示「請上傳所有視頻」</summary>
+              <p>一起上傳模式需要所有相機影片都已上傳。請依照相機數量補齊每個相機區塊後，再點選 <strong>上傳</strong>。</p>
+            </details>
+            <details>
+              <summary>分別上傳後沒有進入回放頁</summary>
+              <p>這代表此紀錄仍缺少其他相機影片。請依照提示補上剩餘相機影片。所有影片補齊後，App 才會進入回放頁。</p>
+            </details>
+            <details>
+              <summary>分析結果顯示「分析中」</summary>
+              <p>影片已送出，但分析尚未完成。請留在回放頁等待，或稍後再回來查看同一筆紀錄。</p>
+            </details>
+            <details>
+              <summary>分析失敗</summary>
+              <p>若歷史紀錄提示分析失敗，請重新上傳影片。若多次失敗，請聯繫系統管理者，並提供選手姓名、日期時間與備註。</p>
+            </details>
+            <details>
+              <summary>相機畫面無法顯示</summary>
+              <ul>
+                <li>確認裝置是否有可用相機。</li>
+                <li>確認是否已允許相機權限。</li>
+                <li>確認是否有其他 App 正在使用相機。</li>
+                <li>確認瀏覽器是否支援相機錄影功能。</li>
+              </ul>
+              <p>重新整理頁面後，再次加入錄影房間。</p>
+            </details>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      百米分析使用手冊。此頁為本專案的靜態操作指南，可直接由瀏覽器開啟。
+    </div>
+  </footer>
+
+  <script>
+    const input = document.getElementById('manualSearch');
+    const sections = Array.from(document.querySelectorAll('.searchable'));
+    const noResults = document.getElementById('noResults');
+
+    input.addEventListener('input', () => {
+      const query = input.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      sections.forEach((section) => {
+        const text = section.textContent.toLowerCase();
+        const matched = !query || text.includes(query);
+        section.classList.toggle('hidden', !matched);
+        if (matched) visibleCount += 1;
+      });
+
+      noResults.classList.toggle('show', visibleCount === 0);
+    });
+  </script>
+</body>
+</html>
