@@ -31,6 +31,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      font-size: 17px;
       line-height: 1.55;
     }
 
@@ -98,44 +99,48 @@
     }
 
     .hero-inner {
-      max-width: 980px;
+      max-width: 740px;
       margin: 0 auto;
-      padding: 72px 22px 58px;
+      padding: 48px 22px 40px;
       text-align: center;
     }
 
     .hero-icon {
-      width: 96px;
-      height: 96px;
-      border-radius: 24px;
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
+    }
+
+    .hero-text {
+      min-width: 0;
     }
 
     .eyebrow {
       color: var(--muted);
-      font-size: 17px;
-      margin: 0 0 8px;
+      font-size: 15px;
+      margin: 0 0 6px;
     }
 
     h1 {
       margin: 0;
-      font-size: 56px;
-      line-height: 1.05;
-      letter-spacing: 0;
+      font-size: 48px;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
       font-weight: 760;
     }
 
     .intro {
-      max-width: 680px;
-      margin: 18px auto 0;
+      max-width: 560px;
+      margin: 12px auto 0;
       color: var(--muted);
-      font-size: 21px;
-      line-height: 1.48;
+      font-size: 17px;
+      line-height: 1.55;
     }
 
     .guide-tools {
-      max-width: 980px;
+      max-width: 740px;
       margin: -28px auto 0;
       padding: 0 22px;
       position: relative;
@@ -153,13 +158,30 @@
       gap: 12px;
     }
 
+    .search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-wrap::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      width: 16px;
+      height: 16px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Ccircle cx='6.5' cy='6.5' r='5' stroke='%236e6e73' stroke-width='1.5'/%3E%3Cpath d='M10.5 10.5L14 14' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / contain;
+      pointer-events: none;
+    }
+
     .search-box {
+      width: 100%;
       min-height: 48px;
       border: 0;
       outline: 0;
       background: #f5f5f7;
       border-radius: 12px;
-      padding: 0 16px;
+      padding: 0 16px 0 40px;
       font-size: 17px;
       color: var(--text);
     }
@@ -207,10 +229,16 @@
       border-top: 1px solid #ededf0;
       color: var(--text);
       font-size: 14px;
+      transition: color 0.15s ease;
     }
 
     .toc a:first-of-type {
       border-top: 0;
+    }
+
+    .toc a.active {
+      color: var(--blue);
+      font-weight: 600;
     }
 
     .content {
@@ -222,7 +250,7 @@
       margin-bottom: 18px;
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 24px;
+      border-radius: 16px;
       overflow: hidden;
     }
 
@@ -232,7 +260,7 @@
     }
 
     .section-kicker {
-      color: var(--app-dark);
+      color: var(--blue);
       font-size: 14px;
       font-weight: 700;
       margin-bottom: 6px;
@@ -248,7 +276,7 @@
     .section-header p {
       margin: 12px 0 0;
       color: var(--muted);
-      font-size: 18px;
+      font-size: 19px;
       max-width: 760px;
     }
 
@@ -289,10 +317,17 @@
     }
 
     h3 {
-      margin: 0 0 8px;
+      margin: 28px 0 8px;
       font-size: 22px;
+      font-weight: 600;
       line-height: 1.25;
       letter-spacing: 0;
+    }
+
+    h3:first-child,
+    .mini-panel > h3,
+    .feature-card > h3 {
+      margin-top: 0;
     }
 
     h4 {
@@ -344,9 +379,9 @@
       display: grid;
       place-items: center;
       border-radius: 50%;
-      background: var(--app);
+      background: var(--blue);
       color: white;
-      font-weight: 750;
+      font-weight: 700;
       font-size: 14px;
     }
 
@@ -399,6 +434,14 @@
       padding: 18px;
     }
 
+    .mini-panel > h4:first-child {
+      margin-top: 0;
+    }
+
+    .mini-panel > *:last-child {
+      margin-bottom: 0;
+    }
+
     .two-col + .mini-panel {
       margin-top: 18px;
     }
@@ -414,12 +457,20 @@
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 16px;
+      padding: 14px 16px;
       color: var(--text);
       font-weight: 650;
-      min-height: 78px;
       display: flex;
-      align-items: end;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quick-links a::after {
+      content: "›";
+      color: var(--blue);
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
     }
 
     details {
@@ -429,6 +480,10 @@
 
     details:first-child {
       border-top: 0;
+    }
+
+    details[open] {
+      padding-bottom: 16px;
     }
 
     summary {
@@ -444,14 +499,16 @@
     }
 
     summary::after {
-      content: "+";
+      content: "›";
       float: right;
       color: var(--muted);
-      font-weight: 500;
+      font-size: 20px;
+      font-weight: 400;
+      transition: transform 0.2s ease;
     }
 
     details[open] summary::after {
-      content: "-";
+      transform: rotate(90deg);
     }
 
     .hidden {
@@ -549,6 +606,9 @@
         font-size: 27px;
       }
     }
+
+    body.lang-en .zh { display: none; }
+    body.lang-zh .en { display: none; }
   </style>
 </head>
 <body>
@@ -556,13 +616,14 @@
     <div class="topbar-inner">
       <a class="brand" href="#welcome" aria-label="回到百米分析使用手冊首頁">
         <img src="assets/app-icon.png" alt="">
-        <span>百米分析使用手冊</span>
+        <span class="zh">百米分析使用手冊</span><span class="en">Sprint Analysis User Guide</span>
       </a>
       <nav class="top-links" aria-label="頁面導覽">
-        <a href="#playback">回放</a>
-        <a href="#upload">上傳</a>
-        <a href="#record">錄影</a>
-        <a href="#troubleshooting">常見狀況</a>
+        <a href="#playback"><span class="zh">回放</span><span class="en">Playback</span></a>
+        <a href="#upload"><span class="zh">上傳</span><span class="en">Upload</span></a>
+        <a href="#record"><span class="zh">錄影</span><span class="en">Record</span></a>
+        <a href="#troubleshooting"><span class="zh">常見狀況</span><span class="en">Troubleshooting</span></a>
+        <button id="lang-btn" aria-label="Switch language" style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);">EN</button>
       </nav>
     </div>
   </header>
@@ -571,368 +632,376 @@
     <section class="hero">
       <div class="hero-inner">
         <img class="hero-icon" src="assets/app-icon.png" alt="百米分析 App 圖示">
-        <p class="eyebrow">百米分析</p>
-        <h1>使用手冊</h1>
-        <p class="intro">瞭解如何上傳影片、同步錄影，並在分析完成後查看跑步影片、速度、加速度、步幅、關節角度與歷史紀錄。</p>
+        <div class="hero-text">
+          <p class="eyebrow"><span class="zh">百米分析</span><span class="en">Sprint Analysis</span></p>
+          <h1><span class="zh">使用手冊</span><span class="en">User Guide</span></h1>
+          <p class="intro"><span class="zh">瞭解如何上傳影片、同步錄影，並在分析完成後查看跑步影片、速度、加速度、步幅、關節角度與歷史紀錄。</span><span class="en">Learn how to upload videos, sync multi-device recording, and review speed, acceleration, stride, joint angles, and history after analysis.</span></p>
+        </div>
       </div>
     </section>
 
     <div class="guide-tools" aria-label="手冊工具">
       <div class="search-card">
-        <input id="manualSearch" class="search-box" type="search" placeholder="在手冊中搜尋" aria-label="在手冊中搜尋">
+        <div class="search-wrap">
+          <input id="manualSearch" class="search-box" type="search" placeholder="在手冊中搜尋" aria-label="在手冊中搜尋" data-placeholder-zh="在手冊中搜尋" data-placeholder-en="Search the guide">
+        </div>
         <select class="version" aria-label="選取版本">
-          <option>目前版本</option>
+          <option><span class="zh">目前版本</span><span class="en">Current Version</span></option>
         </select>
       </div>
     </div>
 
     <div class="layout">
       <aside class="toc" aria-label="目錄">
-        <p class="toc-title">目錄</p>
-        <a href="#start">開始使用</a>
-        <a href="#navigation">瀏覽 App</a>
-        <a href="#upload">上傳影片進行分析</a>
-        <a href="#record">現場錄影上傳</a>
-        <a href="#anchor">設定錨點</a>
-        <a href="#status">查看分析狀態</a>
-        <a href="#playback">查看分析結果</a>
-        <a href="#troubleshooting">常見狀況</a>
+        <p class="toc-title"><span class="zh">目錄</span><span class="en">Contents</span></p>
+        <a href="#start"><span class="zh">開始使用</span><span class="en">Getting Started</span></a>
+        <a href="#upload"><span class="zh">上傳影片進行分析</span><span class="en">Upload Video for Analysis</span></a>
+        <a href="#record"><span class="zh">現場錄影上傳</span><span class="en">Live Recording &amp; Upload</span></a>
+        <a href="#anchor"><span class="zh">設定錨點</span><span class="en">Set Anchor Points</span></a>
+        <a href="#status"><span class="zh">查看分析狀態</span><span class="en">Check Analysis Status</span></a>
+        <a href="#playback"><span class="zh">回放</span><span class="en">Playback</span></a>
+        <a href="#troubleshooting"><span class="zh">常見狀況</span><span class="en">Troubleshooting</span></a>
       </aside>
 
       <div class="content">
         <nav class="quick-links" aria-label="快速前往">
-          <a href="#upload">上傳影片</a>
-          <a href="#record">現場錄影上傳</a>
-          <a href="#anchor">設定錨點</a>
-          <a href="#playback">查看分析結果</a>
+          <a href="#upload"><span class="zh">上傳影片</span><span class="en">Upload Video</span></a>
+          <a href="#record"><span class="zh">現場錄影上傳</span><span class="en">Live Recording &amp; Upload</span></a>
+          <a href="#anchor"><span class="zh">設定錨點</span><span class="en">Set Anchor Points</span></a>
+          <a href="#playback"><span class="zh">回放</span><span class="en">Playback</span></a>
         </nav>
 
-        <div id="noResults" class="no-results">找不到符合搜尋的章節。</div>
+        <div id="noResults" class="no-results"><span class="zh">找不到符合搜尋的章節。</span><span class="en">No sections matched your search.</span></div>
 
         <article id="start" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">開始使用</div>
-            <h2>關於百米分析</h2>
-            <p>百米分析提供兩種建立分析紀錄的方式：上傳既有影片，或在現場同步錄影並上傳。分析完成後，可在回放頁查看結果。</p>
+            <div class="section-kicker"><span class="zh">開始使用</span><span class="en">Getting Started</span></div>
+            <h2><span class="zh">關於百米分析</span><span class="en">About Sprint Analysis</span></h2>
+            <p><span class="zh">上傳既有影片，或在現場以多台裝置同步錄影——百米分析處理完成後，即可在回放頁查看速度、加速度、步幅與關節角度。</span><span class="en">Upload existing footage or record live with multiple synced devices — once Sprint Analysis finishes processing, view speed, acceleration, stride, and joint angles on the Playback page.</span></p>
           </div>
           <div class="section-body">
             <figure class="figure">
-              <img src="assets/nav-options-annotated.png" alt="左側導覽列截圖，紅框標示回放、上傳與錄影三個圖示。">
-              <figcaption>左側導覽列提供三個主要入口：回放用來查看分析結果，上傳用來送出既有影片，錄影用來建立現場同步錄影房間。</figcaption>
+              <img src="assets/nav-options-annotated-v2.png" alt="左側導覽列截圖，紅框標示回放、上傳與錄影三個圖示。">
+              <figcaption><span class="zh">左側導覽列提供三個主要入口：回放用來查看分析結果，上傳用來送出既有影片，錄影用來建立現場同步錄影房間。</span><span class="en">The sidebar provides three main entries: Playback to view analysis results, Upload to submit existing videos, and Record to create a live sync recording room.</span></figcaption>
             </figure>
 
             <div class="cards">
-              <div class="feature-card">
-                <div class="symbol" aria-hidden="true">↑</div>
-                <h3>上傳影片</h3>
-                <p>選擇影片檔案，設定跑者、日期、FPS、備註與錨點後送出分析。</p>
+              <div class="mini-panel">
+                <div class="symbol" aria-hidden="true">▶</div>
+                <h3>1&thinsp;·&thinsp;<span class="zh">回放</span><span class="en">Playback</span></h3>
+                <p><span class="zh">選擇選手，查看分析影片、圖表與歷史紀錄。</span><span class="en">Select a runner to view analysis videos, charts, and history.</span></p>
               </div>
-              <div class="feature-card">
+              <div class="mini-panel">
+                <div class="symbol" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 20h14v-2H5v2Zm7-16-6 6h4v6h4v-6h4l-6-6Z"/>
+                  </svg>
+                </div>
+                <h3>2&thinsp;·&thinsp;<span class="zh">上傳</span><span class="en">Upload</span></h3>
+                <p><span class="zh">選擇影片，設定選手與錨點後送出分析。</span><span class="en">Choose videos, configure runner and anchor points, then submit for analysis.</span></p>
+              </div>
+              <div class="mini-panel">
                 <div class="symbol" aria-hidden="true">
                   <svg viewBox="0 0 24 24" focusable="false">
                     <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v1.6l3.8-2.1a.8.8 0 0 1 1.2.7v8.6a.8.8 0 0 1-1.2.7L16 14.9v1.6a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z"/>
                   </svg>
                 </div>
-                <h3>現場錄影上傳</h3>
-                <p>讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳。</p>
-              </div>
-              <div class="feature-card">
-                <div class="symbol" aria-hidden="true">▶</div>
-                <h3>查看結果</h3>
-                <p>分析完成後，在回放頁查看影片、圖表與歷史紀錄。</p>
+                <h3>3&thinsp;·&thinsp;<span class="zh">錄影</span><span class="en">Record</span></h3>
+                <p><span class="zh">建立多機同步錄影房間，完成後自動上傳。</span><span class="en">Create a multi-device sync recording room; videos upload automatically when done.</span></p>
               </div>
             </div>
             <div class="callout">
-              <strong>提示：</strong>在手機直式畫面中，請使用底部圖示切換頁面。在平板、電腦或橫向畫面中，請點選左上角選單，再從側邊欄切換頁面。
-            </div>
-          </div>
-        </article>
-
-        <article id="navigation" class="section searchable">
-          <div class="section-header">
-            <div class="section-kicker">瀏覽 App</div>
-            <h2>前往主要功能頁面</h2>
-            <p>先使用「上傳」或「錄影」建立分析紀錄，完成後再到「回放」查看結果。</p>
-          </div>
-          <div class="section-body">
-            <div class="two-col">
-              <div class="mini-panel">
-                <h3>前往上傳頁面</h3>
-                <p>點選 <strong>上傳</strong>。你可以選擇既有選手或新增選手，再選擇一起上傳或分別上傳影片。</p>
-              </div>
-              <div class="mini-panel">
-                <h3>前往錄影頁面</h3>
-                <p>點選 <strong>錄影</strong>。你可以建立錄影房間，或讓其他手機加入房間作為錄影裝置。</p>
-              </div>
-            </div>
-            <div class="mini-panel">
-              <h3>前往回放頁面</h3>
-              <p>點選 <strong>回放</strong>。你可以在這裡選擇選手，查看該選手的分析影片與紀錄。</p>
+              <span class="zh"><strong>提示：</strong>在手機直式畫面中，請使用底部圖示切換頁面。在平板、電腦或橫向畫面中，請點選左上角選單，再從側邊欄切換頁面。</span><span class="en"><strong>Tip:</strong> On a phone in portrait mode, use the bottom icons to switch pages. On a tablet, desktop, or landscape view, tap the top-left menu and switch from the sidebar.</span>
+              <details style="margin: top 1 px;">
+                <summary style="color:var(--blue); font-size:15px; font-weight:600; cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:4px; user-select:none; line-height:1.4;"><span class="zh">查看手機版與電腦版差異</span><span class="en">View mobile vs. desktop differences</span></summary>
+                <div class="two-col" style="margin-top:16px; align-items:start;">
+                  <figure class="figure" style="margin:0;">
+                    <img src="assets/mobile-initial-annotated.jpg" alt="手機直式畫面截圖，底部紅框標示回放、上傳與錄影三個切換圖示。">
+                    <figcaption><span class="zh">手機版：底部導覽列</span><span class="en">Mobile: bottom navigation bar</span></figcaption>
+                  </figure>
+                  <figure class="figure" style="margin:0;">
+                    <img src="assets/desktop-initial-annotated.png" alt="電腦版截圖，左側紅框標示回放、上傳與錄影三個側邊欄圖示。">
+                    <figcaption><span class="zh">電腦 / 平板版：左側側邊欄</span><span class="en">Desktop / Tablet: left sidebar</span></figcaption>
+                  </figure>
+                </div>
+              </details>
             </div>
           </div>
         </article>
 
         <article id="upload" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">上傳</div>
-            <h2>上傳影片進行分析</h2>
-            <p>先了解兩種上傳方式，再選擇選手、設定資料並上傳影片。影片上傳後會進入錨點設定。</p>
+            <div class="section-kicker"><span class="zh">上傳</span><span class="en">Upload</span></div>
+            <h2><span class="zh">上傳影片進行分析</span><span class="en">Upload Video for Analysis</span></h2>
+            <p><span class="zh">所有相機影片備妥時，選擇「一起上傳」一次送出；若需分批補齊，選擇「分別上傳」逐次完成。上傳後設定錨點，即可送出分析。</span><span class="en">When all camera videos are ready, choose "Upload All Together" to submit at once. If you need to add videos in batches, choose "Upload Separately". Set anchor points after uploading to submit for analysis.</span></p>
           </div>
           <div class="section-body">
             <figure class="figure">
               <img src="assets/upload-overview-annotated.png" alt="上傳頁面截圖，紅框標示選擇或新增選手、上傳方式、基本資料與相機影片上傳區。">
-              <figcaption>上傳頁面上方可切換選手與上傳方式，中間設定日期、時間、相機數量、FPS 與備註；下方相機區塊用來選擇對應影片。</figcaption>
+              <figcaption><span class="zh">上傳頁面上方可切換選手與上傳方式，中間設定日期、時間、相機數量、FPS 與備註；下方相機區塊用來選擇對應影片。</span><span class="en">The top of the Upload page lets you switch runner and upload mode. The middle sets date, time, camera count, FPS, and notes. The camera blocks below are where you select the corresponding videos.</span></figcaption>
             </figure>
 
-            <h3>選擇上傳方式</h3>
-            <p>上傳方式分為 <strong>一起上傳</strong> 與 <strong>分別上傳</strong>。請先依照手上的影片情況選擇模式。</p>
+            <h3><span class="zh">Step 1&thinsp;·&thinsp;選擇上傳方式</span><span class="en">Step 1&thinsp;·&thinsp;Choose Upload Mode</span></h3>
+            <p><span class="zh">依照手上的影片情況，選擇以下其中一種模式。</span><span class="en">Choose one of the following modes based on your available footage.</span></p>
             <div class="two-col">
               <div class="mini-panel">
-                <h4>一起上傳</h4>
-                <p>適合所有相機影片都已準備好時使用。選好相機數量後，依序上傳每個相機的影片，全部完成後一次送出分析。</p>
+                <h4><span class="zh">一起上傳</span><span class="en">Upload All Together</span></h4>
+                <p><span class="zh">適合所有相機影片都已準備好時使用。選好相機數量後，依序上傳每個相機的影片，全部完成後一次送出分析。</span><span class="en">Use when all camera videos are ready. Set the camera count, upload each camera's video in order, then submit for analysis all at once.</span></p>
               </div>
               <div class="mini-panel">
-                <h4>分別上傳</h4>
-                <p>適合影片需要分批補齊時使用。你可以先建立一筆紀錄並上傳其中一支影片，之後再回來選擇同一筆紀錄補傳剩餘相機。</p>
+                <h4><span class="zh">分別上傳</span><span class="en">Upload Separately</span></h4>
+                <p><span class="zh">適合無法一次備齊所有相機影片時使用。第一次選「新增紀錄」建立紀錄並上傳；之後補傳其他相機時，選「選擇紀錄」找回同一筆紀錄繼續完成。所有相機補齊後才會自動送出分析。</span><span class="en">Use when you cannot gather all camera videos at once. Select "New Record" the first time to create a record and upload. Later, select "Select Record" to find the same record and continue adding videos. Analysis is submitted automatically once all cameras are complete.</span></p>
               </div>
             </div>
 
-            <h3>選擇或新增選手</h3>
+            <h3><span class="zh">Step 2&thinsp;·&thinsp;選擇或新增選手</span><span class="en">Step 2&thinsp;·&thinsp;Select or Add Runner</span></h3>
             <figure class="figure">
               <img src="assets/add-runner-annotated.png" alt="新增選手畫面截圖，紅框標示新增選手模式、選手姓名輸入欄與新增按鈕。">
-              <figcaption>切換到「新增選手」後，輸入選手姓名並點選「新增」。新增完成後，App 會回到選擇選手模式並選取剛建立的選手。</figcaption>
+              <figcaption><span class="zh">切換到「新增選手」後，輸入選手姓名並點選「新增」。新增完成後，App 會回到選擇選手模式並選取剛建立的選手。</span><span class="en">Switch to "Add Runner", enter the runner's name, and tap "Add". After adding, the app returns to runner selection mode with the new runner selected.</span></figcaption>
             </figure>
 
             <div class="two-col">
               <div class="mini-panel">
-                <h4>選擇既有選手</h4>
+                <h4><span class="zh">選擇既有選手</span><span class="en">Select Existing Runner</span></h4>
                 <ol class="step-list">
-                  <li>選擇 <strong>選擇選手</strong>。</li>
-                  <li>從清單中選擇選手。</li>
+                  <li><span class="zh">選擇 <strong>選擇選手</strong>。</span><span class="en">Select <strong>Select Runner</strong>.</span></li>
+                  <li><span class="zh">從清單中選擇選手。</span><span class="en">Choose a runner from the list.</span></li>
                 </ol>
               </div>
               <div class="mini-panel">
-                <h4>建立新選手</h4>
+                <h4><span class="zh">建立新選手</span><span class="en">Create New Runner</span></h4>
                 <ol class="step-list">
-                  <li>選擇 <strong>新增選手</strong>。</li>
-                  <li>輸入選手姓名。</li>
-                  <li>點選 <strong>新增</strong>。</li>
+                  <li><span class="zh">選擇 <strong>新增選手</strong>。</span><span class="en">Select <strong>Add Runner</strong>.</span></li>
+                  <li><span class="zh">輸入選手姓名。</span><span class="en">Enter the runner's name.</span></li>
+                  <li><span class="zh">點選 <strong>新增</strong>。</span><span class="en">Tap <strong>Add</strong>.</span></li>
                 </ol>
               </div>
             </div>
 
-            <h3>一起上傳所有影片</h3>
-            <p>如果所有相機影片都已準備好，請使用一起上傳。</p>
+            <h3><span class="zh">Step 3A&thinsp;·&thinsp;一起上傳</span><span class="en">Step 3A&thinsp;·&thinsp;Upload All Together</span></h3>
+            <p><span class="zh">所有相機影片都已備妥時使用。</span><span class="en">Use when all camera videos are ready.</span></p>
             <ol class="step-list">
-              <li>在上傳方式中選擇 <strong>一起上傳</strong>。</li>
-              <li>設定日期、時間、相機數量、FPS 與備註。</li>
-              <li>依照畫面上的相機區塊，點選 <strong>相機 1 點擊上傳</strong>、<strong>相機 2 點擊上傳</strong> 等區塊。</li>
-              <li>從裝置中選擇對應相機的影片檔。</li>
-              <li>影片上傳完成後，依提示設定錨點。</li>
-              <li>每個相機影片都上傳完成後，點選 <strong>上傳</strong>。</li>
+              <li><span class="zh">在上傳方式中選擇 <strong>一起上傳</strong>。</span><span class="en">In the upload mode, select <strong>Upload All Together</strong>.</span></li>
+              <li><span class="zh">設定日期、時間、相機數量、FPS(禎率)與備註。</span><span class="en">Set date, time, camera count, FPS (frame rate), and notes.</span></li>
+              <li><span class="zh">依照畫面上的相機區塊，點選 <strong>相機 1 點擊上傳</strong>、<strong>相機 2 點擊上傳</strong> 等區塊。</span><span class="en">Tap the camera blocks on screen — <strong>Camera 1 Tap to Upload</strong>, <strong>Camera 2 Tap to Upload</strong>, etc.</span></li>
+              <li><span class="zh">從裝置中選擇對應相機的影片檔。</span><span class="en">Select the corresponding video file from your device.</span></li>
+              <li><span class="zh">影片上傳完成後，依提示設定錨點。</span><span class="en">After the video uploads, set anchor points as prompted.</span></li>
+              <li><span class="zh">每個相機影片都上傳完成後，點選 <strong>上傳</strong>。</span><span class="en">Once all camera videos are uploaded, tap <strong>Upload</strong>.</span></li>
             </ol>
 
-            <h3>分別上傳影片</h3>
-            <p>如果無法一次取得所有相機影片，請使用分別上傳。</p>
+            <h3><span class="zh">Step 3B&thinsp;·&thinsp;分別上傳</span><span class="en">Step 3B&thinsp;·&thinsp;Upload Separately</span></h3>
+            <p><span class="zh">無法一次備齊所有相機影片時使用。</span><span class="en">Use when you cannot gather all camera videos at once.</span></p>
             <figure class="figure">
               <img src="assets/upload-separate-annotated.png" alt="分別上傳頁面截圖，紅框標示分別上傳、新增或選擇紀錄、基本資料、相機編號、單一影片上傳區與上傳按鈕。">
-              <figcaption>分別上傳模式可先建立一筆新紀錄，選擇本次要上傳的相機編號，再上傳該相機影片。其他相機影片可之後再補上。</figcaption>
+              <figcaption><span class="zh">分別上傳模式可先建立一筆新紀錄，選擇本次要上傳的相機編號，再上傳該相機影片。其他相機影片可之後再補上。</span><span class="en">In separate upload mode, first create a new record, select the camera number for this upload, then upload that camera's video. Remaining cameras can be added later.</span></figcaption>
             </figure>
             <ol class="step-list">
-              <li>在上傳方式中選擇 <strong>分別上傳</strong>。</li>
-              <li>選擇 <strong>新增紀錄</strong>。</li>
-              <li>設定日期、時間、相機數量、FPS 與備註。</li>
-              <li>在 <strong>第幾個相機</strong> 中選擇這次要上傳的相機編號。</li>
-              <li>點選影片區塊並選擇影片檔。</li>
-              <li>影片上傳完成後，設定錨點。</li>
-              <li>點選 <strong>上傳</strong>。</li>
+              <li><span class="zh">在上傳方式中選擇 <strong>分別上傳</strong>。</span><span class="en">In the upload mode, select <strong>Upload Separately</strong>.</span></li>
+              <li><span class="zh">選擇 <strong>新增紀錄</strong>。</span><span class="en">Select <strong>New Record</strong>.</span></li>
+              <li><span class="zh">設定日期、時間、相機數量、FPS 與備註。</span><span class="en">Set date, time, camera count, FPS, and notes.</span></li>
+              <li><span class="zh">在 <strong>第幾個相機</strong> 中選擇這次要上傳的相機編號。</span><span class="en">In <strong>Which Camera</strong>, select the camera number for this upload.</span></li>
+              <li><span class="zh">點選影片區塊並選擇影片檔。</span><span class="en">Tap the video block and select the video file.</span></li>
+              <li><span class="zh">影片上傳完成後，設定錨點。</span><span class="en">After the video uploads, set anchor points.</span></li>
+              <li><span class="zh">點選 <strong>上傳</strong>。</span><span class="en">Tap <strong>Upload</strong>.</span></li>
             </ol>
 
             <div class="callout">
-              如果尚有其他相機影片未上傳，App 會提示還需要補上的相機。之後請選擇 <strong>選擇紀錄</strong>，從未分析紀錄表中選擇要補傳的紀錄，再補上剩餘影片。
+              <span class="zh">如果尚有其他相機影片未上傳，App 會提示還需要補上的相機。之後請選擇 <strong>選擇紀錄</strong>，從未分析紀錄表中選擇要補傳的紀錄，再補上剩餘影片。</span><span class="en">If other camera videos are still missing, the app will indicate which cameras still need to be added. Select <strong>Select Record</strong>, choose the pending record from the unanalyzed records list, and upload the remaining videos.</span>
             </div>
           </div>
         </article>
 
         <article id="record" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">錄影</div>
-            <h2>現場錄影上傳</h2>
-            <p>現場錄影上傳可讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳影片進行分析。</p>
+            <div class="section-kicker"><span class="zh">錄影</span><span class="en">Record</span></div>
+            <h2><span class="zh">現場錄影上傳</span><span class="en">Live Recording &amp; Upload</span></h2>
+            <p><span class="zh">現場錄影上傳可讓多台裝置加入同一個房間，由主控裝置同步開始與停止錄影，錄完後自動上傳影片進行分析。</span><span class="en">Live Recording lets multiple devices join the same room. The master device starts and stops recording in sync, and videos are automatically uploaded for analysis when done.</span></p>
           </div>
           <div class="section-body">
-            <h3>建立錄影房間</h3>
+            <h3><span class="zh">建立錄影房間</span><span class="en">Create Recording Room</span></h3>
             <ol class="step-list">
-              <li>在主控裝置前往 <strong>錄影</strong>。</li>
-              <li>在 <strong>主控裝置</strong> 區塊選擇預計連線裝置數。</li>
-              <li>點選 <strong>建立錄影房間</strong>。</li>
-              <li>將畫面上的房間號碼提供給其他錄影手機。</li>
+              <li><span class="zh">在主控裝置前往 <strong>錄影</strong>。</span><span class="en">On the master device, go to <strong>Record</strong>.</span></li>
+              <li><span class="zh">在 <strong>主控裝置</strong> 區塊選擇預計連線裝置數。</span><span class="en">In the <strong>Master Device</strong> section, select the expected number of connected devices.</span></li>
+              <li><span class="zh">點選 <strong>建立錄影房間</strong>。</span><span class="en">Tap <strong>Create Recording Room</strong>.</span></li>
+              <li><span class="zh">將畫面上的<strong>房間號碼</strong>提供給其他錄影手機。</span><span class="en">Share the <strong>room number</strong> shown on screen with the other recording phones.</span></li>
             </ol>
             <figure class="figure">
               <img src="assets/record-room-annotated.png" alt="建立錄影房間後的畫面截圖，紅框標示房間號碼、目前身份、錄影參數設定、本機參與錄影、已連線設備清單與開始同步錄影。">
-              <figcaption>建立房間後，畫面會顯示房間號碼、主控端身份、錄影參數設定、本機參與錄影選項與已連線設備清單。請將房間號碼提供給其他錄影手機加入。</figcaption>
+              <figcaption><span class="zh">建立房間後，畫面會顯示房間號碼、主控端身份、錄影參數設定、本機參與錄影選項與已連線設備清單。請將房間號碼提供給其他錄影手機加入。</span><span class="en">After creating the room, the screen shows the room number, master identity, recording settings, local participation option, and connected device list. Share the room number with other recording phones to join.</span></figcaption>
             </figure>
 
-            <h3>加入錄影房間</h3>
+            <h3><span class="zh">加入錄影房間</span><span class="en">Join Recording Room</span></h3>
             <ol class="step-list">
-              <li>在每一台錄影手機前往 <strong>錄影</strong>。</li>
-              <li>在 <strong>錄影手機</strong> 區塊輸入房間號碼。</li>
-              <li>選擇此手機負責的相機位置，例如相機 1、相機 2。</li>
-              <li>點選 <strong>加入錄影房間</strong>。</li>
-              <li>保持在此頁面，等待主控端開始錄影。</li>
+              <li><span class="zh">在每一台錄影手機前往 <strong>錄影</strong>。</span><span class="en">On each recording phone, go to <strong>Record</strong>.</span></li>
+              <li><span class="zh">在 <strong>錄影手機</strong> 區塊輸入房間號碼。</span><span class="en">In the <strong>Recording Phone</strong> section, enter the room number.</span></li>
+              <li><span class="zh">選擇此手機負責的相機位置，例如相機 1、相機 2。</span><span class="en">Select the camera position this phone covers, e.g. Camera 1, Camera 2.</span></li>
+              <li><span class="zh">點選 <strong>加入錄影房間</strong>。</span><span class="en">Tap <strong>Join Recording Room</strong>.</span></li>
+              <li><span class="zh">保持在此頁面，等待主控端開始錄影。</span><span class="en">Stay on this page and wait for the master device to start recording.</span></li>
             </ol>
 
-            <h3>設定錄影參數</h3>
+            <h3><span class="zh">設定錄影參數</span><span class="en">Configure Recording Settings</span></h3>
             <ul>
-              <li>選手：可選擇既有選手，也可新增選手。</li>
-              <li>FPS：可選擇 30 或 60。</li>
-              <li>備註：可輸入本次測試說明。</li>
+              <li><span class="zh">選手：可選擇既有選手，也可新增選手。</span><span class="en">Runner: select an existing runner or add a new one.</span></li>
+              <li><span class="zh">FPS：可選擇 30 或 60。</span><span class="en">FPS: choose 30 or 60.</span></li>
+              <li><span class="zh">備註：可輸入本次測試說明。</span><span class="en">Notes: enter a description for this session.</span></li>
             </ul>
 
-            <h3>讓主控裝置也參與錄影</h3>
+            <h3><span class="zh">讓主控裝置也參與錄影</span><span class="en">Let the Master Device Also Record</span></h3>
             <ol class="step-list">
-              <li>在房間畫面開啟 <strong>本機參與錄影</strong>。</li>
-              <li>選擇本機相機編號。</li>
-              <li>設定好鏡頭畫面與錨點。</li>
+              <li><span class="zh">在房間畫面開啟 <strong>本機參與錄影</strong>。</span><span class="en">In the room screen, enable <strong>Local Device Participates in Recording</strong>.</span></li>
+              <li><span class="zh">選擇本機相機編號。</span><span class="en">Select this device's camera number.</span></li>
+              <li><span class="zh">設定好鏡頭畫面與錨點。</span><span class="en">Configure the camera view and anchor points.</span></li>
             </ol>
-            <p>若主控裝置只負責控制錄影，請關閉 <strong>本機參與錄影</strong>。</p>
+            <p><span class="zh">若主控裝置只負責控制錄影，請關閉 <strong>本機參與錄影</strong>。</span><span class="en">If the master device is only controlling the recording, disable <strong>Local Device Participates in Recording</strong>.</span></p>
 
-            <h3>開始與停止同步錄影</h3>
+            <h3><span class="zh">開始與停止同步錄影</span><span class="en">Start and Stop Sync Recording</span></h3>
             <ol class="step-list">
-              <li>確認已選擇或新增選手。</li>
-              <li>確認所有預計相機都已連線。</li>
-              <li>確認所有參與錄影的裝置都已就緒。</li>
-              <li>點選 <strong>開始同步錄影</strong>。</li>
-              <li>錄影結束時，主控端點選 <strong>停止錄影並上傳</strong>。</li>
+              <li><span class="zh">確認已選擇或新增選手。</span><span class="en">Confirm a runner has been selected or added.</span></li>
+              <li><span class="zh">確認所有相機都已連線。</span><span class="en">Confirm all expected cameras are connected.</span></li>
+              <li><span class="zh">確認所有參與錄影的裝置都已就緒。</span><span class="en">Confirm all participating devices are ready.</span></li>
+              <li><span class="zh">點選 <strong>開始同步錄影</strong>。</span><span class="en">Tap <strong>Start Sync Recording</strong>.</span></li>
+              <li><span class="zh">錄影結束時，主控端點選 <strong>停止錄影並上傳</strong>。</span><span class="en">When finished, the master device taps <strong>Stop Recording and Upload</strong>.</span></li>
             </ol>
           </div>
         </article>
 
         <article id="anchor" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">錨點</div>
-            <h2>設定錨點</h2>
-            <p>錨點用來標記影片中跑道或校正區域的位置，協助系統判讀影像中的實際距離。</p>
+            <div class="section-kicker"><span class="zh">錨點</span><span class="en">Anchor</span></div>
+            <h2><span class="zh">設定錨點</span><span class="en">Set Anchor Points</span></h2>
+            <p><span class="zh">錨點用來標記影片中跑道或校正區域的位置，協助系統判讀影像中的實際距離。</span><span class="en">Anchor points mark the track or calibration area in the video, helping the system determine real-world distances in the image.</span></p>
           </div>
           <div class="section-body">
             <figure class="figure">
-              <img src="assets/anchor-dialog.png" alt="設定錨點畫面截圖，左側可選取四個錨點並輸入實際距離，右側顯示上傳後預覽。">
-              <figcaption>設定錨點時，先在影像上依序點選四個角，再輸入實際距離。下方按鈕可復原、重設或確認錨點；右側會顯示上傳後的預覽畫面。</figcaption>
+              <img src="assets/anchor-dialog.png" alt="設定錨點對話框截圖，影像上標示左上、右上、右下、左下四個錨點，下方輸入上邊與下邊實際距離。">
+              <figcaption><span class="zh">依照左上→右上→右下→左下的順序點選四個錨點，再輸入上邊與下邊的實際距離（公尺），最後點選「確認錨點」。</span><span class="en">Tap the four anchor points in order — top-left → top-right → bottom-right → bottom-left — then enter the top and bottom real-world distances (metres) and tap "Confirm Anchor Points".</span></figcaption>
             </figure>
 
-            <h3>選取四個錨點</h3>
+            <h3><span class="zh">選取四個錨點</span><span class="en">Select Four Anchor Points</span></h3>
             <ol class="step-list">
-              <li>在縮圖上點選 <strong>左上</strong>。</li>
-              <li>接著點選 <strong>右上</strong>。</li>
-              <li>再點選 <strong>右下</strong>。</li>
-              <li>最後點選 <strong>左下</strong>。</li>
+              <li><span class="zh">在縮圖上點選 <strong>左上</strong>。</span><span class="en">Tap <strong>Top Left</strong> on the thumbnail.</span></li>
+              <li><span class="zh">接著點選 <strong>右上</strong>。</span><span class="en">Then tap <strong>Top Right</strong>.</span></li>
+              <li><span class="zh">再點選 <strong>右下</strong>。</span><span class="en">Then tap <strong>Bottom Right</strong>.</span></li>
+              <li><span class="zh">最後點選 <strong>左下</strong>。</span><span class="en">Finally tap <strong>Bottom Left</strong>.</span></li>
             </ol>
-            <p>設定完成後，你可以拖曳任一錨點微調位置。拖曳時會顯示放大鏡，方便精準對齊。</p>
+            <p><span class="zh">設定完成後，你可以拖曳任一錨點微調位置。拖曳時會顯示放大鏡，方便精準對齊。</span><span class="en">After placing all points, drag any anchor point to fine-tune its position. A magnifier appears while dragging for precise alignment.</span></p>
+            <figure class="figure">
+              <img src="assets/anchor-magnifier.png" alt="拖曳錨點時顯示放大鏡的截圖，方便精準對齊位置。">
+              <figcaption><span class="zh">拖曳錨點時，畫面上會出現放大鏡，協助精準對齊跑道標線或校正點。</span><span class="en">A magnifier appears on screen while dragging an anchor point, making it easier to align precisely with track markings or calibration targets.</span></figcaption>
+            </figure>
+            <figure class="figure">
+              <img src="assets/anchor-rectangle-recommended.png" alt="錨點點選後產生的矩形建議大小示意圖。">
+              <figcaption><span class="zh">錨點形成的矩形建議完整涵蓋欲校正的跑道區域，讓上邊與下邊距離可以對應到實際量測距離。</span><span class="en">The rectangle formed by anchor points should fully cover the track area to be calibrated, so the top and bottom edges correspond to measured real-world distances.</span></figcaption>
+            </figure>
+            <figure class="figure">
+              <img src="assets/anchor-rectangle-not-recommended.png" alt="錨點矩形不建議大小示意圖，矩形變成梯形且前方跑道被壓縮。">
+              <figcaption><span class="zh">不建議將錨點框得過窄或角度偏斜。若矩形變成梯形，前方跑道會被壓縮，可能影響後續距離與姿態判讀。</span><span class="en">Avoid making the anchor rectangle too narrow or skewed. If it becomes a trapezoid, the near end of the track is compressed, which may affect distance and pose estimation.</span></figcaption>
+            </figure>
 
-            <h3>輸入實際距離</h3>
-            <p>在影像下方輸入 <strong>上邊實際距離（公尺）</strong> 與 <strong>下邊實際距離（公尺）</strong>。兩個距離都必須大於 0。完成後點選 <strong>確認錨點</strong>。</p>
+            <h3><span class="zh">輸入實際距離</span><span class="en">Enter Real-World Distances</span></h3>
+            <p><span class="zh">在影像下方輸入 <strong>上邊實際距離（公尺）</strong> 與 <strong>下邊實際距離（公尺）</strong>。兩個距離都必須大於 0。完成後點選 <strong>確認錨點</strong>。</span><span class="en">Below the image, enter the <strong>Top Edge Distance (meters)</strong> and <strong>Bottom Edge Distance (meters)</strong>. Both values must be greater than 0. Tap <strong>Confirm Anchor Points</strong> when done.</span></p>
 
-            <h3>修改或略過錨點</h3>
+            <h3><span class="zh">修改或略過錨點</span><span class="en">Edit or Skip Anchor Points</span></h3>
             <ul>
-              <li>點選 <strong>復原</strong>，可移除上一個錨點。</li>
-              <li>點選 <strong>重設</strong>，可清除全部錨點。</li>
-              <li>點選右上角關閉按鈕，可略過本次錨點設定。</li>
-              <li>影片縮圖右上角顯示 <strong>錨點已設定</strong> 時，代表此相機已完成錨點設定。</li>
+              <li><span class="zh">點選 <strong>復原</strong>，可移除上一個錨點。</span><span class="en">Tap <strong>Undo</strong> to remove the last anchor point.</span></li>
+              <li><span class="zh">點選 <strong>重設</strong>，可清除全部錨點。</span><span class="en">Tap <strong>Reset</strong> to clear all anchor points.</span></li>
+              <li><span class="zh">點選右上角關閉按鈕，可略過本次錨點設定。</span><span class="en">Tap the close button in the top-right corner to skip anchor point setup for this video.</span></li>
+              <li><span class="zh">影片縮圖右上角顯示 <strong>錨點已設定</strong> 時，代表此相機已完成錨點設定。</span><span class="en">When <strong>Anchor Set</strong> appears in the top-right corner of the thumbnail, anchor points for that camera are complete.</span></li>
             </ul>
           </div>
         </article>
 
         <article id="status" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">分析狀態</div>
-            <h2>查看分析進度</h2>
-            <p>分析可能需要一段時間。當紀錄仍在處理中，回放頁會顯示進度。</p>
+            <div class="section-kicker"><span class="zh">分析狀態</span><span class="en">Analysis Status</span></div>
+            <h2><span class="zh">查看分析進度</span><span class="en">Check Analysis Status</span></h2>
+            <p><span class="zh">分析可能需要一段時間。當紀錄仍在處理中，回放頁會顯示進度。</span><span class="en">Analysis may take some time. While a record is still processing, the Playback page shows the progress.</span></p>
           </div>
           <div class="section-body">
-            <p>你可以留在回放頁等待，App 會自動更新分析狀態。分析完成後，影片、圖表與數據會出現在畫面上。</p>
+            <p><span class="zh">你可以留在回放頁等待，App 會自動更新分析狀態。分析完成後，影片、圖表與數據會出現在畫面上。</span><span class="en">Stay on the Playback page and the app will automatically update the analysis status. When analysis is complete, the video, charts, and data will appear on screen.</span></p>
           </div>
         </article>
 
         <article id="playback" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">回放</div>
-            <h2>查看分析結果</h2>
-            <p>選擇選手後，查看該選手的影片、分析圖表、影片資訊與歷史紀錄。</p>
+            <div class="section-kicker"><span class="zh">回放</span><span class="en">Playback</span></div>
+            <h2><span class="zh">回放</span><span class="en">Playback</span></h2>
+            <p><span class="zh">選擇選手後，查看該選手的影片、分析圖表、影片資訊與歷史紀錄。</span><span class="en">After selecting a runner, view their video, analysis charts, video info, and history.</span></p>
           </div>
           <div class="section-body">
             <figure class="figure">
               <img src="assets/playback-overview-annotated.png" alt="回放頁面截圖，紅框標示選擇選手、影片播放與時間軸、分析圖表、影片資訊與歷史紀錄。">
-              <figcaption>回放頁面會把影片播放區、分析圖表、影片資訊與歷史紀錄放在同一個畫面中。選擇選手後，可從歷史紀錄切換不同分析結果。</figcaption>
+              <figcaption><span class="zh">回放頁面會把影片播放區、分析圖表、影片資訊與歷史紀錄放在同一個畫面中。選擇選手後，可從歷史紀錄切換不同分析結果。</span><span class="en">The Playback page combines the video player, analysis charts, video info, and history in one view. After selecting a runner, switch between different analysis results from the history.</span></figcaption>
             </figure>
 
-            <h3>選擇選手</h3>
+            <h3><span class="zh">選擇選手</span><span class="en">Select Runner</span></h3>
             <ol class="step-list">
-              <li>點選頁面上方的 <strong>選擇選手</strong>。</li>
-              <li>從清單中選擇要查看的選手。</li>
-              <li>App 會自動載入該選手最近一次紀錄。</li>
+              <li><span class="zh">點選頁面上方的 <strong>選擇選手</strong>。</span><span class="en">Tap <strong>Select Runner</strong> at the top of the page.</span></li>
+              <li><span class="zh">從清單中選擇要查看的選手。</span><span class="en">Choose the runner you want to view from the list.</span></li>
+              <li><span class="zh">App 會自動載入該選手最近一次紀錄。</span><span class="en">The app automatically loads the runner's most recent record.</span></li>
             </ol>
-            <p>如果此選手尚無紀錄，畫面會提示你先上傳影片。</p>
+            <p><span class="zh">如果此選手尚無紀錄，畫面會提示你先上傳影片。</span><span class="en">If this runner has no records yet, the screen will prompt you to upload a video first.</span></p>
 
-            <h3>播放影片</h3>
+            <h3><span class="zh">播放影片</span><span class="en">Play Video</span></h3>
             <ul>
-              <li>點一下影片，可播放或暫停。</li>
-              <li>拖曳影片下方的滑桿，可跳到指定時間。</li>
-              <li>當影片播放時，圖表會跟著目前播放進度更新。</li>
+              <li><span class="zh">點一下影片，可播放或暫停。</span><span class="en">Tap the video once to play or pause.</span></li>
+              <li><span class="zh">拖曳影片下方的滑桿，可跳到指定時間。</span><span class="en">Drag the slider below the video to jump to a specific time.</span></li>
+              <li><span class="zh">當影片播放時，圖表會跟著目前播放進度更新。</span><span class="en">While the video plays, the charts update in sync with the current playback position.</span></li>
             </ul>
 
-            <h3>查看圖表</h3>
-            <p>回放頁會顯示 <strong>Distance, Velocity & Acceleration</strong> 與 <strong>Joint Angles</strong>。點選圖表區塊標題可以展開或收合。</p>
+            <h3><span class="zh">查看圖表</span><span class="en">View Charts</span></h3>
+            <p><span class="zh">回放頁會顯示 <strong>Distance, Velocity &amp; Acceleration</strong> 與 <strong>Joint Angles</strong>。點選圖表區塊標題可以展開或收合。</span><span class="en">The Playback page shows <strong>Distance, Velocity &amp; Acceleration</strong> and <strong>Joint Angles</strong> charts. Tap a chart section title to expand or collapse it.</span></p>
 
-            <h3>查看影片資訊與歷史紀錄</h3>
-            <p>影片資訊會顯示選手姓名、日期時間、相機數量、FPS、平均速度、平均加速度、平均步幅、總時間與備註。在歷史紀錄表中，點選任一列即可切換到該次紀錄。</p>
+            <h3><span class="zh">查看影片資訊與歷史紀錄</span><span class="en">View Video Info and History</span></h3>
+            <p><span class="zh">影片資訊會顯示選手姓名、日期時間、相機數量、FPS、平均速度、平均加速度、平均步幅、總時間與備註。在歷史紀錄表中，點選任一列即可切換到該次紀錄。</span><span class="en">Video info shows runner name, date/time, camera count, FPS, average speed, average acceleration, average stride, total time, and notes. In the history table, tap any row to switch to that record.</span></p>
           </div>
         </article>
 
         <article id="troubleshooting" class="section searchable">
           <div class="section-header">
-            <div class="section-kicker">常見狀況</div>
-            <h2>取得協助</h2>
-            <p>遇到問題時，請先依照下列項目檢查。</p>
+            <div class="section-kicker"><span class="zh">常見狀況</span><span class="en">Troubleshooting</span></div>
+            <h2><span class="zh">取得協助</span><span class="en">Get Help</span></h2>
+            <p><span class="zh">遇到問題時，請先依照下列項目檢查。</span><span class="en">If you run into an issue, check the items below first.</span></p>
           </div>
           <div class="section-body">
             <details open>
-              <summary>找不到選手</summary>
-              <p>請確認目前在正確頁面，並等待選手清單載入完成。若仍找不到，請使用 <strong>新增選手</strong> 建立。</p>
+              <summary><span class="zh">找不到選手</span><span class="en">Cannot find runner</span></summary>
+              <p><span class="zh">請確認目前在正確頁面，並等待選手清單載入完成。若仍找不到，請使用 <strong>新增選手</strong> 建立。</span><span class="en">Make sure you are on the correct page and wait for the runner list to finish loading. If still not found, use <strong>Add Runner</strong> to create one.</span></p>
             </details>
             <details>
-              <summary>無法開始同步錄影</summary>
+              <summary><span class="zh">無法開始同步錄影</span><span class="en">Cannot start sync recording</span></summary>
               <ul>
-                <li>確認是否已選擇選手。</li>
-                <li>確認所有相機是否都已加入房間。</li>
-                <li>確認每台錄影裝置是否已橫放並顯示就緒。</li>
-                <li>確認裝置是否允許瀏覽器或 App 使用相機權限。</li>
+                <li><span class="zh">確認是否已選擇選手。</span><span class="en">Confirm a runner has been selected.</span></li>
+                <li><span class="zh">確認所有相機是否都已加入房間。</span><span class="en">Confirm all cameras have joined the room.</span></li>
+                <li><span class="zh">確認每台錄影裝置是否已橫放並顯示就緒。</span><span class="en">Confirm each recording device is in landscape orientation and shows ready.</span></li>
+                <li><span class="zh">確認裝置是否允許瀏覽器或 App 使用相機權限。</span><span class="en">Confirm the device has granted camera permission to the browser or app.</span></li>
               </ul>
             </details>
             <details>
-              <summary>上傳時提示「請上傳所有視頻」</summary>
-              <p>一起上傳模式需要所有相機影片都已上傳。請依照相機數量補齊每個相機區塊後，再點選 <strong>上傳</strong>。</p>
+              <summary><span class="zh">上傳時提示「請上傳所有視頻」</span><span class="en">Upload prompt: "Please upload all videos"</span></summary>
+              <p><span class="zh">一起上傳模式需要所有相機影片都已上傳。請依照相機數量補齊每個相機區塊後，再點選 <strong>上傳</strong>。</span><span class="en">Upload All Together mode requires all camera videos to be uploaded. Fill in every camera block according to the camera count, then tap <strong>Upload</strong>.</span></p>
             </details>
             <details>
-              <summary>分別上傳後沒有進入回放頁</summary>
-              <p>這代表此紀錄仍缺少其他相機影片。請依照提示補上剩餘相機影片。所有影片補齊後，App 才會進入回放頁。</p>
+              <summary><span class="zh">分別上傳後沒有進入回放頁</span><span class="en">Not redirected to Playback after uploading separately</span></summary>
+              <p><span class="zh">這代表此紀錄仍缺少其他相機影片。請依照提示補上剩餘相機影片。所有影片補齊後，App 才會進入回放頁。</span><span class="en">This means the record is still missing other camera videos. Follow the prompt to upload the remaining videos. The app will navigate to Playback only after all videos are complete.</span></p>
             </details>
             <details>
-              <summary>分析結果顯示「分析中」</summary>
-              <p>影片已送出，但分析尚未完成。請留在回放頁等待，或稍後再回來查看同一筆紀錄。</p>
+              <summary><span class="zh">分析結果顯示「分析中」</span><span class="en">Analysis result shows "Processing"</span></summary>
+              <p><span class="zh">影片已送出，但分析尚未完成。請留在回放頁等待，或稍後再回來查看同一筆紀錄。</span><span class="en">The video has been submitted but analysis is not yet complete. Stay on the Playback page to wait, or come back later to check the same record.</span></p>
             </details>
             <details>
-              <summary>分析失敗</summary>
-              <p>若歷史紀錄提示分析失敗，請重新上傳影片。若多次失敗，請聯繫系統管理者，並提供選手姓名、日期時間與備註。</p>
+              <summary><span class="zh">分析失敗</span><span class="en">Analysis failed</span></summary>
+              <p><span class="zh">若歷史紀錄提示分析失敗，請重新上傳影片。若多次失敗，請聯繫系統管理者，並提供選手姓名、日期時間與備註。</span><span class="en">If the history shows analysis failed, re-upload the video. If it fails multiple times, contact your system administrator with the runner name, date/time, and notes.</span></p>
             </details>
             <details>
-              <summary>相機畫面無法顯示</summary>
+              <summary><span class="zh">相機畫面無法顯示</span><span class="en">Camera view not showing</span></summary>
               <ul>
-                <li>確認裝置是否有可用相機。</li>
-                <li>確認是否已允許相機權限。</li>
-                <li>確認是否有其他 App 正在使用相機。</li>
-                <li>確認瀏覽器是否支援相機錄影功能。</li>
+                <li><span class="zh">確認裝置是否有可用相機。</span><span class="en">Confirm the device has an available camera.</span></li>
+                <li><span class="zh">確認是否已允許相機權限。</span><span class="en">Confirm camera permission has been granted.</span></li>
+                <li><span class="zh">確認是否有其他 App 正在使用相機。</span><span class="en">Confirm no other app is currently using the camera.</span></li>
+                <li><span class="zh">確認瀏覽器是否支援相機錄影功能。</span><span class="en">Confirm the browser supports camera recording.</span></li>
               </ul>
-              <p>重新整理頁面後，再次加入錄影房間。</p>
+              <p><span class="zh">重新整理頁面後，再次加入錄影房間。</span><span class="en">Refresh the page and rejoin the recording room.</span></p>
             </details>
           </div>
         </article>
@@ -942,7 +1011,7 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      百米分析使用手冊。此頁為本專案的靜態操作指南，可直接由瀏覽器開啟。
+      <span class="zh">百米分析使用手冊。此頁為本專案的靜態操作指南，可直接由瀏覽器開啟。</span><span class="en">Sprint Analysis User Guide. This page is a static reference for this project and can be opened directly in a browser.</span>
     </div>
   </footer>
 
@@ -964,6 +1033,50 @@
 
       noResults.classList.toggle('show', visibleCount === 0);
     });
+
+    const tocAnchors = Array.from(document.querySelectorAll('.toc a'));
+    const articleSections = Array.from(document.querySelectorAll('article[id]'));
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          tocAnchors.forEach((a) => a.classList.remove('active'));
+          const active = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+
+    articleSections.forEach((el) => sectionObserver.observe(el));
+  </script>
+
+  <script>
+  (function(){
+    const btn = document.getElementById('lang-btn');
+    const saved = localStorage.getItem('manual-lang') || 'zh';
+    document.body.classList.add('lang-' + saved);
+    btn.textContent = saved === 'zh' ? 'EN' : '中文';
+
+    function updatePlaceholder(lang) {
+      const searchBox = document.getElementById('manualSearch');
+      if (searchBox) {
+        searchBox.placeholder = lang === 'zh'
+          ? (searchBox.dataset.placeholderZh || '在手冊中搜尋')
+          : (searchBox.dataset.placeholderEn || 'Search the guide');
+      }
+    }
+    updatePlaceholder(saved);
+
+    btn.addEventListener('click', function(){
+      const isZh = document.body.classList.contains('lang-zh');
+      document.body.classList.toggle('lang-zh', !isZh);
+      document.body.classList.toggle('lang-en', isZh);
+      btn.textContent = isZh ? '中文' : 'EN';
+      const newLang = isZh ? 'en' : 'zh';
+      localStorage.setItem('manual-lang', newLang);
+      updatePlaceholder(newLang);
+    });
+  })();
   </script>
 </body>
 </html>
