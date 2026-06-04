@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage>
       appBar: AppBar(
         title: Text(
           _controller.selectedIndex == 0
-              ? "回放"
+              ? "查看結果"
               : _controller.selectedIndex == 1
               ? "上傳"
               : "錄影",
@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage>
                   controller: _controller,
                   showToggleButton: false,
                   items: [
-                    SidebarXItem(icon: Icons.play_arrow, label: "回放"),
+                    SidebarXItem(icon: Icons.play_arrow, label: "查看結果"),
                     SidebarXItem(icon: Icons.upload, label: "上傳"),
                     SidebarXItem(icon: Icons.videocam, label: "錄影"),
                   ],

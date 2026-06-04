@@ -1,0 +1,10 @@
+cameras:
+  - video_path: /home/jeter/runner-analysis-pipeline/IMG_2532.mp4
+    crop: [0, 0, 1920, 1080]
+    roi_x: [0, 1920]
+    roi_y: [0, 1080]
+    distance_m: 20.0
+
+output_dir: /home/jeter/runner-analysis-pipeline/output_img2532_pose
+auto_crop: true
+show_overlay: false
