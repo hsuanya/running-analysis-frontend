@@ -847,11 +847,6 @@
               <li><span class="zh">點選右上角<strong>全螢幕</strong>圖示放大檢查畫面構圖。</span><span class="en">Tap the <strong>fullscreen</strong> icon in the top-right to expand and inspect the framing.</span></li>
               <li><span class="zh">畫面左上角出現<strong>錨點已設定</strong>標示時，代表此相機已完成錨點設定。</span><span class="en">When the <strong>Anchor Set</strong> badge appears in the top-left, the anchor points for this camera are configured.</span></li>
             </ul>
-            <figure class="figure">
-              <img src="assets/record-camera-view.png" alt="錄影手機相機畫面截圖，顯示縮放滑桿、更換鏡頭按鈕、錨點已設定標示與開始錄影按鈕。">
-              <figcaption><span class="zh">加入房間後的相機畫面：左側為縮放滑桿（目前 0.5x）、底部可更換鏡頭、左上角顯示「錨點已設定」、右下角為「開始錄影」按鈕（由主控端觸發）。</span><span class="en">Camera view after joining the room: zoom slider on the left (currently 0.5×), switch camera at the bottom, "Anchor Set" badge top-left, and "Start Recording" button bottom-right (triggered by the master device).</span></figcaption>
-            </figure>
-
             <h3><span class="zh">設定錄影參數</span><span class="en">Configure Recording Settings</span></h3>
             <ul>
               <li><span class="zh">選手：可選擇既有選手，也可新增選手。</span><span class="en">Runner: select an existing runner or add a new one.</span></li>
@@ -897,6 +892,18 @@
               <li><span class="zh">再點選 <strong>右下</strong>。</span><span class="en">Then tap <strong>Bottom Right</strong>.</span></li>
               <li><span class="zh">最後點選 <strong>左下</strong>。</span><span class="en">Finally tap <strong>Bottom Left</strong>.</span></li>
             </ol>
+
+            <h3><span class="zh">輸入實際距離</span><span class="en">Enter Real-World Distances</span></h3>
+            <p><span class="zh">在影像下方輸入 <strong>上邊實際距離（公尺）</strong> 與 <strong>下邊實際距離（公尺）</strong>。兩個距離都必須大於 0。完成後點選 <strong>確認錨點</strong>。</span><span class="en">Below the image, enter the <strong>Top Edge Distance (meters)</strong> and <strong>Bottom Edge Distance (meters)</strong>. Both values must be greater than 0. Tap <strong>Confirm Anchor Points</strong> when done.</span></p>
+
+            <h3><span class="zh">修改或略過錨點</span><span class="en">Edit or Skip Anchor Points</span></h3>
+            <ul>
+              <li><span class="zh">點選 <strong>復原</strong>，可移除上一個錨點。</span><span class="en">Tap <strong>Undo</strong> to remove the last anchor point.</span></li>
+              <li><span class="zh">點選 <strong>重設</strong>，可清除全部錨點。</span><span class="en">Tap <strong>Reset</strong> to clear all anchor points.</span></li>
+              <li><span class="zh">點選右上角關閉按鈕，可略過本次錨點設定。</span><span class="en">Tap the close button in the top-right corner to skip anchor point setup for this video.</span></li>
+              <li><span class="zh">影片縮圖右上角顯示 <strong>錨點已設定</strong> 時，代表此相機已完成錨點設定。</span><span class="en">When <strong>Anchor Set</strong> appears in the top-right corner of the thumbnail, anchor points for that camera are complete.</span></li>
+            </ul>
+
             <p><span class="zh">設定完成後，你可以拖曳任一錨點微調位置。拖曳時會顯示放大鏡，方便精準對齊。</span><span class="en">After placing all points, drag any anchor point to fine-tune its position. A magnifier appears while dragging for precise alignment.</span></p>
             <figure class="figure">
               <img src="assets/anchor-magnifier.png" alt="拖曳錨點時顯示放大鏡的截圖，方便精準對齊位置。">
@@ -910,17 +917,10 @@
               <img src="assets/anchor-rectangle-not-recommended.png" alt="錨點矩形不建議大小示意圖，矩形變成梯形且前方跑道被壓縮。">
               <figcaption><span class="zh">不建議將錨點框得過窄或角度偏斜。若矩形變成梯形，前方跑道會被壓縮，可能影響後續距離與姿態判讀。</span><span class="en">Avoid making the anchor rectangle too narrow or skewed. If it becomes a trapezoid, the near end of the track is compressed, which may affect distance and pose estimation.</span></figcaption>
             </figure>
-
-            <h3><span class="zh">輸入實際距離</span><span class="en">Enter Real-World Distances</span></h3>
-            <p><span class="zh">在影像下方輸入 <strong>上邊實際距離（公尺）</strong> 與 <strong>下邊實際距離（公尺）</strong>。兩個距離都必須大於 0。完成後點選 <strong>確認錨點</strong>。</span><span class="en">Below the image, enter the <strong>Top Edge Distance (meters)</strong> and <strong>Bottom Edge Distance (meters)</strong>. Both values must be greater than 0. Tap <strong>Confirm Anchor Points</strong> when done.</span></p>
-
-            <h3><span class="zh">修改或略過錨點</span><span class="en">Edit or Skip Anchor Points</span></h3>
-            <ul>
-              <li><span class="zh">點選 <strong>復原</strong>，可移除上一個錨點。</span><span class="en">Tap <strong>Undo</strong> to remove the last anchor point.</span></li>
-              <li><span class="zh">點選 <strong>重設</strong>，可清除全部錨點。</span><span class="en">Tap <strong>Reset</strong> to clear all anchor points.</span></li>
-              <li><span class="zh">點選右上角關閉按鈕，可略過本次錨點設定。</span><span class="en">Tap the close button in the top-right corner to skip anchor point setup for this video.</span></li>
-              <li><span class="zh">影片縮圖右上角顯示 <strong>錨點已設定</strong> 時，代表此相機已完成錨點設定。</span><span class="en">When <strong>Anchor Set</strong> appears in the top-right corner of the thumbnail, anchor points for that camera are complete.</span></li>
-            </ul>
+            <figure class="figure">
+              <img src="assets/record-camera-view.png" alt="錄影手機相機畫面截圖，顯示縮放滑桿、更換鏡頭按鈕、錨點已設定標示與開始錄影按鈕。">
+              <figcaption><span class="zh">拖曳並確認好錨點後，點擊「開始錄影」即開始錄影。</span><span class="en">Once anchor points are set and confirmed, tap "Start Recording" to begin.</span></figcaption>
+            </figure>
           </div>
         </article>
 
