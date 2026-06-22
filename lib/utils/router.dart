@@ -5,6 +5,8 @@ import 'package:frontend/feature/playback/playback_page.dart';
 import 'package:frontend/feature/upload/upload_page.dart';
 import 'package:frontend/feature/record/record_page.dart';
 import 'package:frontend/feature/splash/splash_page.dart';
+import 'package:frontend/feature/policy/policy_page.dart';
+import 'package:frontend/feature/support/support_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
@@ -47,6 +49,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         pageBuilder: (context, state) =>
             _buildFadePage(state, const SplashPage()),
+      ),
+      GoRoute(
+        path: '/policy',
+        pageBuilder: (context, state) =>
+            _buildFadePage(state, const PolicyPage()),
+      ),
+      GoRoute(
+        path: '/support',
+        pageBuilder: (context, state) =>
+            _buildFadePage(state, const SupportPage()),
       ),
       ShellRoute(
         builder: (context, state, child) => HomePage(child: child),

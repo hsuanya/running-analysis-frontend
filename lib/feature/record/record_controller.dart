@@ -1,19 +1,19 @@
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:frontend/backend/backend_interface.dart';
-import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
+import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/utils/api.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RecordController extends StateNotifier<RecordState> {
   WebSocketChannel? _channel;
-  final BackendInterface _backend;
+  final Ref _ref;
 
-  RecordController(this._backend) : super(RecordState());
+  RecordController(this._ref) : super(RecordState());
 
   String get _wsUrl {
     final baseUrl = API.baseUrl;
@@ -58,6 +58,7 @@ class RecordController extends StateNotifier<RecordState> {
           runnerName: msg.data['runnerName'],
           fps: msg.data['fps'] ?? 60,
           note: msg.data['note'] ?? '',
+          clearSharedRunSessionId: true,
         );
         break;
       case RecordMessageType.stopRecording:
@@ -93,6 +94,7 @@ class RecordController extends StateNotifier<RecordState> {
       role: RecordRole.master,
       expectedCameraCount: expectedCameraCount,
       myCameraIndex: state.isRecordingEnabled ? state.myCameraIndex : null,
+      clearSharedRunSessionId: true,
     );
     _connect();
     final msg = RecordMessage(
@@ -158,6 +160,7 @@ class RecordController extends StateNotifier<RecordState> {
       role: RecordRole.slave,
       roomId: roomId,
       myCameraIndex: cameraIndex,
+      clearSharedRunSessionId: true,
     );
     _connect();
     final msg = RecordMessage(
@@ -176,13 +179,13 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   Future<String> addRunner(String name) async {
-    final runnerId = await _backend.addRunner(name);
+    final runnerInfo = await _ref.read(uploadRunnerListProvider.notifier).addRunner(name);
     state = state.copyWith(
-      runnerId: runnerId,
+      runnerId: runnerInfo.id,
       runnerName: name,
       runnerSource: RunnerSource.select,
     );
-    return runnerId;
+    return runnerInfo.id;
   }
 
   void setFps(int fps) {
@@ -253,6 +256,5 @@ class RecordController extends StateNotifier<RecordState> {
 
 final recordControllerProvider =
     StateNotifierProvider.autoDispose<RecordController, RecordState>((ref) {
-      final backend = ref.watch(backendProvider);
-      return RecordController(backend);
+      return RecordController(ref);
     });

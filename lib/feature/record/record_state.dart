@@ -66,6 +66,7 @@ class RecordState {
     String? note,
     AnchorResult? anchorResult,
     bool clearAnchor = false,
+    bool clearSharedRunSessionId = false,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -75,7 +76,9 @@ class RecordState {
       error: error,
       myDeviceInfoIndex: myDeviceInfoIndex ?? this.myDeviceInfoIndex,
       myCameraIndex: myCameraIndex ?? this.myCameraIndex,
-      sharedRunSessionId: sharedRunSessionId ?? this.sharedRunSessionId,
+      sharedRunSessionId: clearSharedRunSessionId
+          ? null
+          : (sharedRunSessionId ?? this.sharedRunSessionId),
       expectedCameraCount: expectedCameraCount ?? this.expectedCameraCount,
       isRecordingEnabled: isRecordingEnabled ?? this.isRecordingEnabled,
       isPhysicallyReady: isPhysicallyReady ?? this.isPhysicallyReady,

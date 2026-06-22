@@ -428,6 +428,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
     required bool isFullscreen,
     bool isAnchorMode = false,
     Widget? anchorOverlay,
+    Uint8List? snapshotBytes,
   }) {
     final state = ref.watch(recordControllerProvider);
     final controller = ref.read(recordControllerProvider.notifier);
@@ -475,10 +476,16 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              RotatedBox(
-                quarterTurns: quarterTurns,
-                child: CameraPreview(_controller!),
-              ),
+              if (isAnchorMode && snapshotBytes != null)
+                Image.memory(
+                  snapshotBytes,
+                  fit: BoxFit.fill,
+                )
+              else
+                RotatedBox(
+                  quarterTurns: quarterTurns,
+                  child: CameraPreview(_controller!),
+                ),
               // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
               if (anchorOverlay != null) anchorOverlay,
             ],
@@ -1011,6 +1018,7 @@ class _FullScreenCameraDialogState
                 isFullscreen: true,
                 isAnchorMode: _anchorMode,
                 anchorOverlay: _anchorMode ? _buildAnchorOverlay() : null,
+                snapshotBytes: _snapshotBytes,
               ),
             ),
           ),
