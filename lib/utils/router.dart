@@ -5,10 +5,11 @@ import 'package:frontend/feature/playback/playback_page.dart';
 import 'package:frontend/feature/upload/upload_page.dart';
 import 'package:frontend/feature/record/record_page.dart';
 import 'package:frontend/feature/splash/splash_page.dart';
+import 'package:frontend/feature/manual/manual_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
-enum AppRoute { playback, upload, record }
+enum AppRoute { playback, upload, record, manual }
 
 Page<dynamic> _buildFadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage(
@@ -75,6 +76,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: AppRoute.record.name,
             pageBuilder: (context, state) {
               return _buildFadePage(state, const RecordPage());
+            },
+          ),
+          GoRoute(
+            path: '/manual',
+            name: AppRoute.manual.name,
+            pageBuilder: (context, state) {
+              return _buildFadePage(state, const ManualPage());
             },
           ),
         ],

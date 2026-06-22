@@ -5,6 +5,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/feature/playback/widget/angle_data_table_view.dart';
 import 'package:frontend/feature/playback/widget/video_player_view.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/widget/graph_list_view.dart';
@@ -201,6 +202,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                   delegate: SliverChildListDelegate([
                     VideoPlayerView(),
                     GraphListView(),
+                    RoundedBoxWidget(child: AngleDataTableView()),
                     RoundedBoxWidget(child: VideoInfoView()),
                     RoundedBoxWidget(child: RunnerHistoryView()),
                   ]),

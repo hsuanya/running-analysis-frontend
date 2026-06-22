@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/backend/backend_interface.dart';
+import 'package:frontend/entities/angle_data.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
@@ -29,6 +30,15 @@ class RestBackendRepo implements BackendInterface {
       method: API.getGraphData(runSessionId)[0],
     );
     return (response as List).map((e) => GraphData.fromJson(e)).toList();
+  }
+
+  @override
+  Future<AngleData> getAngleData(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getAngleData(runSessionId)[1],
+      method: API.getAngleData(runSessionId)[0],
+    );
+    return AngleData.fromJson(response);
   }
 
   @override

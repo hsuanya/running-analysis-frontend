@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _controller.addListener(() {
       if (_updatingFromRouter) return;
       final index = _controller.selectedIndex;
@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage>
       if (index == 0) context.goNamed(AppRoute.playback.name);
       if (index == 1) context.goNamed(AppRoute.upload.name);
       if (index == 2) context.goNamed(AppRoute.record.name);
+      if (index == 3) context.goNamed(AppRoute.manual.name);
     });
   }
 
@@ -59,6 +60,9 @@ class _HomePageState extends State<HomePage>
     } else if (location.startsWith('/record')) {
       _controller.selectIndex(2);
       _tabController.index = 2;
+    } else if (location.startsWith('/manual')) {
+      _controller.selectIndex(3);
+      _tabController.index = 3;
     }
     _isSidebarOpen = false;
     _updatingFromRouter = false;
@@ -76,7 +80,9 @@ class _HomePageState extends State<HomePage>
               ? "查看結果"
               : _controller.selectedIndex == 1
               ? "上傳"
-              : "錄影",
+              : _controller.selectedIndex == 2
+              ? "錄影"
+              : "使用手冊",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color.fromARGB(255, 121, 169, 234),
@@ -109,6 +115,7 @@ class _HomePageState extends State<HomePage>
                     SidebarXItem(icon: Icons.play_arrow, label: "查看結果"),
                     SidebarXItem(icon: Icons.upload, label: "上傳"),
                     SidebarXItem(icon: Icons.videocam, label: "錄影"),
+                    SidebarXItem(icon: Icons.menu_book, label: "使用手冊"),
                   ],
                 ),
               ),
@@ -126,6 +133,7 @@ class _HomePageState extends State<HomePage>
                 TabItem(icon: Icons.play_arrow),
                 TabItem(icon: Icons.upload),
                 TabItem(icon: Icons.videocam),
+                TabItem(icon: Icons.menu_book),
               ],
               backgroundColor: Color.fromARGB(255, 121, 169, 234),
             )

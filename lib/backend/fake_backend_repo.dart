@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:frontend/backend/backend_interface.dart';
+import 'package:frontend/entities/angle_data.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
@@ -80,6 +81,36 @@ class FakeBackendRepo implements BackendInterface {
           ],
         ),
       ],
+    );
+  }
+
+  @override
+  Future<AngleData> getAngleData(String runSessionId) {
+    return Future.delayed(
+      const Duration(seconds: 1),
+      () => AngleData(
+        columns: const [
+          'left_knee_angle',
+          'right_knee_angle',
+          'left_hip_angle',
+          'right_hip_angle',
+          'pelvis_torso_angle',
+        ],
+        samples: List.generate(
+          120,
+          (i) => AngleSample(
+            frame: i,
+            timeSec: i / 60.0,
+            values: {
+              'left_knee_angle': 100 + sin(i / 10) * 25,
+              'right_knee_angle': 105 + cos(i / 10) * 25,
+              'left_hip_angle': 120 + sin(i / 12) * 15,
+              'right_hip_angle': 118 + cos(i / 12) * 15,
+              'pelvis_torso_angle': 70 + sin(i / 20) * 8,
+            },
+          ),
+        ),
+      ),
     );
   }
 

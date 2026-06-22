@@ -58,6 +58,8 @@ dependencies:
   camera: ^0.11.1
   lottie: ^3.3.1
   convex_bottom_bar: ^3.2.0
+  webview_flutter: ^4.10.0
+  webview_flutter_web: ^0.2.3+4
   toastification: ^3.0.3
   image: ^4.8.0
   expansion_tile_group: ^2.3.0

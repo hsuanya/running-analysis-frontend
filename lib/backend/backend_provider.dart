@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/fake_backend_repo.dart';
 import 'package:frontend/backend/rest_backend_repo.dart';
+import 'package:frontend/entities/angle_data.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
@@ -24,6 +25,14 @@ final graphDataProvider = FutureProvider.autoDispose
       final backend = ref.watch(backendProvider);
       return backend.getGraphData(runSessionId);
     });
+
+final angleDataProvider = FutureProvider.autoDispose.family<AngleData, String>((
+  ref,
+  runSessionId,
+) {
+  final backend = ref.watch(backendProvider);
+  return backend.getAngleData(runSessionId);
+});
 
 final videoInfoProvider = FutureProvider.autoDispose
     .family<RunSessionInfo, String>((ref, runSessionId) async {

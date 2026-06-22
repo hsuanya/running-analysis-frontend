@@ -29,6 +29,11 @@ class API {
     "$baseUrl/run_session/$runSessionId/graphs",
   ];
 
+  static List getAngleData(String runSessionId) => [
+    DioMethod.get,
+    "$baseUrl/run_session/$runSessionId/angles",
+  ];
+
   static List getRunSessionVideo(String runSessionId) => [
     DioMethod.get,
     "$baseUrl/run_session/$runSessionId/video",
