@@ -1,10 +1,7 @@
 import 'package:frontend/utils/net_utils.dart';
 
 class API {
-  static const baseUrl = String.fromEnvironment(
-    "API_BASE_URL",
-    defaultValue: "https://catslab.ee.ncku.edu.tw/running_analysis/api",
-  );
+  static const baseUrl = "https://catslab.ee.ncku.edu.tw/running_analysis/api";
 
   static List getRunner = [DioMethod.get, "$baseUrl/runner"];
   static List addRunner = [DioMethod.post, "$baseUrl/runner"];
@@ -33,6 +30,13 @@ class API {
     DioMethod.get,
     "$baseUrl/run_session/$runSessionId/angles",
   ];
+
+  static String getRunSessionReportUrl(String runSessionId) =>
+      "$baseUrl/run_session/$runSessionId/report";
+
+  static String getRunSessionAnglesCsvUrl(String runSessionId) =>
+      "$baseUrl/run_session/$runSessionId/angles.csv";
+
 
   static List getRunSessionVideo(String runSessionId) => [
     DioMethod.get,

@@ -115,6 +115,16 @@ class RestBackendRepo implements BackendInterface {
   }
 
   @override
+  Uri getRunSessionReportUrl(String runSessionId) {
+    return Uri.parse(API.getRunSessionReportUrl(runSessionId));
+  }
+
+  @override
+  Uri getRunSessionAnglesCsvUrl(String runSessionId) {
+    return Uri.parse(API.getRunSessionAnglesCsvUrl(runSessionId));
+  }
+
+  @override
   Future<UploadSeperatelyStatus> uploadSeperatelyNew(
     String runnerId,
     DateTime date,

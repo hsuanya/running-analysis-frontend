@@ -200,6 +200,18 @@ class FakeBackendRepo implements BackendInterface {
   }
 
   @override
+  Uri getRunSessionReportUrl(String runSessionId) {
+    return Uri.parse('https://example.com/run_session/$runSessionId/report');
+  }
+
+  @override
+  Uri getRunSessionAnglesCsvUrl(String runSessionId) {
+    return Uri.parse(
+      'https://example.com/run_session/$runSessionId/angles.csv',
+    );
+  }
+
+  @override
   Future<UploadSeperatelyStatus> uploadSeperatelyNew(
     String runnerId,
     DateTime date,
