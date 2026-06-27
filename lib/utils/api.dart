@@ -26,6 +26,12 @@ class API {
     "$baseUrl/run_session/$runSessionId/graphs",
   ];
 
+  static String getRunSessionReportUrl(String runSessionId) =>
+      "$baseUrl/run_session/$runSessionId/report";
+
+  static String getRunSessionAnglesCsvUrl(String runSessionId) =>
+      "$baseUrl/run_session/$runSessionId/angles.csv";
+
   static List getRunSessionVideo(String runSessionId) => [
     DioMethod.get,
     "$baseUrl/run_session/$runSessionId/video",

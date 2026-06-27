@@ -14,6 +14,8 @@ abstract class BackendInterface {
   Future<List<UnanalyzedRunSessionInfo>> getRunnerUnanalyzedHistory(
     String runnerId,
   );
+  Uri getRunSessionReportUrl(String runSessionId);
+  Uri getRunSessionAnglesCsvUrl(String runSessionId);
 
   Future<String> addRunner(String name);
   Future<String> uploadAllInfo(

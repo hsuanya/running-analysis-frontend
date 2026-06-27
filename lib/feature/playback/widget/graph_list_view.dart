@@ -6,7 +6,9 @@ import 'package:frontend/backend/video_playback_state_provider.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/video_playback.dart';
 import 'package:frontend/feature/playback/placeholder/graph_list_placeholder.dart';
+import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/download_file.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/graph_list_shimmer.dart';
 import 'package:frontend/widget/processing_progress_widget.dart';
@@ -43,6 +45,7 @@ class GraphListView extends ConsumerWidget {
         }
 
         final graphData = ref.watch(graphDataProvider(videoId));
+        final backend = ref.watch(backendProvider);
 
         return AsyncValueWidget(
           value: graphData,
@@ -57,6 +60,13 @@ class GraphListView extends ConsumerWidget {
 
             return Column(
               children: [
+                _ReportDownloadBar(
+                  info: info,
+                  graphs: graphs,
+                  reportUrl: backend.getRunSessionReportUrl(videoId),
+                  anglesCsvUrl: backend.getRunSessionAnglesCsvUrl(videoId),
+                ),
+                const SizedBox(height: 8),
                 RoundedBoxWidget(
                   child: _GraphSection(
                     title: 'Distance, Velocity & Acceleration',
@@ -81,6 +91,77 @@ class GraphListView extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _ReportDownloadBar extends StatelessWidget {
+  final RunSessionInfo info;
+  final List<GraphData> graphs;
+  final Uri reportUrl;
+  final Uri anglesCsvUrl;
+
+  const _ReportDownloadBar({
+    required this.info,
+    required this.graphs,
+    required this.reportUrl,
+    required this.anglesCsvUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RoundedBoxWidget(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.assignment_rounded,
+              color: Colors.white70,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Analysis Report',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: supportsFileDownload ? '下載 HTML 報表' : 'App 版本暫不支援下載報告',
+              icon: const Icon(
+                Icons.description_rounded,
+                color: Colors.white70,
+                size: 22,
+              ),
+              onPressed: graphs.isEmpty || !supportsFileDownload
+                  ? null
+                  : () => downloadFileFromUrl(
+                      filename: 'running_report_${info.runSessionId}.html',
+                      url: reportUrl,
+                    ),
+            ),
+            IconButton(
+              tooltip: supportsFileDownload ? '下載角度 CSV' : 'App 版本暫不支援下載報告',
+              icon: const Icon(
+                Icons.download_rounded,
+                color: Colors.white70,
+                size: 22,
+              ),
+              onPressed: graphs.isEmpty || !supportsFileDownload
+                  ? null
+                  : () => downloadFileFromUrl(
+                      filename: 'angles_${info.runSessionId}.csv',
+                      url: anglesCsvUrl,
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
