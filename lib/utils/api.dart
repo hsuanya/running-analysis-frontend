@@ -31,6 +31,16 @@ class API {
     "$baseUrl/run_session/$runSessionId/video",
   ];
 
+  static List getRunSessionPdf(String runSessionId) => [
+    DioMethod.get,
+    "$baseUrl/run_session/$runSessionId/pdf",
+  ];
+
+  static List getRunSessionCsv(String runSessionId) => [
+    DioMethod.get,
+    "$baseUrl/run_session/$runSessionId/csv",
+  ];
+
   static List getTempVideoThumbnail(String tempVideoId) => [
     DioMethod.get,
     "$baseUrl/temp_video/$tempVideoId/thumbnail",
@@ -51,5 +61,15 @@ class API {
   static List uploadSeperatelySelect = [
     DioMethod.post,
     "$baseUrl/upload_seperately_select",
+  ];
+
+  static List deleteRunSession(String runSessionId) => [
+    DioMethod.delete,
+    "$baseUrl/run_session/$runSessionId",
+  ];
+
+  static List deleteRunner(String runnerId) => [
+    DioMethod.delete,
+    "$baseUrl/runner/$runnerId",
   ];
 }

@@ -42,4 +42,8 @@ abstract class BackendInterface {
     AnchorResult? anchors,
   );
   Future<String> uploadVideo(int index, UploadVideoFile file);
+  Future<List<int>> getRunSessionPdf(String runSessionId);
+  Future<List<int>> getRunSessionCsv(String runSessionId);
+  Future<void> deleteRunSession(String runSessionId);
+  Future<void> deleteRunner(String runnerId);
 }

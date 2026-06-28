@@ -215,4 +215,27 @@ class FakeBackendRepo implements BackendInterface {
     kRunners.add(RunnerInfo(id: runnerId, name: name, lastVideoId: ''));
     return Future.delayed(const Duration(seconds: 1), () => runnerId);
   }
+
+  @override
+  Future<List<int>> getRunSessionPdf(String runSessionId) {
+    return Future.value([]);
+  }
+
+  @override
+  Future<List<int>> getRunSessionCsv(String runSessionId) {
+    return Future.value([]);
+  }
+
+  @override
+  Future<void> deleteRunSession(String runSessionId) {
+    kVideos.removeWhere((video) => video.runSessionId == runSessionId);
+    return Future.value();
+  }
+
+  @override
+  Future<void> deleteRunner(String runnerId) {
+    kRunners.removeWhere((runner) => runner.id == runnerId);
+    kVideos.removeWhere((video) => video.runnerId == runnerId);
+    return Future.value();
+  }
 }

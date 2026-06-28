@@ -10,6 +10,7 @@ import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/widget/graph_list_view.dart';
 import 'package:frontend/feature/playback/widget/runner_history_view.dart';
 import 'package:frontend/feature/playback/widget/video_info_view.dart';
+import 'package:frontend/feature/playback/widget/session_actions_view.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -43,6 +44,8 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     final runners = ref.watch(runnerProvider);
     final selectedRunnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final selectedVideoId = ref.watch(playbackSelectedRunSessionIdProvider);
+    final isDone = selectedVideoId != null &&
+        ref.watch(videoInfoProvider(selectedVideoId)).asData?.value.status == 'done';
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -63,7 +66,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     ).primaryColor.withValues(alpha: 0.3),
                     child: Container(
                       height: 50,
-                      width: 160,
+                      width: double.infinity,
                       padding: const EdgeInsets.only(left: 12, right: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -89,86 +92,150 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     ),
                   ),
                   data: (List<RunnerInfo> items) {
-                    return DropdownButtonHideUnderline(
-                      child: DropdownButton2<String>(
-                        isExpanded: true,
-                        hint: const Row(
-                          children: [
-                            Icon(Icons.people, size: 16),
-                            SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                '選擇選手',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                    final selectedRunnerName = items.firstWhere(
+                      (runner) => runner.id == selectedRunnerId,
+                      orElse: () => RunnerInfo(id: '', name: '', lastVideoId: ''),
+                    ).name;
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton2<String>(
+                              isExpanded: true,
+                              hint: const Row(
+                                children: [
+                                  Icon(Icons.people, size: 16),
+                                  SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '選擇選手',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              items: items
+                                  .map(
+                                    (RunnerInfo item) => DropdownMenuItem<String>(
+                                      value: item.id,
+                                      child: Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              value: selectedRunnerId,
+                              onChanged: (value) {
+                                setState(() {
+                                  ref
+                                          .read(
+                                            playbackSelectedRunnerIdProvider.notifier,
+                                          )
+                                          .state =
+                                      value;
+                                });
+                                ref
+                                    .read(
+                                      playbackSelectedRunSessionIdProvider.notifier,
+                                    )
+                                    .state = items
+                                    .firstWhere((item) => item.id == value)
+                                    .lastVideoId;
+                              },
+                              buttonStyleData: ButtonStyleData(
+                                height: 50,
+                                padding: const EdgeInsets.only(left: 12, right: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.black26),
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                              ),
+                              iconStyleData: const IconStyleData(
+                                icon: Icon(Icons.arrow_forward_ios_outlined),
+                                iconSize: 12,
+                              ),
+                              dropdownStyleData: DropdownStyleData(
+                                maxHeight: 200,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                offset: const Offset(0, 0),
+                                scrollbarTheme: ScrollbarThemeData(
+                                  radius: const Radius.circular(40),
+                                ),
+                              ),
+                              menuItemStyleData: const MenuItemStyleData(
+                                height: 40,
+                                padding: EdgeInsets.only(left: 12, right: 12),
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                        items: items
-                            .map(
-                              (RunnerInfo item) => DropdownMenuItem<String>(
-                                value: item.id,
-                                child: Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                        if (selectedRunnerId != null) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("確認刪除選手"),
+                                  content: Text("您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(false),
+                                      child: const Text("取消"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      child: const Text("刪除"),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            )
-                            .toList(),
-                        value: selectedRunnerId,
-                        onChanged: (value) {
-                          setState(() {
-                            ref
-                                    .read(
-                                      playbackSelectedRunnerIdProvider.notifier,
-                                    )
-                                    .state =
-                                value;
-                          });
-                          ref
-                              .read(
-                                playbackSelectedRunSessionIdProvider.notifier,
-                              )
-                              .state = items
-                              .firstWhere((item) => item.id == value)
-                              .lastVideoId;
-                        },
-                        buttonStyleData: ButtonStyleData(
-                          height: 50,
-                          width: 160,
-                          padding: const EdgeInsets.only(left: 12, right: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.black26),
+                              );
+
+                              if (confirm == true) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("正在刪除選手...")),
+                                );
+
+                                try {
+                                  final backend = ref.read(backendProvider);
+                                  await backend.deleteRunner(selectedRunnerId);
+
+                                  ref.read(playbackSelectedRunnerIdProvider.notifier).state = null;
+                                  ref.read(playbackSelectedRunSessionIdProvider.notifier).state = null;
+                                  ref.invalidate(runnerProvider);
+
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("選手已成功刪除")),
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("刪除失敗: $e")),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 24),
+                            tooltip: "刪除此選手",
                           ),
-                        ),
-                        iconStyleData: const IconStyleData(
-                          icon: Icon(Icons.arrow_forward_ios_outlined),
-                          iconSize: 12,
-                        ),
-                        dropdownStyleData: DropdownStyleData(
-                          maxHeight: 200,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          offset: const Offset(0, 0),
-                          scrollbarTheme: ScrollbarThemeData(
-                            radius: const Radius.circular(40),
-                          ),
-                        ),
-                        menuItemStyleData: const MenuItemStyleData(
-                          height: 40,
-                          padding: EdgeInsets.only(left: 12, right: 12),
-                        ),
-                      ),
+                        ],
+                      ],
                     );
                   },
                 ),
@@ -202,6 +269,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     VideoPlayerView(),
                     GraphListView(),
                     RoundedBoxWidget(child: VideoInfoView()),
+                    if (isDone) RoundedBoxWidget(child: SessionActionsView()),
                     RoundedBoxWidget(child: RunnerHistoryView()),
                   ]),
                 ),

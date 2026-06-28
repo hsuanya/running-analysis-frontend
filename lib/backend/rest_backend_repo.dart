@@ -163,4 +163,38 @@ class RestBackendRepo implements BackendInterface {
     );
     return response['id'];
   }
+
+  @override
+  Future<List<int>> getRunSessionPdf(String runSessionId) async {
+    final response = await Dio().get<List<int>>(
+      API.getRunSessionPdf(runSessionId)[1],
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return response.data ?? [];
+  }
+
+  @override
+  Future<List<int>> getRunSessionCsv(String runSessionId) async {
+    final response = await Dio().get<List<int>>(
+      API.getRunSessionCsv(runSessionId)[1],
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return response.data ?? [];
+  }
+
+  @override
+  Future<void> deleteRunSession(String runSessionId) async {
+    await NetUtils().reqeustData(
+      API.deleteRunSession(runSessionId)[1],
+      method: API.deleteRunSession(runSessionId)[0],
+    );
+  }
+
+  @override
+  Future<void> deleteRunner(String runnerId) async {
+    await NetUtils().reqeustData(
+      API.deleteRunner(runnerId)[1],
+      method: API.deleteRunner(runnerId)[0],
+    );
+  }
 }
