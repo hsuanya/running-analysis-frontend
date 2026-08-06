@@ -5,6 +5,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/feature/playback/widget/video_player_view.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/widget/graph_list_view.dart';
@@ -44,8 +45,43 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     final runners = ref.watch(runnerProvider);
     final selectedRunnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final selectedVideoId = ref.watch(playbackSelectedRunSessionIdProvider);
-    final isDone = selectedVideoId != null &&
-        ref.watch(videoInfoProvider(selectedVideoId)).asData?.value.status == 'done';
+
+    // Validate runner ID against the runner list when loaded
+    final activeRunnerId = runners.when(
+      data: (items) {
+        final isRunnerIdValid = items.any((r) => r.id == selectedRunnerId);
+        if (!isRunnerIdValid && selectedRunnerId != null && selectedRunnerId.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ref.read(playbackSelectedRunnerIdProvider.notifier).state =
+                items.isNotEmpty ? items.first.id : null;
+            ref.read(playbackSelectedRunSessionIdProvider.notifier).state =
+                items.isNotEmpty ? items.first.lastVideoId : null;
+            context.go('/playback');
+          });
+          return items.isNotEmpty ? items.first.id : null;
+        }
+        return selectedRunnerId;
+      },
+      error: (_, __) => null,
+      loading: () => null,
+    );
+
+    // Validate video ID against the runner's history list when loaded
+    if (activeRunnerId != null) {
+      ref.watch(runnerHistoryProvider(activeRunnerId)).whenData((history) {
+        if (selectedVideoId != null && selectedVideoId.isNotEmpty) {
+          if (!history.any((s) => s.runSessionId == selectedVideoId)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              ref.read(playbackSelectedRunSessionIdProvider.notifier).state =
+                  history.isNotEmpty ? history.last.runSessionId : null;
+              context.go('/playback');
+            });
+          }
+        }
+      });
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -92,10 +128,13 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     ),
                   ),
                   data: (List<RunnerInfo> items) {
-                    final selectedRunnerName = items.firstWhere(
-                      (runner) => runner.id == selectedRunnerId,
-                      orElse: () => RunnerInfo(id: '', name: '', lastVideoId: ''),
-                    ).name;
+                    final selectedRunnerName = items
+                        .firstWhere(
+                          (runner) => runner.id == activeRunnerId,
+                          orElse: () =>
+                              RunnerInfo(id: '', name: '', lastVideoId: ''),
+                        )
+                        .name;
 
                     return Row(
                       children: [
@@ -121,32 +160,35 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                               ),
                               items: items
                                   .map(
-                                    (RunnerInfo item) => DropdownMenuItem<String>(
-                                      value: item.id,
-                                      child: Text(
-                                        item.name,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                                    (RunnerInfo item) =>
+                                        DropdownMenuItem<String>(
+                                          value: item.id,
+                                          child: Text(
+                                            item.name,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
                                   )
                                   .toList(),
-                              value: selectedRunnerId,
+                              value: activeRunnerId,
                               onChanged: (value) {
                                 setState(() {
                                   ref
                                           .read(
-                                            playbackSelectedRunnerIdProvider.notifier,
+                                            playbackSelectedRunnerIdProvider
+                                                .notifier,
                                           )
                                           .state =
                                       value;
                                 });
                                 ref
                                     .read(
-                                      playbackSelectedRunSessionIdProvider.notifier,
+                                      playbackSelectedRunSessionIdProvider
+                                          .notifier,
                                     )
                                     .state = items
                                     .firstWhere((item) => item.id == value)
@@ -154,7 +196,10 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                               },
                               buttonStyleData: ButtonStyleData(
                                 height: 50,
-                                padding: const EdgeInsets.only(left: 12, right: 12),
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  right: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Colors.black26),
@@ -189,15 +234,21 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text("確認刪除選手"),
-                                  content: Text("您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。"),
+                                  content: Text(
+                                    "您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。",
+                                  ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
                                       child: const Text("取消"),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
                                       child: const Text("刪除"),
                                     ),
                                   ],
@@ -214,12 +265,26 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                                   final backend = ref.read(backendProvider);
                                   await backend.deleteRunner(selectedRunnerId);
 
-                                  ref.read(playbackSelectedRunnerIdProvider.notifier).state = null;
-                                  ref.read(playbackSelectedRunSessionIdProvider.notifier).state = null;
+                                  ref
+                                          .read(
+                                            playbackSelectedRunnerIdProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      null;
+                                  ref
+                                          .read(
+                                            playbackSelectedRunSessionIdProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      null;
                                   ref.invalidate(runnerProvider);
 
                                   if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text("選手已成功刪除")),
                                   );
@@ -231,7 +296,11 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                                 }
                               }
                             },
-                            icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 24),
+                            icon: const Icon(
+                              Icons.delete_forever,
+                              color: Colors.redAccent,
+                              size: 24,
+                            ),
                             tooltip: "刪除此選手",
                           ),
                         ],
@@ -269,7 +338,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     VideoPlayerView(),
                     GraphListView(),
                     RoundedBoxWidget(child: VideoInfoView()),
-                    if (isDone) RoundedBoxWidget(child: SessionActionsView()),
+                    RoundedBoxWidget(child: SessionActionsView()),
                     RoundedBoxWidget(child: RunnerHistoryView()),
                   ]),
                 ),

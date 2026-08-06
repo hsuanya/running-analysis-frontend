@@ -112,7 +112,7 @@ class RunnerHistoryView extends ConsumerWidget {
                                       ),
                                     ),
                                     description: const Text(
-                                      "此次影片分析失敗，請重新上傳或聯繫開發者",
+                                      "此次影片分析失敗，您可以在操作卡片中將其刪除",
                                     ),
                                     type: ToastificationType.error,
                                     style: ToastificationStyle.minimal,
@@ -121,7 +121,6 @@ class RunnerHistoryView extends ConsumerWidget {
                                       seconds: 4,
                                     ),
                                   );
-                                  return;
                                 }
                                 ref
                                         .read(

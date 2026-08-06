@@ -24,9 +24,11 @@ class SessionActionsView extends ConsumerWidget {
       value: videoInfo,
       loading: const SizedBox.shrink(),
       data: (RunSessionInfo video) {
-        if (video.status != 'done') {
+        if (video.status == 'processing') {
           return const SizedBox.shrink();
         }
+
+        final isDone = video.status == 'done';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,17 +55,23 @@ class SessionActionsView extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final filename = "Runner_Analysis_Report_${video.runSessionId}.pdf";
-                            if (kIsWeb) {
-                              final pdfUrl = API.getRunSessionPdf(video.runSessionId)[1];
-                              downloadFileFromUrl(pdfUrl, filename);
-                            } else {
-                              final backend = ref.read(backendProvider);
-                              final bytes = await backend.getRunSessionPdf(video.runSessionId);
-                              await saveBytesToFile(bytes, filename);
-                            }
-                          },
+                          onPressed: isDone
+                              ? () async {
+                                  final filename =
+                                      "Runner_Analysis_Report_${video.runSessionId}.pdf";
+                                  if (kIsWeb) {
+                                    final pdfUrl = API.getRunSessionPdf(
+                                      video.runSessionId,
+                                    )[1];
+                                    downloadFileFromUrl(pdfUrl, filename);
+                                  } else {
+                                    final backend = ref.read(backendProvider);
+                                    final bytes = await backend
+                                        .getRunSessionPdf(video.runSessionId);
+                                    await saveBytesToFile(bytes, filename);
+                                  }
+                                }
+                              : null,
                           icon: const Icon(
                             Icons.picture_as_pdf,
                             color: Colors.white,
@@ -94,17 +102,23 @@ class SessionActionsView extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final filename = "angles_${video.runSessionId}.csv";
-                            if (kIsWeb) {
-                              final csvUrl = API.getRunSessionCsv(video.runSessionId)[1];
-                              downloadFileFromUrl(csvUrl, filename);
-                            } else {
-                              final backend = ref.read(backendProvider);
-                              final bytes = await backend.getRunSessionCsv(video.runSessionId);
-                              await saveBytesToFile(bytes, filename);
-                            }
-                          },
+                          onPressed: isDone
+                              ? () async {
+                                  final filename =
+                                      "angles_${video.runSessionId}.csv";
+                                  if (kIsWeb) {
+                                    final csvUrl = API.getRunSessionCsv(
+                                      video.runSessionId,
+                                    )[1];
+                                    downloadFileFromUrl(csvUrl, filename);
+                                  } else {
+                                    final backend = ref.read(backendProvider);
+                                    final bytes = await backend
+                                        .getRunSessionCsv(video.runSessionId);
+                                    await saveBytesToFile(bytes, filename);
+                                  }
+                                }
+                              : null,
                           icon: const Icon(
                             Icons.table_chart,
                             color: Colors.white,
@@ -144,13 +158,15 @@ class SessionActionsView extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(true),
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text("刪除"),
                             ),
                           ],
                         ),
                       );
-                      
+
                       if (confirm == true) {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,20 +175,34 @@ class SessionActionsView extends ConsumerWidget {
                         try {
                           final backend = ref.read(backendProvider);
                           await backend.deleteRunSession(video.runSessionId);
-                          
+
                           // 1. Fetch updated history list to select another session
-                          final history = await backend.getRunnerHistory(video.runnerId);
-                          
+                          final history = await backend.getRunnerHistory(
+                            video.runnerId,
+                          );
+
                           // 2. Select next available session or null
                           if (history.isNotEmpty) {
-                            ref.read(playbackSelectedRunSessionIdProvider.notifier).state = history.first.runSessionId;
+                            ref
+                                .read(
+                                  playbackSelectedRunSessionIdProvider.notifier,
+                                )
+                                .state = history
+                                .last
+                                .runSessionId;
                           } else {
-                            ref.read(playbackSelectedRunSessionIdProvider.notifier).state = null;
+                            ref
+                                    .read(
+                                      playbackSelectedRunSessionIdProvider
+                                          .notifier,
+                                    )
+                                    .state =
+                                null;
                           }
-                          
+
                           // 3. Invalidate history provider to update UI list
                           ref.invalidate(runnerHistoryProvider(video.runnerId));
-                          
+
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).clearSnackBars();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -180,16 +210,24 @@ class SessionActionsView extends ConsumerWidget {
                           );
                         } catch (e) {
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("刪除失敗: $e")),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text("刪除失敗: $e")));
                         }
                       }
                     },
-                    icon: const Icon(Icons.delete, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     label: const Text(
                       "刪除此次紀錄",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,

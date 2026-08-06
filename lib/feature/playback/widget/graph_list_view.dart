@@ -32,6 +32,76 @@ class GraphListView extends ConsumerWidget {
       value: videoInfo,
       loading: const GraphListShimmer(),
       data: (info) {
+        if (info.status == 'failed') {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const GraphListPlaceholder(),
+                Positioned.fill(
+                  child: Container(color: Colors.black.withValues(alpha: 0.5)),
+                ),
+                Container(
+                  width: 300,
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.redAccent,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 16),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "無圖表數據",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Failed',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: const LinearProgressIndicator(
+                          value: 1.0,
+                          minHeight: 8,
+                          backgroundColor: Colors.white10,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         if (info.status == 'processing') {
           return Stack(
             alignment: Alignment.center,

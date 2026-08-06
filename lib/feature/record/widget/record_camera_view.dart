@@ -476,16 +476,10 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (isAnchorMode && snapshotBytes != null)
-                Image.memory(
-                  snapshotBytes,
-                  fit: BoxFit.fill,
-                )
-              else
-                RotatedBox(
-                  quarterTurns: quarterTurns,
-                  child: CameraPreview(_controller!),
-                ),
+              RotatedBox(
+                quarterTurns: quarterTurns,
+                child: CameraPreview(_controller!),
+              ),
               // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
               if (anchorOverlay != null) anchorOverlay,
             ],
@@ -877,6 +871,14 @@ class _FullScreenCameraDialogState
     widget.cameraViewState.removeListener(_handleStateChange);
     _topCtrl.dispose();
     _botCtrl.dispose();
+    final controller = widget.cameraViewState._controller;
+    if (controller != null && controller.value.isInitialized) {
+      try {
+        controller.resumePreview();
+      } catch (e) {
+        if (kDebugMode) print('無法恢復相機預覽: $e');
+      }
+    }
     super.dispose();
   }
 
@@ -919,6 +921,14 @@ class _FullScreenCameraDialogState
     );
     ref.read(recordControllerProvider.notifier).setAnchor(result);
     setState(() => _anchorMode = false);
+    final controller = widget.cameraViewState._controller;
+    if (controller != null && controller.value.isInitialized) {
+      try {
+        controller.resumePreview();
+      } catch (e) {
+        if (kDebugMode) print('無法恢復相機預覽: $e');
+      }
+    }
   }
 
   void _enterAnchorMode() async {
@@ -1462,11 +1472,21 @@ class _FullScreenCameraDialogState
       children: [
         // Cancel
         OutlinedButton.icon(
-          onPressed: () => setState(() {
-            _anchorMode = false;
-            _draggingIdx = null;
-            _magPos = null;
-          }),
+          onPressed: () {
+            setState(() {
+              _anchorMode = false;
+              _draggingIdx = null;
+              _magPos = null;
+            });
+            final controller = widget.cameraViewState._controller;
+            if (controller != null && controller.value.isInitialized) {
+              try {
+                controller.resumePreview();
+              } catch (e) {
+                if (kDebugMode) print('無法恢復相機預覽: $e');
+              }
+            }
+          },
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white70,
             side: const BorderSide(color: Colors.white30),

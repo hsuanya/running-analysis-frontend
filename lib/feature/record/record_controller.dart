@@ -65,7 +65,18 @@ class RecordController extends StateNotifier<RecordState> {
         state = state.copyWith(status: RecordStatus.uploading);
         break;
       case RecordMessageType.uploadComplete:
-        state = state.copyWith(sharedRunSessionId: msg.data['runSessionId']);
+        state = state.copyWith(
+          sharedRunSessionId: msg.data['runSessionId'],
+          status: RecordStatus.ready,
+        );
+        if (state.myCameraIndex != null) {
+          final isReady = state.isPhysicallyReady && state.anchorIsSet;
+          final responseMsg = RecordMessage(
+            type: RecordMessageType.updateReady,
+            data: {'isReady': isReady},
+          );
+          _channel?.sink.add(jsonEncode(responseMsg.toJson()));
+        }
         break;
       case RecordMessageType.error:
         state = state.copyWith(
