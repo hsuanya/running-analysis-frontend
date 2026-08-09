@@ -18,30 +18,32 @@ class AnchorPoint {
 /// Result: 4 points (TL → TR → BR → BL) + top/bottom real distances (m)
 class AnchorResult {
   final List<AnchorPoint> points;
-  final double topDistanceM;
-  final double bottomDistanceM;
+  final double leftToMidDistanceM;
+  final double midToRightDistanceM;
 
   const AnchorResult({
     required this.points,
-    required this.topDistanceM,
-    required this.bottomDistanceM,
+    required this.leftToMidDistanceM,
+    required this.midToRightDistanceM,
   });
 
   Map<String, dynamic> toJson() => {
     'points': points.map((p) => p.toJson()).toList(),
-    'topDistanceM': topDistanceM,
-    'bottomDistanceM': bottomDistanceM,
+    'leftToMidDistanceM': leftToMidDistanceM,
+    'midToRightDistanceM': midToRightDistanceM,
   };
 }
 
 // ── Styling constants ─────────────────────────────────────────
 
-const _labels = ['左上', '右上', '右下', '左下'];
+const _labels = ['左上', '右上', '右下', '左下', '上中', '下中'];
 const _colors = [
   Color(0xFF4FC3F7), // 淺藍 – TL
   Color(0xFF81C784), // 淺綠 – TR
   Color(0xFFFFB74D), // 橘   – BR
   Color(0xFFE57373), // 紅   – BL
+  Color(0xFFCE93D8), // 淺紫 – TM
+  Color(0xFFFFCC80), // 淺橘 – BM
 ];
 
 /// Hit-test radius for grabbing an existing anchor (logical pixels)
@@ -94,6 +96,10 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   // Anchor points (normalised 0–1)
   final List<Offset> _pts = [];
 
+  // Slide ratios for TM (point 5) and BM (point 6) along their segments
+  double _t5 = 0.5;
+  double _t6 = 0.5;
+
   // Drag / magnifier state
   int? _draggingIdx;
   Offset? _magPos; // normalised position shown in magnifier
@@ -129,8 +135,37 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     final prev = widget.initialAnchor;
     if (prev != null) {
       _pts.addAll(prev.points.map((p) => Offset(p.x, p.y)));
-      _topCtrl.text = prev.topDistanceM.toString();
-      _botCtrl.text = prev.bottomDistanceM.toString();
+      _topCtrl.text = prev.leftToMidDistanceM.toString();
+      _botCtrl.text = prev.midToRightDistanceM.toString();
+
+      if (_pts.length == 6) {
+        // Calculate _t5 (TM along TL-TR)
+        final A5 = _pts[0];
+        final B5 = _pts[1];
+        final P5 = _pts[4];
+        final AB5 = B5 - A5;
+        final AP5 = P5 - A5;
+        final lenSq5 = AB5.dx * AB5.dx + AB5.dy * AB5.dy;
+        _t5 = lenSq5 > 0 ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0) : 0.5;
+
+        // Calculate _t6 (BM along BL-BR)
+        final A6 = _pts[3];
+        final B6 = _pts[2];
+        final P6 = _pts[5];
+        final AB6 = B6 - A6;
+        final AP6 = P6 - A6;
+        final lenSq6 = AB6.dx * AB6.dx + AB6.dy * AB6.dy;
+        _t6 = lenSq6 > 0 ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0) : 0.5;
+      } else if (_pts.length == 4) {
+        // Dynamic upgrade of legacy 4 points to 6 points
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+        // For legacy data, distances were topDistanceM and bottomDistanceM. We reuse them directly as leftToMid and midToRight.
+      }
     }
   }
 
@@ -144,7 +179,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
 
   // ── Helpers ────────────────────────────────────────────────
 
-  bool get _full => _pts.length == 4;
+  bool get _full => _pts.length >= 4;
   int get _nextIdx => _pts.length;
 
   /// Normalise local position to [0, 1]
@@ -183,7 +218,18 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     // Don't add if user touched near an existing point (they probably wanted to drag)
     if (_nearestIdx(pos) != null) return;
 
-    setState(() => _pts.add(pos));
+    setState(() {
+      _pts.add(pos);
+      if (_pts.length == 4) {
+        // Auto-generate TM (point 5) and BM (point 6)
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+      }
+    });
   }
 
   void _onPanStart(DragStartDetails d) {
@@ -202,8 +248,50 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     if (_draggingIdx == null) return;
     final norm = _norm(d.localPosition);
     setState(() {
-      _pts[_draggingIdx!] = norm;
-      _magPos = norm;
+      if (_draggingIdx == 4) {
+        // Dragging TM (index 4): project onto segment TL-TR (0-1)
+        final A = _pts[0];
+        final B = _pts[1];
+        final AB = B - A;
+        final AP = norm - A;
+        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+        double t = 0.5;
+        if (abLenSq > 0) {
+          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+          t = t.clamp(0.0, 1.0);
+        }
+        _t5 = t;
+        _pts[4] = A + AB * t;
+      } else if (_draggingIdx == 5) {
+        // Dragging BM (index 5): project onto segment BL-BR (3-2)
+        final A = _pts[3]; // BL
+        final B = _pts[2]; // BR
+        final AB = B - A;
+        final AP = norm - A;
+        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+        double t = 0.5;
+        if (abLenSq > 0) {
+          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+          t = t.clamp(0.0, 1.0);
+        }
+        _t6 = t;
+        _pts[5] = A + AB * t;
+      } else {
+        // Dragging corners (0 to 3)
+        _pts[_draggingIdx!] = norm;
+        if (_pts.length == 6) {
+          // Adjust TM (index 4) based on current _t5 ratio along segment 0-1
+          final A5 = _pts[0];
+          final B5 = _pts[1];
+          _pts[4] = A5 + (B5 - A5) * _t5;
+
+          // Adjust BM (index 5) based on current _t6 ratio along segment 3-2 (BL-BR)
+          final A6 = _pts[3];
+          final B6 = _pts[2];
+          _pts[5] = A6 + (B6 - A6) * _t6;
+        }
+      }
+      _magPos = _pts[_draggingIdx!];
     });
   }
 
@@ -226,8 +314,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   void _confirm() {
     final result = AnchorResult(
       points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
-      topDistanceM: double.parse(_topCtrl.text),
-      bottomDistanceM: double.parse(_botCtrl.text),
+      leftToMidDistanceM: double.parse(_topCtrl.text),
+      midToRightDistanceM: double.parse(_botCtrl.text),
     );
     Navigator.of(context).pop(result);
   }
@@ -600,7 +688,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
           children: [
             Expanded(
               child: _buildDistanceField(
-                label: '上邊實際距離 (公尺)',
+                label: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
                 controller: _topCtrl,
                 icon: Icons.straighten,
                 color: const Color(0xFF4FC3F7),
@@ -608,7 +696,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             ),
             Expanded(
               child: _buildDistanceField(
-                label: '下邊實際距離 (公尺)',
+                label: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
                 controller: _botCtrl,
                 icon: Icons.straighten,
                 color: const Color(0xFFFFB74D),
@@ -675,12 +763,14 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             children: [
               Icon(Icons.info_outline, color: Colors.white54, size: 14),
               SizedBox(width: 6),
-              Text(
-                '點選順序・設定完可拖動微調',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                  fontFamily: 'NotoSansTC',
+              Expanded(
+                child: Text(
+                  '點選四角順序・上中與下中為自動生成之輔助錨點（可沿連線拖動微調）',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                    fontFamily: 'NotoSansTC',
+                  ),
                 ),
               ),
             ],
@@ -710,7 +800,13 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         OutlinedButton.icon(
           onPressed: _pts.isEmpty
               ? null
-              : () => setState(() => _pts.removeLast()),
+              : () => setState(() {
+                    if (_pts.length == 6) {
+                      _pts.removeRange(3, 6);
+                    } else {
+                      _pts.removeLast();
+                    }
+                  }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white70,
             side: const BorderSide(color: Colors.white24),
@@ -726,7 +822,9 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
-          onPressed: _pts.isEmpty ? null : () => setState(() => _pts.clear()),
+          onPressed: _pts.isEmpty ? null : () => setState(() {
+            _pts.clear();
+          }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white54,
             side: const BorderSide(color: Colors.white12),
@@ -934,33 +1032,65 @@ class _QuadPainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
-    // Edges
-    for (int i = 0; i < pts.length - 1; i++) {
-      final isDragEdge =
-          draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
-      linePaint
-        ..color = _colors[i].withValues(alpha: isDragEdge ? 1.0 : 0.75)
-        ..strokeWidth = isDragEdge ? 2.5 : 2.0;
-      canvas.drawLine(pts[i], pts[i + 1], linePaint);
-    }
+    if (pts.length == 6) {
+      // Draw lines for 6-point layout
+      final drawLine = (int pA, int pB, Color color) {
+        final isDragEdge = draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
+        linePaint
+          ..color = color.withValues(alpha: isDragEdge ? 1.0 : 0.75)
+          ..strokeWidth = isDragEdge ? 2.5 : 2.0;
+        canvas.drawLine(pts[pA], pts[pB], linePaint);
+      };
 
-    // Close quad
-    if (pts.length == 4) {
-      final isDragEdge =
-          draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
-      linePaint
-        ..color = _colors[3].withValues(alpha: isDragEdge ? 1.0 : 0.75)
-        ..strokeWidth = isDragEdge ? 2.5 : 2.0;
-      canvas.drawLine(pts[3], pts[0], linePaint);
+      // Left boundary (BL - TL)
+      drawLine(3, 0, _colors[3]);
+      // Right boundary (TR - BR)
+      drawLine(1, 2, _colors[1]);
+      // Top boundary segment 1 (TL - TM)
+      drawLine(0, 4, _colors[0]);
+      // Top boundary segment 2 (TM - TR)
+      drawLine(4, 1, _colors[0]);
+      // Bottom boundary segment 1 (BR - BM)
+      drawLine(2, 5, _colors[2]);
+      // Bottom boundary segment 2 (BM - BL)
+      drawLine(5, 3, _colors[2]);
+      // Middle line (TM - BM)
+      drawLine(4, 5, _colors[4]);
 
-      // Semi-transparent fill
-      final path = Path()..addPolygon(pts, true);
+      // Semi-transparent fill of the entire quad area
+      final path = Path()..addPolygon([pts[0], pts[1], pts[2], pts[3]], true);
       canvas.drawPath(
         path,
         Paint()
-          ..color = const Color(0xFF2979FF).withValues(alpha: 0.10)
+          ..color = const Color(0xFF2979FF).withValues(alpha: 0.08)
           ..style = PaintingStyle.fill,
       );
+    } else {
+      // Legacy / intermediate drawing (less than 6 points)
+      for (int i = 0; i < pts.length - 1; i++) {
+        final isDragEdge = draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
+        linePaint
+          ..color = _colors[i].withValues(alpha: isDragEdge ? 1.0 : 0.75)
+          ..strokeWidth = isDragEdge ? 2.5 : 2.0;
+        canvas.drawLine(pts[i], pts[i + 1], linePaint);
+      }
+
+      if (pts.length == 4) {
+        final isDragEdge = draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
+        linePaint
+          ..color = _colors[3].withValues(alpha: isDragEdge ? 1.0 : 0.75)
+          ..strokeWidth = isDragEdge ? 2.5 : 2.0;
+        canvas.drawLine(pts[3], pts[0], linePaint);
+
+        // Semi-transparent fill
+        final path = Path()..addPolygon(pts, true);
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = const Color(0xFF2979FF).withValues(alpha: 0.10)
+            ..style = PaintingStyle.fill,
+        );
+      }
     }
   }
 

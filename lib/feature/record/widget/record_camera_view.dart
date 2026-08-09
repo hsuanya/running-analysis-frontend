@@ -812,12 +812,14 @@ class _FullScreenCameraDialog extends ConsumerStatefulWidget {
 }
 
 // ── Anchor overlay constants ────────────────────────────────────
-const _kAnchorLabels = ['左上', '右上', '右下', '左下'];
+const _kAnchorLabels = ['左上', '右上', '右下', '左下', '上中', '下中'];
 const _kAnchorColors = [
   Color(0xFF4FC3F7),
   Color(0xFF81C784),
   Color(0xFFFFB74D),
   Color(0xFFE57373),
+  Color(0xFFCE93D8),
+  Color(0xFFFFCC80),
 ];
 const _kAnchorHitRadius = 12.0;
 const _kAnchorMagRadius = 60.0;
@@ -833,6 +835,8 @@ class _FullScreenCameraDialogState
   // ── Anchor mode state ───────────────────────────────────────
   bool _anchorMode = false;
   final List<Offset> _pts = []; // normalised 0–1
+  double _t5 = 0.5;
+  double _t6 = 0.5;
   int? _draggingIdx;
   Offset? _magPos;
   Offset? _pendingTapNorm;
@@ -861,8 +865,33 @@ class _FullScreenCameraDialogState
     final existing = ref.read(recordControllerProvider).anchorResult;
     if (existing != null) {
       _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
-      _topCtrl.text = existing.topDistanceM.toString();
-      _botCtrl.text = existing.bottomDistanceM.toString();
+      _topCtrl.text = existing.leftToMidDistanceM.toString();
+      _botCtrl.text = existing.midToRightDistanceM.toString();
+
+      if (_pts.length == 6) {
+        final A5 = _pts[0];
+        final B5 = _pts[1];
+        final P5 = _pts[4];
+        final AB5 = B5 - A5;
+        final AP5 = P5 - A5;
+        final lenSq5 = AB5.dx * AB5.dx + AB5.dy * AB5.dy;
+        _t5 = lenSq5 > 0 ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0) : 0.5;
+
+        final A6 = _pts[3];
+        final B6 = _pts[2];
+        final P6 = _pts[5];
+        final AB6 = B6 - A6;
+        final AP6 = P6 - A6;
+        final lenSq6 = AB6.dx * AB6.dx + AB6.dy * AB6.dy;
+        _t6 = lenSq6 > 0 ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0) : 0.5;
+      } else if (_pts.length == 4) {
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+      }
     }
   }
 
@@ -883,7 +912,7 @@ class _FullScreenCameraDialogState
   }
 
   // ── Anchor helpers ──────────────────────────────────────────
-  bool get _full => _pts.length == 4;
+  bool get _full => _pts.length >= 4;
   int get _nextIdx => _pts.length;
 
   Offset _norm(Offset local) => Offset(
@@ -916,8 +945,8 @@ class _FullScreenCameraDialogState
   void _confirmAnchor() {
     final result = AnchorResult(
       points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
-      topDistanceM: double.parse(_topCtrl.text),
-      bottomDistanceM: double.parse(_botCtrl.text),
+      leftToMidDistanceM: double.parse(_topCtrl.text),
+      midToRightDistanceM: double.parse(_botCtrl.text),
     );
     ref.read(recordControllerProvider.notifier).setAnchor(result);
     setState(() => _anchorMode = false);
@@ -949,8 +978,8 @@ class _FullScreenCameraDialogState
           _pts.clear();
           if (existing != null) {
             _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
-            _topCtrl.text = existing.topDistanceM.toString();
-            _botCtrl.text = existing.bottomDistanceM.toString();
+            _topCtrl.text = existing.leftToMidDistanceM.toString();
+            _botCtrl.text = existing.midToRightDistanceM.toString();
           } else {
             _topCtrl.clear();
             _botCtrl.clear();
@@ -981,7 +1010,17 @@ class _FullScreenCameraDialogState
     _pendingTapNorm = null;
     if (pos == null || _full) return;
     if (_nearestIdx(pos) != null) return;
-    setState(() => _pts.add(pos));
+    setState(() {
+      _pts.add(pos);
+      if (_pts.length == 4) {
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+      }
+    });
   }
 
   void _onPanStart(DragStartDetails d) {
@@ -1000,8 +1039,48 @@ class _FullScreenCameraDialogState
     if (_draggingIdx == null) return;
     final norm = _norm(d.localPosition);
     setState(() {
-      _pts[_draggingIdx!] = norm;
-      _magPos = norm;
+      if (_draggingIdx == 4) {
+        // Dragging TM (index 4): project onto segment TL-TR (0-1)
+        final A = _pts[0];
+        final B = _pts[1];
+        final AB = B - A;
+        final AP = norm - A;
+        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+        double t = 0.5;
+        if (abLenSq > 0) {
+          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+          t = t.clamp(0.0, 1.0);
+        }
+        _t5 = t;
+        _pts[4] = A + AB * t;
+      } else if (_draggingIdx == 5) {
+        // Dragging BM (index 5): project onto segment BL-BR (3-2)
+        final A = _pts[3]; // BL
+        final B = _pts[2]; // BR
+        final AB = B - A;
+        final AP = norm - A;
+        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+        double t = 0.5;
+        if (abLenSq > 0) {
+          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+          t = t.clamp(0.0, 1.0);
+        }
+        _t6 = t;
+        _pts[5] = A + AB * t;
+      } else {
+        // Dragging corners (0 to 3)
+        _pts[_draggingIdx!] = norm;
+        if (_pts.length == 6) {
+          final A5 = _pts[0];
+          final B5 = _pts[1];
+          _pts[4] = A5 + (B5 - A5) * _t5;
+
+          final A6 = _pts[3];
+          final B6 = _pts[2];
+          _pts[5] = A6 + (B6 - A6) * _t6;
+        }
+      }
+      _magPos = _pts[_draggingIdx!];
     });
   }
 
@@ -1321,7 +1400,7 @@ class _FullScreenCameraDialogState
                       Expanded(
                         child: _distanceField(
                           controller: _topCtrl,
-                          label: '上邊 (m)',
+                          label: '左至中 D1 (m)',
                           color: _kAnchorColors[0],
                         ),
                       ),
@@ -1329,8 +1408,8 @@ class _FullScreenCameraDialogState
                       Expanded(
                         child: _distanceField(
                           controller: _botCtrl,
-                          label: '下邊 (m)',
-                          color: _kAnchorColors[3],
+                          label: '中至右 D2 (m)',
+                          color: _kAnchorColors[4],
                         ),
                       ),
                     ],
@@ -1356,7 +1435,7 @@ class _FullScreenCameraDialogState
                       color: Colors.white54,
                     ),
                     const SizedBox(width: 8),
-                    // Top edge
+                    // Left-to-Middle segment
                     Container(
                       width: 8,
                       height: 8,
@@ -1377,12 +1456,12 @@ class _FullScreenCameraDialogState
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Bottom edge
+                    // Middle-to-Right segment
                     Container(
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: _kAnchorColors[3],
+                        color: _kAnchorColors[4],
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -1502,7 +1581,13 @@ class _FullScreenCameraDialogState
         OutlinedButton.icon(
           onPressed: _pts.isEmpty
               ? null
-              : () => setState(() => _pts.removeLast()),
+              : () => setState(() {
+                    if (_pts.length == 6) {
+                      _pts.removeRange(3, 6);
+                    } else {
+                      _pts.removeLast();
+                    }
+                  }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white60,
             side: const BorderSide(color: Colors.white24),
@@ -1683,30 +1768,63 @@ class _AnchorQuadPainter extends CustomPainter {
       ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke;
 
-    for (int i = 0; i < pts.length - 1; i++) {
-      final isDragEdge =
-          draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
-      paint
-        ..color = _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
-        ..strokeWidth = isDragEdge ? 2.8 : 2.2;
-      canvas.drawLine(pts[i], pts[i + 1], paint);
-    }
+    if (pts.length == 6) {
+      final drawLine = (int pA, int pB, Color color) {
+        final isDragEdge = draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
+        paint
+          ..color = color.withValues(alpha: isDragEdge ? 1.0 : 0.8)
+          ..strokeWidth = isDragEdge ? 2.8 : 2.2;
+        canvas.drawLine(pts[pA], pts[pB], paint);
+      };
 
-    if (pts.length == 4) {
-      final isDragEdge =
-          draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
-      paint
-        ..color = _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
-        ..strokeWidth = isDragEdge ? 2.8 : 2.2;
-      canvas.drawLine(pts[3], pts[0], paint);
+      // Left boundary (BL - TL)
+      drawLine(3, 0, _kAnchorColors[3]);
+      // Right boundary (TR - BR)
+      drawLine(1, 2, _kAnchorColors[1]);
+      // Top boundary segment 1 (TL - TM)
+      drawLine(0, 4, _kAnchorColors[0]);
+      // Top boundary segment 2 (TM - TR)
+      drawLine(4, 1, _kAnchorColors[0]);
+      // Bottom boundary segment 1 (BR - BM)
+      drawLine(2, 5, _kAnchorColors[2]);
+      // Bottom boundary segment 2 (BM - BL)
+      drawLine(5, 3, _kAnchorColors[2]);
+      // Middle line (TM - BM)
+      drawLine(4, 5, _kAnchorColors[4]);
 
-      final path = Path()..addPolygon(pts, true);
+      // Semi-transparent fill of the entire quad area
+      final path = Path()..addPolygon([pts[0], pts[1], pts[2], pts[3]], true);
       canvas.drawPath(
         path,
         Paint()
-          ..color = const Color(0xFF2979FF).withValues(alpha: 0.12)
+          ..color = const Color(0xFF2979FF).withValues(alpha: 0.10)
           ..style = PaintingStyle.fill,
       );
+    } else {
+      // Legacy / intermediate drawing (less than 6 points)
+      for (int i = 0; i < pts.length - 1; i++) {
+        final isDragEdge = draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
+        paint
+          ..color = _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+          ..strokeWidth = isDragEdge ? 2.8 : 2.2;
+        canvas.drawLine(pts[i], pts[i + 1], paint);
+      }
+
+      if (pts.length == 4) {
+        final isDragEdge = draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
+        paint
+          ..color = _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
+          ..strokeWidth = isDragEdge ? 2.8 : 2.2;
+        canvas.drawLine(pts[3], pts[0], paint);
+
+        final path = Path()..addPolygon(pts, true);
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = const Color(0xFF2979FF).withValues(alpha: 0.12)
+            ..style = PaintingStyle.fill,
+        );
+      }
     }
   }
 
