@@ -7,6 +7,10 @@ import 'package:frontend/feature/record/record_page.dart';
 import 'package:frontend/feature/splash/splash_page.dart';
 import 'package:frontend/feature/policy/policy_page.dart';
 import 'package:frontend/feature/support/support_page.dart';
+import 'package:frontend/feature/auth/login_page.dart';
+import 'package:frontend/feature/auth/register_page.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
@@ -39,16 +43,63 @@ Page<dynamic> _buildFadePage(GoRouterState state, Widget child) {
   );
 }
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen(authProvider, (previous, next) {
+      notifyListeners();
+    });
+  }
+}
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final goRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = RouterNotifier(ref);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: kIsWeb ? '/playback' : '/splash',
+    refreshListenable: notifier,
+    redirect: (context, state) {
+      final auth = ref.read(authProvider);
+      final isLoggedIn = auth.status == AuthStatus.authenticated;
+      final isLoggingIn = state.uri.path == '/login';
+      final isRegistering = state.uri.path == '/register';
+
+      // 載入期間或初始狀態不重導向
+      if (auth.status == AuthStatus.loading || auth.status == AuthStatus.initial) {
+        return null;
+      }
+
+      if (!isLoggedIn) {
+        // 未登入：非登入/註冊/隱私/支援頁，強制導向登入頁
+        if (!isLoggingIn && !isRegistering && state.uri.path != '/policy' && state.uri.path != '/support') {
+          return '/login';
+        }
+      } else {
+        // 已登入：若造訪登入或註冊頁，重導向至主畫面
+        if (isLoggingIn || isRegistering) {
+          return '/playback';
+        }
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
         pageBuilder: (context, state) =>
             _buildFadePage(state, const SplashPage()),
+      ),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) =>
+            _buildFadePage(state, const LoginPage()),
+      ),
+      GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) =>
+            _buildFadePage(state, const RegisterPage()),
       ),
       GoRoute(
         path: '/policy',

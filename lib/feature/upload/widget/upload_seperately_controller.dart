@@ -1,9 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/api.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
 
 class UploadSeperatelyState {
   final String? thumbnail;
@@ -43,8 +45,9 @@ class UploadSeperatelyState {
 
 class UploadSeperatelyController extends StateNotifier<UploadSeperatelyState> {
   final BackendInterface backend;
+  final Ref ref;
 
-  UploadSeperatelyController(this.backend)
+  UploadSeperatelyController(this.backend, this.ref)
     : super(UploadSeperatelyState.initial());
 
   Future<void> uploadVideo(int index, UploadVideoFile file) async {
@@ -52,7 +55,13 @@ class UploadSeperatelyController extends StateNotifier<UploadSeperatelyState> {
 
     try {
       final tempVideoId = await backend.uploadVideo(index, file);
-      final thumbnailUrl = API.getTempVideoThumbnail(tempVideoId)[1];
+      var thumbnailUrl = API.getTempVideoThumbnail(tempVideoId)[1] as String;
+      final token = ref.read(authProvider).token;
+      if (token != null && token.isNotEmpty) {
+        final separator = thumbnailUrl.contains('?') ? '&' : '?';
+        thumbnailUrl = '$thumbnailUrl${separator}token=$token';
+      }
+      
       state = state.copyWith(
         thumbnail: thumbnailUrl,
         tempVideoId: tempVideoId,
@@ -82,5 +91,5 @@ final uploadSeperatelyControllerProvider =
       UploadSeperatelyState
     >((ref) {
       final backend = ref.watch(backendProvider);
-      return UploadSeperatelyController(backend);
+      return UploadSeperatelyController(backend, ref);
     });

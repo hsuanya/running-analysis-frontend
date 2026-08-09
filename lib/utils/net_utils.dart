@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum DioMethod { get, post, patch, put, delete }
 
@@ -38,8 +39,14 @@ class NetUtils {
     DioMethod method = DioMethod.get,
   }) async {
     try {
-      if (token.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final savedToken = prefs.getString('auth_token');
+      if (savedToken != null && savedToken.isNotEmpty) {
+        _dio.options.headers['Authorization'] = 'Bearer $savedToken';
+      } else if (token.isNotEmpty) {
         _dio.options.headers['Authorization'] = 'Token $token';
+      } else {
+        _dio.options.headers.remove('Authorization');
       }
       _dio.options.headers['ngrok-skip-browser-warning'] = true;
 
@@ -61,7 +68,7 @@ class NetUtils {
       return response.data as T;
     } on DioException catch (e) {
       // DioError only return error 500
-      String message = e.response?.data['message'] ?? e.message;
+      String message = e.response?.data['detail'] ?? e.response?.data['message'] ?? e.message;
       if (e.type == DioExceptionType.connectionTimeout) {
         message = "Connection Timeout";
       } else if (e.type == DioExceptionType.receiveTimeout) {
@@ -82,8 +89,14 @@ class NetUtils {
     DioMethod method = DioMethod.get,
   }) async* {
     try {
-      if (token.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final savedToken = prefs.getString('auth_token');
+      if (savedToken != null && savedToken.isNotEmpty) {
+        _dio.options.headers['Authorization'] = 'Bearer $savedToken';
+      } else if (token.isNotEmpty) {
         _dio.options.headers['Authorization'] = 'Token $token';
+      } else {
+        _dio.options.headers.remove('Authorization');
       }
 
       Response<ResponseBody> response;

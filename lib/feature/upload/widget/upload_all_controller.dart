@@ -1,9 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/utils/api.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
 
 class UploadThumbnailState {
   final String? thumbnailUrl;
@@ -73,8 +75,9 @@ class UploadAllState {
 
 class UploadAllController extends StateNotifier<UploadAllState> {
   final BackendInterface backend;
+  final Ref ref;
 
-  UploadAllController(this.backend) : super(UploadAllState.initial());
+  UploadAllController(this.backend, this.ref) : super(UploadAllState.initial());
 
   void setCameraCount(int count) {
     if (count == state.cameraCount) return;
@@ -106,7 +109,12 @@ class UploadAllController extends StateNotifier<UploadAllState> {
 
     try {
       final tempVideoId = await backend.uploadVideo(index, file);
-      final thumbnailUrl = API.getTempVideoThumbnail(tempVideoId)[1];
+      var thumbnailUrl = API.getTempVideoThumbnail(tempVideoId)[1] as String;
+      final token = ref.read(authProvider).token;
+      if (token != null && token.isNotEmpty) {
+        final separator = thumbnailUrl.contains('?') ? '&' : '?';
+        thumbnailUrl = '$thumbnailUrl${separator}token=$token';
+      }
 
       updated[index] = updated[index].copyWith(
         thumbnailUrl: thumbnailUrl,
@@ -139,5 +147,5 @@ final uploadAllControllerProvider =
       ref,
     ) {
       final backend = ref.watch(backendProvider);
-      return UploadAllController(backend);
+      return UploadAllController(backend, ref);
     });

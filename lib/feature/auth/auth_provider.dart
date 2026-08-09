@@ -1,0 +1,91 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/utils/net_utils.dart';
+import 'package:frontend/utils/api.dart';
+import 'auth_state.dart';
+
+class AuthNotifier extends Notifier<AuthState> {
+  static const _tokenKey = 'auth_token';
+  static const _usernameKey = 'auth_username';
+
+  @override
+  AuthState build() {
+    // 非同步初始化狀態
+    _init();
+    return AuthState.initial();
+  }
+
+  Future<void> _init() async {
+    state = AuthState.loading();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      final username = prefs.getString(_usernameKey);
+      if (token != null && token.isNotEmpty && username != null) {
+        state = AuthState.authenticated(token, username);
+      } else {
+        state = AuthState.unauthenticated();
+      }
+    } catch (e) {
+      state = AuthState.unauthenticated();
+    }
+  }
+
+  Future<bool> login(String username, String password) async {
+    state = AuthState.loading();
+    try {
+      final response = await NetUtils().reqeustData<Map<String, dynamic>>(
+        '${API.baseUrl}/auth/login',
+        method: DioMethod.post,
+        postData: {
+          'username': username,
+          'password': password,
+        },
+      );
+
+      final token = response['access_token'] as String;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, token);
+      await prefs.setString(_usernameKey, username);
+
+      state = AuthState.authenticated(token, username);
+      return true;
+    } catch (e) {
+      state = AuthState.error(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> register(String username, String password) async {
+    state = AuthState.loading();
+    try {
+      await NetUtils().reqeustData<Map<String, dynamic>>(
+        '${API.baseUrl}/auth/register',
+        method: DioMethod.post,
+        postData: {
+          'username': username,
+          'password': password,
+        },
+      );
+      // 註冊成功後直接自動登入
+      return await login(username, password);
+    } catch (e) {
+      state = AuthState.error(e.toString());
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
+    state = AuthState.loading();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_usernameKey);
+    } catch (_) {}
+    state = AuthState.unauthenticated();
+  }
+}
+
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
+  return AuthNotifier();
+});

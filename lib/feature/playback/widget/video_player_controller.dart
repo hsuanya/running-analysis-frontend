@@ -2,11 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/utils/api.dart';
 import 'package:video_player/video_player.dart';
 
+import 'package:frontend/feature/auth/auth_provider.dart';
+
 class VideoControllerManager {
   late final VideoPlayerController controller;
 
   VideoControllerManager(String videoUrl) {
-    controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+    controller = VideoPlayerController.networkUrl(
+      Uri.parse(videoUrl),
+    );
   }
 
   Future<void> initializeAll() async {
@@ -33,7 +37,13 @@ class VideoControllerManager {
 
 final videoManagerProvider =
     FutureProvider.family<VideoControllerManager, String>((ref, id) async {
-      final urls = API.getRunSessionVideo(id)[1];
+      final authState = ref.watch(authProvider);
+      final token = authState.token;
+      var urls = API.getRunSessionVideo(id)[1] as String;
+      if (token != null && token.isNotEmpty) {
+        final separator = urls.contains('?') ? '&' : '?';
+        urls = '$urls${separator}token=$token';
+      }
 
       final manager = VideoControllerManager(urls);
       await manager.initializeAll();

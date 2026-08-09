@@ -1,18 +1,21 @@
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:frontend/utils/router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sidebarx/sidebarx.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   final Widget child;
   const HomePage({super.key, required this.child});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
+class _HomePageState extends ConsumerState<HomePage>
     with SingleTickerProviderStateMixin {
   final SidebarXController _controller = SidebarXController(selectedIndex: 0);
   late TabController _tabController;
@@ -68,6 +71,7 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isPortrait = size.height > size.width;
+    final authState = ref.watch(authProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +81,7 @@ class _HomePageState extends State<HomePage>
               : _controller.selectedIndex == 1
               ? "上傳"
               : "錄影",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color.fromARGB(255, 121, 169, 234),
         elevation: 4,
@@ -93,6 +97,56 @@ class _HomePageState extends State<HomePage>
                   });
                 },
               ),
+        actions: [
+          if (authState.status == AuthStatus.authenticated && authState.username != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.account_circle, color: Colors.white, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    authState.username!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: '登出',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('確認登出'),
+                  content: const Text('您確定要登出跑姿分析系統嗎？'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('取消'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ref.read(authProvider.notifier).logout();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                      ),
+                      child: const Text('登出', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Row(
         children: [
@@ -127,7 +181,7 @@ class _HomePageState extends State<HomePage>
                 TabItem(icon: Icons.upload),
                 TabItem(icon: Icons.videocam),
               ],
-              backgroundColor: Color.fromARGB(255, 121, 169, 234),
+              backgroundColor: const Color.fromARGB(255, 121, 169, 234),
             )
           : null,
     );
