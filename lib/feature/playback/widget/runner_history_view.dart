@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
-import 'package:frontend/feature/playback/placeholder/runner_history_placeholder.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/runner_history_shimmer.dart';
+import 'package:frontend/feature/playback/placeholder/runner_history_placeholder.dart';
 import 'package:intl/intl.dart';
 import 'package:toastification/toastification.dart';
 
 class RunnerHistoryView extends ConsumerWidget {
-  const RunnerHistoryView({super.key});
+  const RunnerHistoryView({super.key, this.onSessionSelected});
+
+  final VoidCallback? onSessionSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final runnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
-    if (runnerId == null || videoId == null) {
+
+    if (runnerId == null) {
       return const RunnerHistoryPlaceholder();
     }
 
@@ -24,151 +27,251 @@ class RunnerHistoryView extends ConsumerWidget {
     return AsyncValueWidget(
       value: runnerHistory,
       loading: const RunnerHistoryShimmer(),
-      data: (List<RunSessionInfo> videos) {
-        final List<String> headers = ["日期時間", "相機數量", "總時間", "備註"];
-        final List<List<String>> values = [
-          videos
-              .map(
-                (video) => DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date),
-              )
-              .toList(),
-          videos.map((video) => video.cameraCount.toString()).toList(),
-          videos
-              .map(
-                (video) => video.status == 'processing'
-                    ? '分析中...'
-                    : (video.totalTime?.toString() ?? 'N/A'),
-              )
-              .toList(),
-          videos.map((video) => video.note).toList(),
-        ];
-
-        const columnWidths = {
-          0: FlexColumnWidth(2),
-          1: FlexColumnWidth(1),
-          2: FlexColumnWidth(1),
-          3: FlexColumnWidth(2),
-        };
-
-        return Column(
-          children: [
-            // 1. 固定標題欄 (加入底邊框與 Body 區隔)
-            Table(
-              columnWidths: columnWidths,
-              border: const TableBorder(
-                horizontalInside: BorderSide(width: 3, color: Colors.white),
-                verticalInside: BorderSide(width: 3, color: Colors.white),
-                bottom: BorderSide(width: 3, color: Colors.white),
-              ),
-              children: [
-                TableRow(
-                  children: headers
-                      .map(
-                        (header) => Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            header,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
-            // 2. 可捲動資料區
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 280),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: Table(
-                  columnWidths: columnWidths,
-                  border: const TableBorder(
-                    horizontalInside: BorderSide(width: 3, color: Colors.white),
-                    verticalInside: BorderSide(width: 3, color: Colors.white),
+      data: (List<RunSessionInfo> sessions) {
+        if (sessions.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history_toggle_off_outlined,
+                    size: 32,
+                    color: Colors.grey,
                   ),
-                  children: [
-                    for (int i = 0; i < videos.length; i++)
-                      TableRow(
-                        decoration: BoxDecoration(
-                          color: videoId == videos[i].runSessionId
-                              ? Theme.of(context).primaryColorDark
-                              : Colors.transparent,
-                        ),
-                        children: [
-                          for (int j = 0; j < values.length; j++)
-                            TableRowInkWell(
-                              onTap: () {
-                                final video = videos[i];
-                                if (video.status == 'failed') {
-                                  toastification.show(
-                                    context: context,
-                                    title: const Text(
-                                      "分析失敗！",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    description: const Text(
-                                      "此次影片分析失敗，您可以在操作卡片中將其刪除",
-                                    ),
-                                    type: ToastificationType.error,
-                                    style: ToastificationStyle.minimal,
-                                    alignment: Alignment.bottomCenter,
-                                    autoCloseDuration: const Duration(
-                                      seconds: 4,
-                                    ),
-                                  );
-                                }
-                                ref
-                                        .read(
-                                          playbackSelectedRunSessionIdProvider
-                                              .notifier,
-                                        )
-                                        .state =
-                                    video.runSessionId;
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Text(
-                                  values[j][i],
-                                  textAlign: TextAlign.center,
-                                  softWrap: true,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            // 3. 固定裝飾欄 (Footer) (加入頂邊框與 Body 區隔)
-            Table(
-              columnWidths: columnWidths,
-              border: const TableBorder(
-                horizontalInside: BorderSide(width: 3, color: Colors.white),
-                verticalInside: BorderSide(width: 3, color: Colors.white),
-                top: BorderSide(width: 3, color: Colors.white),
-              ),
-              children: [
-                TableRow(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: const Radius.circular(25),
-                      bottomRight: const Radius.circular(25),
+                  SizedBox(height: 8),
+                  Text(
+                    "尚無跑步紀錄",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  children: [
-                    for (int i = 0; i < headers.length; i++)
-                      const Padding(padding: EdgeInsets.all(12.0)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: sessions.length,
+          itemBuilder: (context, index) {
+            final session = sessions[index];
+            final isSelected = session.runSessionId == videoId;
+
+            // Define status badge colors
+            Color badgeBgColor;
+            Color badgeTextColor;
+            String statusText;
+
+            switch (session.status) {
+              case 'done':
+                badgeBgColor = Colors.green.shade50;
+                badgeTextColor = Colors.green.shade700;
+                statusText = "完成";
+                break;
+              case 'failed':
+                badgeBgColor = Colors.red.shade50;
+                badgeTextColor = Colors.red.shade700;
+                statusText = "失敗";
+                break;
+              case 'processing':
+                badgeBgColor = Colors.orange.shade50;
+                badgeTextColor = Colors.orange.shade700;
+                statusText = "分析中";
+                break;
+              default:
+                badgeBgColor = Colors.grey.shade100;
+                badgeTextColor = Colors.grey.shade700;
+                statusText = session.status;
+            }
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Theme.of(context).primaryColorDark
+                        : Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ],
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      if (session.status == 'failed') {
+                        toastification.show(
+                          context: context,
+                          title: const Text(
+                            "分析失敗！",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          description: const Text("此次影片分析失敗，您可以在右側操作卡片中將其刪除"),
+                          type: ToastificationType.error,
+                          style: ToastificationStyle.minimal,
+                          alignment: Alignment.bottomCenter,
+                          autoCloseDuration: const Duration(seconds: 4),
+                        );
+                      }
+                      ref.read(playbackSelectedRunSessionIdProvider.notifier).state =
+                          session.runSessionId;
+                      
+                      // Notify parent (e.g. to close bottom sheet on mobile)
+                      if (onSessionSelected != null) {
+                        onSessionSelected!();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          // Left Icon
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.directions_run,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Theme.of(context).primaryColorDark,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Middle Column (Title/Subtitles)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat('yyyy-MM-dd HH:mm').format(session.date),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.videocam_outlined,
+                                      size: 14,
+                                      color: isSelected
+                                          ? Colors.white.withValues(alpha: 0.8)
+                                          : Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${session.cameraCount} 鏡頭",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isSelected
+                                            ? Colors.white.withValues(alpha: 0.8)
+                                            : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    if (session.status == 'processing') ...[
+                                      const SizedBox(width: 8),
+                                      SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            isSelected
+                                                ? Colors.white
+                                                : Colors.orange.shade700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "${session.progress}%",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isSelected
+                                              ? Colors.white.withValues(alpha: 0.9)
+                                              : Colors.orange.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (session.note.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    session.note,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                      color: isSelected
+                                          ? Colors.white.withValues(alpha: 0.7)
+                                          : Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Right Status Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.25)
+                                  : badgeBgColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? Colors.white
+                                    : badgeTextColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

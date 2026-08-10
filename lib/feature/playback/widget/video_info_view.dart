@@ -39,7 +39,7 @@ class VideoInfoView extends ConsumerWidget {
         final List<MapEntry<String, String>> allInfo = [
           MapEntry("狀態", video.status == 'failed' ? "分析失敗" : (video.status == 'processing' ? "分析中" : "分析完成")),
           MapEntry("選手姓名", video.runnerName.toString()),
-          MapEntry("日期時間", DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date)),
+          MapEntry("日期時間", DateFormat('yyyy-MM-dd HH:mm').format(video.date)),
           MapEntry("相機數量", video.cameraCount.toString()),
           MapEntry("fps", video.fps.toString()),
           MapEntry("平均速度", video.avgVelocity.toString()),

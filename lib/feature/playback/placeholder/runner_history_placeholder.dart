@@ -5,57 +5,112 @@ class RunnerHistoryPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> headers = ["日期時間", "相機數量", "總時間", "備註"];
-    final List<String> values = ["年-月-日 時:分:秒", "{1, 2, 3, 4, 5}", "總時間", "備註"];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Table(
-        border: TableBorder(
-          horizontalInside: BorderSide(
-            width: 3,
-            color: Colors.white,
-          ), // 只要橫向分隔線
-          verticalInside: BorderSide(width: 3, color: Colors.white),
-          top: BorderSide.none, // 不要最上面
-          bottom: BorderSide.none, // 不要最下面
-          left: BorderSide.none, // 不要最左邊
-          right: BorderSide.none, // 不要最右邊
-        ),
-        children: [
-          // 表格標題
-          TableRow(
-            children: headers
-                .map(
-                  (header) => Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Text(
-                      header,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis, // 單行，不換行
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          for (int i = 0; i < 2; i++)
-            // 表格內容
-            TableRow(
-              children: [
-                for (int j = 0; j < headers.length; j++)
-                  Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Text(
-                      values[j],
-                      textAlign: TextAlign.center,
-                      softWrap: true, // 允許換行
-                    ),
-                  ),
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: 4, // 顯示 4 個靜態骨架卡片
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
-        ],
-      ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: OneRunnerHistoryPlaceholder(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class OneRunnerHistoryPlaceholder extends StatelessWidget {
+  const OneRunnerHistoryPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // 左側圓形圖示骨架 (與選了跑者後一樣是淡藍底色)
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.directions_run,
+            color: Theme.of(context).primaryColorDark,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        // 中間文字欄位骨架
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 日期時間骨架 (使用主題淡藍色)
+              Container(
+                width: 120,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 相機數量與圖示骨架 (使用主題淡藍色)
+              Row(
+                children: [
+                  Icon(
+                    Icons.videocam_outlined,
+                    size: 14,
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 50,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 右側狀態標籤骨架 (使用主題淡藍色)
+        Container(
+          width: 44,
+          height: 18,
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+      ],
     );
   }
 }

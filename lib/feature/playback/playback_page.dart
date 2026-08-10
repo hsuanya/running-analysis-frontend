@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
+import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/feature/playback/widget/video_player_view.dart';
@@ -13,7 +14,8 @@ import 'package:frontend/feature/playback/widget/runner_history_view.dart';
 import 'package:frontend/feature/playback/widget/video_info_view.dart';
 import 'package:frontend/feature/playback/widget/session_actions_view.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:frontend/feature/playback/shimmer/runner_dropdown_shimmer.dart';
+import 'package:intl/intl.dart';
 
 class PlaybackPage extends ConsumerStatefulWidget {
   const PlaybackPage({super.key, this.runnerId, this.videoId});
@@ -26,6 +28,8 @@ class PlaybackPage extends ConsumerStatefulWidget {
 }
 
 class _PlaybackPageState extends ConsumerState<PlaybackPage> {
+  bool _isSidebarExpanded = true;
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +54,9 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     final activeRunnerId = runners.when(
       data: (items) {
         final isRunnerIdValid = items.any((r) => r.id == selectedRunnerId);
-        if (!isRunnerIdValid && selectedRunnerId != null && selectedRunnerId.isNotEmpty) {
+        if (!isRunnerIdValid &&
+            selectedRunnerId != null &&
+            selectedRunnerId.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             ref.read(playbackSelectedRunnerIdProvider.notifier).state =
@@ -83,269 +89,498 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
       });
     }
 
+    final selectedRunnerName =
+        runners.whenOrNull(
+          data: (items) => items
+              .firstWhere(
+                (runner) => runner.id == activeRunnerId,
+                orElse: () => RunnerInfo(id: '', name: '', lastVideoId: ''),
+              )
+              .name,
+        ) ??
+        '';
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 小螢幕 1 欄，大螢幕 2 欄
-        final crossAxisCount = constraints.maxWidth < 800 ? 1 : 2;
+        final isLargeScreen = constraints.maxWidth >= 900;
+
+        if (isLargeScreen) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Unified Top Row (Seamless Background)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  top: 12,
+                  bottom: 4,
+                ),
+                child: Row(
+                  children: [
+                    // Sidebar Expand/Collapse Toggle Button
+                    IconButton(
+                      icon: Icon(
+                        _isSidebarExpanded
+                            ? Icons.keyboard_double_arrow_left
+                            : Icons.keyboard_double_arrow_right,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isSidebarExpanded = !_isSidebarExpanded;
+                        });
+                      },
+                      tooltip: _isSidebarExpanded ? "收合紀錄列表" : "展開紀錄列表",
+                    ),
+                    const SizedBox(width: 8),
+                    // Runner Selector
+                    Expanded(
+                      child: AsyncValueWidget(
+                        value: runners,
+                        loading: const RunnerDropdownShimmer(),
+                        data: (List<RunnerInfo> items) => _buildRunnerDropdown(
+                          context,
+                          items,
+                          activeRunnerId,
+                          selectedRunnerId,
+                          selectedRunnerName,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Main Workspace Layout
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Sidebar Panel (Animated Width, Margin, Border, and Corner Radius)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      width: _isSidebarExpanded ? 304 : 0,
+                      height: double.infinity,
+                      margin: EdgeInsets.only(
+                        left: _isSidebarExpanded ? 12 : 0,
+                        right: _isSidebarExpanded ? 4 : 0,
+                        top: _isSidebarExpanded ? 12 : 0,
+                        bottom: _isSidebarExpanded ? 12 : 0,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: _isSidebarExpanded
+                            ? Border.all(
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                                width: 1.5,
+                              )
+                            : null,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: SizedBox(
+                          width: 304,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16,
+                                  top: 16,
+                                  bottom: 8,
+                                ),
+                                child: Text(
+                                  "跑步紀錄選擇",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                              // Scrollable History Cards
+                              const Expanded(child: RunnerHistoryView()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Right Details Content
+                    Expanded(
+                      child: selectedVideoId != null && selectedVideoId.isEmpty
+                          ? _buildEmptyPlaceholder()
+                          : CustomScrollView(
+                              slivers: [
+                                SliverPadding(
+                                  padding: const EdgeInsets.all(12),
+                                  sliver: SliverMasonryGrid(
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    gridDelegate:
+                                        const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                        ),
+                                    delegate: SliverChildListDelegate([
+                                      VideoPlayerView(),
+                                      GraphListView(),
+                                      RoundedBoxWidget(child: VideoInfoView()),
+                                      RoundedBoxWidget(
+                                        child: SessionActionsView(),
+                                      ),
+                                    ]),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Mobile Layout (Stacked)
+        final runnerHistory = activeRunnerId != null
+            ? ref.watch(runnerHistoryProvider(activeRunnerId))
+            : null;
+        final activeSession = runnerHistory?.whenOrNull(
+          data: (sessions) {
+            if (sessions.isEmpty) return null;
+            return sessions.firstWhere(
+              (s) => s.runSessionId == selectedVideoId,
+              orElse: () => sessions.first,
+            );
+          },
+        );
 
         return CustomScrollView(
           slivers: [
+            // Runner Selector
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 12),
                 child: AsyncValueWidget(
                   value: runners,
-                  loading: Shimmer.fromColors(
-                    baseColor: Theme.of(context).primaryColorDark,
-                    highlightColor: Theme.of(
-                      context,
-                    ).primaryColor.withValues(alpha: 0.3),
-                    child: Container(
-                      height: 50,
-                      width: double.infinity,
-                      padding: const EdgeInsets.only(left: 12, right: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.black26),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.people, size: 16),
-                          const SizedBox(width: 4),
-                          const Expanded(
-                            child: Text(
-                              '選擇選手',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios_outlined, size: 12),
-                        ],
-                      ),
-                    ),
+                  loading: const RunnerDropdownShimmer(),
+                  data: (List<RunnerInfo> items) => _buildRunnerDropdown(
+                    context,
+                    items,
+                    activeRunnerId,
+                    selectedRunnerId,
+                    selectedRunnerName,
                   ),
-                  data: (List<RunnerInfo> items) {
-                    final selectedRunnerName = items
-                        .firstWhere(
-                          (runner) => runner.id == activeRunnerId,
-                          orElse: () =>
-                              RunnerInfo(id: '', name: '', lastVideoId: ''),
-                        )
-                        .name;
-
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton2<String>(
-                              isExpanded: true,
-                              hint: const Row(
-                                children: [
-                                  Icon(Icons.people, size: 16),
-                                  SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      '選擇選手',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              items: items
-                                  .map(
-                                    (RunnerInfo item) =>
-                                        DropdownMenuItem<String>(
-                                          value: item.id,
-                                          child: Text(
-                                            item.name,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                  )
-                                  .toList(),
-                              value: activeRunnerId,
-                              onChanged: (value) {
-                                setState(() {
-                                  ref
-                                          .read(
-                                            playbackSelectedRunnerIdProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      value;
-                                });
-                                ref
-                                    .read(
-                                      playbackSelectedRunSessionIdProvider
-                                          .notifier,
-                                    )
-                                    .state = items
-                                    .firstWhere((item) => item.id == value)
-                                    .lastVideoId;
-                              },
-                              buttonStyleData: ButtonStyleData(
-                                height: 50,
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.black26),
-                                ),
-                              ),
-                              iconStyleData: const IconStyleData(
-                                icon: Icon(Icons.arrow_forward_ios_outlined),
-                                iconSize: 12,
-                              ),
-                              dropdownStyleData: DropdownStyleData(
-                                maxHeight: 200,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                offset: const Offset(0, 0),
-                                scrollbarTheme: ScrollbarThemeData(
-                                  radius: const Radius.circular(40),
-                                ),
-                              ),
-                              menuItemStyleData: const MenuItemStyleData(
-                                height: 40,
-                                padding: EdgeInsets.only(left: 12, right: 12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (selectedRunnerId != null) ...[
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text("確認刪除選手"),
-                                  content: Text(
-                                    "您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: const Text("取消"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(true),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      child: const Text("刪除"),
-                                    ),
-                                  ],
-                                ),
-                              );
-
-                              if (confirm == true) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("正在刪除選手...")),
-                                );
-
-                                try {
-                                  final backend = ref.read(backendProvider);
-                                  await backend.deleteRunner(selectedRunnerId);
-
-                                  ref
-                                          .read(
-                                            playbackSelectedRunnerIdProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      null;
-                                  ref
-                                          .read(
-                                            playbackSelectedRunSessionIdProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      null;
-                                  ref.invalidate(runnerProvider);
-
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("選手已成功刪除")),
-                                  );
-                                } catch (e) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("刪除失敗: $e")),
-                                  );
-                                }
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.delete_forever,
-                              color: Colors.redAccent,
-                              size: 24,
-                            ),
-                            tooltip: "刪除此選手",
-                          ),
-                        ],
-                      ],
-                    );
-                  },
                 ),
               ),
             ),
-            if (selectedVideoId != null && selectedVideoId.isEmpty)
-              const SliverToBoxAdapter(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      "此跑者尚無歷史紀錄，請先上傳",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+
+            // Record Selector Card for Mobile
+            if (activeRunnerId != null && selectedVideoId != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 12, top: 8),
+                  child: _buildMobileRecordSelector(
+                    context,
+                    ref,
+                    activeSession,
                   ),
                 ),
-              )
+              ),
+
+            if (selectedVideoId != null && selectedVideoId.isEmpty)
+              SliverToBoxAdapter(child: _buildEmptyPlaceholder())
             else
               SliverPadding(
                 padding: const EdgeInsets.all(12),
                 sliver: SliverMasonryGrid(
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                  ),
+                  gridDelegate:
+                      const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 1,
+                      ),
                   delegate: SliverChildListDelegate([
                     VideoPlayerView(),
                     GraphListView(),
                     RoundedBoxWidget(child: VideoInfoView()),
                     RoundedBoxWidget(child: SessionActionsView()),
-                    RoundedBoxWidget(child: RunnerHistoryView()),
                   ]),
                 ),
               ),
           ],
         );
       },
+    );
+  }
+
+
+
+  Widget _buildRunnerDropdown(
+    BuildContext context,
+    List<RunnerInfo> items,
+    String? activeRunnerId,
+    String? selectedRunnerId,
+    String selectedRunnerName,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton2<String>(
+              isExpanded: true,
+              hint: const Row(
+                children: [
+                  Icon(Icons.people, size: 16),
+                  SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '選擇選手',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              items: items
+                  .map(
+                    (RunnerInfo item) => DropdownMenuItem<String>(
+                      value: item.id,
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              value: activeRunnerId,
+              onChanged: (value) {
+                setState(() {
+                  ref.read(playbackSelectedRunnerIdProvider.notifier).state =
+                      value;
+                });
+                ref.read(playbackSelectedRunSessionIdProvider.notifier).state =
+                    items.firstWhere((item) => item.id == value).lastVideoId;
+              },
+              buttonStyleData: ButtonStyleData(
+                height: 50,
+                padding: const EdgeInsets.only(left: 12, right: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black26),
+                ),
+              ),
+              iconStyleData: const IconStyleData(
+                icon: Icon(Icons.arrow_forward_ios_outlined),
+                iconSize: 12,
+              ),
+              dropdownStyleData: DropdownStyleData(
+                maxHeight: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                offset: const Offset(0, 0),
+                scrollbarTheme: const ScrollbarThemeData(
+                  radius: Radius.circular(40),
+                ),
+              ),
+              menuItemStyleData: const MenuItemStyleData(
+                height: 40,
+                padding: EdgeInsets.only(left: 12, right: 12),
+              ),
+            ),
+          ),
+        ),
+        if (selectedRunnerId != null) ...[
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("確認刪除選手"),
+                  content: Text(
+                    "您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text("取消"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text("刪除"),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text("正在刪除選手...")));
+
+                try {
+                  final backend = ref.read(backendProvider);
+                  await backend.deleteRunner(selectedRunnerId);
+
+                  ref.read(playbackSelectedRunnerIdProvider.notifier).state =
+                      null;
+                  ref
+                          .read(playbackSelectedRunSessionIdProvider.notifier)
+                          .state =
+                      null;
+                  ref.invalidate(runnerProvider);
+
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("選手已成功刪除")));
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text("刪除失敗: $e")));
+                }
+              }
+            },
+            icon: const Icon(
+              Icons.delete_forever,
+              color: Colors.redAccent,
+              size: 24,
+            ),
+            tooltip: "刪除此選手",
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEmptyPlaceholder() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(32),
+        child: Text(
+          "此跑者尚無歷史紀錄，請先上傳",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileRecordSelector(
+    BuildContext context,
+    WidgetRef ref,
+    RunSessionInfo? activeSession,
+  ) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => Container(
+              padding: const EdgeInsets.only(top: 16),
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      "選擇跑步紀錄",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: RunnerHistoryView(
+                      onSessionSelected: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.history,
+                  size: 18,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "目前跑步紀錄",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      activeSession != null
+                          ? "${DateFormat('yyyy-MM-dd HH:mm').format(activeSession.date)} (${activeSession.cameraCount}鏡頭)"
+                          : "選擇跑步紀錄",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down_circle_outlined,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

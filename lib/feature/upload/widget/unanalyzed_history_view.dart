@@ -43,7 +43,7 @@ class UnanalyzedHistoryView extends ConsumerWidget {
         final List<List<String>> values = [
           videos
               .map(
-                (video) => DateFormat('yyyy-MM-dd HH:mm:ss').format(video.date),
+                (video) => DateFormat('yyyy-MM-dd HH:mm').format(video.date),
               )
               .toList(),
           videos.map((video) => video.runnerName).toList(),
