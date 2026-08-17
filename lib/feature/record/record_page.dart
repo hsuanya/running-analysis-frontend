@@ -90,6 +90,38 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       }
     });
 
+    ref.listen(
+      recordControllerProvider.select((s) => s.pendingControlRequestFrom),
+      (prev, next) {
+        if (next != null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('主控權轉移要求'),
+              content: Text('設備 $next 正在要求此房間的主控權，您同意轉移嗎？'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    controller.respondControlRequest(next, false);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('拒絕'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    controller.respondControlRequest(next, true);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('同意'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
+
     // 同步本機物理轉向狀態到控制器
     final orientation = MediaQuery.of(context).orientation;
     final isPhysicallyReady = orientation != Orientation.portrait;
@@ -514,7 +546,33 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     leading: CircleAvatar(
                                       child: Text('${index + 1}'),
                                     ),
-                                    title: Text('設備 ID: ${member.id}'),
+                                    title: Row(
+                                      children: [
+                                        Text('設備 ID: ${member.id}'),
+                                        if (member.isMaster) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber[100],
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              '房主',
+                                              style: TextStyle(
+                                                color: Colors.amber[900],
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                     subtitle: Text(
                                       member.cameraIndex != null
                                           ? '相機 ${member.cameraIndex! + 1}'
@@ -651,6 +709,43 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           const SizedBox(height: 16),
                           const Text('請留在本頁影面，等待主控端發送錄影指令...'),
                         ],
+                      ],
+                      if (state.role == RecordRole.slave) ...[
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          icon: state.isWaitingForControlApproval
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.black54,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.swap_horizontal_circle_outlined,
+                                  size: 16,
+                                ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.black,
+                            minimumSize: const Size(200, 40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          onPressed: state.isWaitingForControlApproval
+                              ? null
+                              : () => controller.requestControl(),
+                          label: Text(
+                            state.isWaitingForControlApproval
+                                ? '等待房主審核中...'
+                                : (state.members.any((m) => m.isMaster)
+                                    ? '要求主控權'
+                                    : '取得主控權'),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
                       TextButton.icon(
                         icon: const Icon(Icons.exit_to_app),

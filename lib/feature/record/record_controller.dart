@@ -78,6 +78,29 @@ class RecordController extends StateNotifier<RecordState> {
           _channel?.sink.add(jsonEncode(responseMsg.toJson()));
         }
         break;
+      case RecordMessageType.controlRequest:
+        state = state.copyWith(
+          pendingControlRequestFrom: msg.data['requesterId'],
+        );
+        break;
+      case RecordMessageType.controlGranted:
+        state = state.copyWith(
+          role: RecordRole.master,
+          isWaitingForControlApproval: false,
+        );
+        break;
+      case RecordMessageType.controlRevoked:
+        state = state.copyWith(
+          role: RecordRole.slave,
+          isRecordingEnabled: false,
+        );
+        break;
+      case RecordMessageType.controlRejected:
+        state = state.copyWith(
+          isWaitingForControlApproval: false,
+          error: msg.data['message'] ?? '要求控制權被拒絕',
+        );
+        break;
       case RecordMessageType.error:
         state = state.copyWith(
           status: RecordStatus.idle,
@@ -249,6 +272,24 @@ class RecordController extends StateNotifier<RecordState> {
     final msg = RecordMessage(
       type: RecordMessageType.cameraPreview,
       data: {'image': base64Image},
+    );
+    _channel?.sink.add(jsonEncode(msg.toJson()));
+  }
+
+  void requestControl() {
+    state = state.copyWith(isWaitingForControlApproval: true);
+    final msg = RecordMessage(
+      type: RecordMessageType.requestControl,
+      data: {},
+    );
+    _channel?.sink.add(jsonEncode(msg.toJson()));
+  }
+
+  void respondControlRequest(String requesterId, bool agree) {
+    state = state.copyWith(clearPendingControlRequest: true);
+    final msg = RecordMessage(
+      type: RecordMessageType.respondControlRequest,
+      data: {'requesterId': requesterId, 'agree': agree},
     );
     _channel?.sink.add(jsonEncode(msg.toJson()));
   }

@@ -8,6 +8,8 @@ class NetUtils {
   static NetUtils? _instance;
   late Dio _dio;
 
+  static void Function()? onUnauthorized;
+
   _init() {
     BaseOptions options = BaseOptions(
       connectTimeout: Duration(seconds: 180),
@@ -67,8 +69,16 @@ class NetUtils {
 
       return response.data as T;
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        onUnauthorized?.call();
+      }
       // DioError only return error 500
-      String message = e.response?.data['detail'] ?? e.response?.data['message'] ?? e.message;
+      String? message;
+      if (e.response?.data is Map) {
+        final data = e.response!.data as Map;
+        message = data['detail']?.toString() ?? data['message']?.toString();
+      }
+      message ??= e.message ?? "Unknown Network Error";
       if (e.type == DioExceptionType.connectionTimeout) {
         message = "Connection Timeout";
       } else if (e.type == DioExceptionType.receiveTimeout) {
@@ -150,6 +160,9 @@ class NetUtils {
         }
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        onUnauthorized?.call();
+      }
       yield* Stream.error(e.message ?? "Dio error");
     } catch (e) {
       yield* Stream.error(e);

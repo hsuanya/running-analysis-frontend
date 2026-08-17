@@ -10,6 +10,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    NetUtils.onUnauthorized = () {
+      logout();
+    };
     // 非同步初始化狀態
     _init();
     return AuthState.initial();
@@ -22,7 +25,18 @@ class AuthNotifier extends Notifier<AuthState> {
       final token = prefs.getString(_tokenKey);
       final username = prefs.getString(_usernameKey);
       if (token != null && token.isNotEmpty && username != null) {
-        state = AuthState.authenticated(token, username);
+        try {
+          await NetUtils().reqeustData<Map<String, dynamic>>(
+            '${API.baseUrl}/auth/verify',
+            method: DioMethod.get,
+          );
+          state = AuthState.authenticated(token, username);
+        } catch (_) {
+          // Token is invalid/expired
+          await prefs.remove(_tokenKey);
+          await prefs.remove(_usernameKey);
+          state = AuthState.unauthenticated();
+        }
       } else {
         state = AuthState.unauthenticated();
       }

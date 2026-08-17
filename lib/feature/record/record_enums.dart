@@ -6,14 +6,21 @@ class RecordMember {
   final String id;
   final int? cameraIndex;
   final bool isReady;
+  final bool isMaster;
 
-  RecordMember({required this.id, this.cameraIndex, this.isReady = false});
+  RecordMember({
+    required this.id,
+    this.cameraIndex,
+    this.isReady = false,
+    this.isMaster = false,
+  });
 
   factory RecordMember.fromJson(Map<String, dynamic> json) {
     return RecordMember(
       id: json['id'],
       cameraIndex: json['cameraIndex'],
       isReady: json['isReady'] ?? false,
+      isMaster: json['isMaster'] ?? false,
     );
   }
 }
@@ -28,6 +35,12 @@ enum RecordMessageType {
   updateReady,
   cameraPreview,
   error,
+  requestControl,
+  respondControlRequest,
+  controlRequest,
+  controlGranted,
+  controlRevoked,
+  controlRejected,
 }
 
 class RecordMessage {

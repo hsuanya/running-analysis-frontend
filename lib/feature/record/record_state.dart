@@ -25,6 +25,10 @@ class RecordState {
   // Calibration
   final AnchorResult? anchorResult;
 
+  // Room Control Request
+  final String? pendingControlRequestFrom;
+  final bool isWaitingForControlApproval;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -43,6 +47,8 @@ class RecordState {
     this.fps = 60,
     this.note = '',
     this.anchorResult,
+    this.pendingControlRequestFrom,
+    this.isWaitingForControlApproval = false,
   });
 
   bool get anchorIsSet => anchorResult != null;
@@ -67,6 +73,9 @@ class RecordState {
     AnchorResult? anchorResult,
     bool clearAnchor = false,
     bool clearSharedRunSessionId = false,
+    String? pendingControlRequestFrom,
+    bool? isWaitingForControlApproval,
+    bool clearPendingControlRequest = false,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -88,6 +97,10 @@ class RecordState {
       fps: fps ?? this.fps,
       note: note ?? this.note,
       anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
+      pendingControlRequestFrom: clearPendingControlRequest
+          ? null
+          : (pendingControlRequestFrom ?? this.pendingControlRequestFrom),
+      isWaitingForControlApproval: isWaitingForControlApproval ?? this.isWaitingForControlApproval,
     );
   }
 }
