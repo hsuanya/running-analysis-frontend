@@ -480,6 +480,16 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                 quarterTurns: quarterTurns,
                 child: CameraPreview(_controller!),
               ),
+              if (isAnchorMode && snapshotBytes != null)
+                Positioned.fill(
+                  child: RotatedBox(
+                    quarterTurns: quarterTurns,
+                    child: Image.memory(
+                      snapshotBytes,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
               if (anchorOverlay != null) anchorOverlay,
             ],
@@ -840,6 +850,9 @@ class _FullScreenCameraDialogState
   int? _draggingIdx;
   Offset? _magPos;
   Offset? _pendingTapNorm;
+  int? _selectedActivePointIdx;
+  Offset? _panStartTouchNorm;
+  Offset? _panStartAnchorPos;
 
   // Cached image size (set in LayoutBuilder inside the anchor overlay)
   double _imgW = 1.0;
@@ -848,9 +861,6 @@ class _FullScreenCameraDialogState
   // Distance text controllers
   final _topCtrl = TextEditingController();
   final _botCtrl = TextEditingController();
-
-  // Distance panel expand/collapse state
-  bool _distanceExpanded = true;
 
   // Snapshot taken when entering anchor mode (for magnifier)
   Uint8List? _snapshotBytes;
@@ -867,6 +877,7 @@ class _FullScreenCameraDialogState
       _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
       _topCtrl.text = existing.leftToMidDistanceM.toString();
       _botCtrl.text = existing.midToRightDistanceM.toString();
+      _selectedActivePointIdx = null;
 
       if (_pts.length == 6) {
         final A5 = _pts[0];
@@ -920,6 +931,63 @@ class _FullScreenCameraDialogState
     (local.dy / _imgH).clamp(0.0, 1.0),
   );
 
+  bool _isMobile(BuildContext context) {
+    final isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+    final isShortScreen = MediaQuery.of(context).size.shortestSide < 600;
+    return isMobilePlatform || isShortScreen;
+  }
+
+  void _updatePointPosition(int idx, Offset norm) {
+    if (idx < 4) {
+      if (idx < _pts.length) {
+        _pts[idx] = norm;
+      } else {
+        while (_pts.length < idx) {
+          _pts.add(norm);
+        }
+        _pts.add(norm);
+      }
+      if (_pts.length == 4) {
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+      } else if (_pts.length == 6) {
+        _pts[4] = _pts[0] + (_pts[1] - _pts[0]) * _t5;
+        _pts[5] = _pts[3] + (_pts[2] - _pts[3]) * _t6;
+      }
+    } else if (idx == 4 && _pts.length == 6) {
+      final A = _pts[0];
+      final B = _pts[1];
+      final AB = B - A;
+      final AP = norm - A;
+      final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+      double t = 0.5;
+      if (abLenSq > 0) {
+        t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+        t = t.clamp(0.0, 1.0);
+      }
+      _t5 = t;
+      _pts[4] = A + AB * t;
+    } else if (idx == 5 && _pts.length == 6) {
+      final A = _pts[3];
+      final B = _pts[2];
+      final AB = B - A;
+      final AP = norm - A;
+      final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+      double t = 0.5;
+      if (abLenSq > 0) {
+        t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+        t = t.clamp(0.0, 1.0);
+      }
+      _t6 = t;
+      _pts[5] = A + AB * t;
+    }
+  }
+
   int? _nearestIdx(Offset normPos) {
     int? best;
     double bestDist = double.infinity;
@@ -935,14 +1003,190 @@ class _FullScreenCameraDialogState
     return best;
   }
 
-  bool get _canConfirm {
-    if (!_full) return false;
-    final t = double.tryParse(_topCtrl.text);
-    final b = double.tryParse(_botCtrl.text);
-    return t != null && t > 0 && b != null && b > 0;
+  bool get _canConfirm => _full;
+
+  Future<void> _showDistanceInputDialog(BuildContext context) async {
+    final formKey = GlobalKey<FormState>();
+    final topTextCtrl = TextEditingController(
+      text: _topCtrl.text.isNotEmpty ? _topCtrl.text : '10.0',
+    );
+    final botTextCtrl = TextEditingController(
+      text: _botCtrl.text.isNotEmpty ? _botCtrl.text : '10.0',
+    );
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.white12),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.straighten, color: Color(0xFF00BFA5), size: 22),
+              SizedBox(width: 8),
+              Text(
+                '輸入跑道實際距離',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'NotoSansTC',
+                ),
+              ),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '請輸入兩段分區的實際物理長度，以利精準校正：',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontFamily: 'NotoSansTC',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Left-to-Mid
+                  TextFormField(
+                    controller: topTextCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
+                      labelStyle: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      suffixText: 'm',
+                      suffixStyle: const TextStyle(color: Colors.white60),
+                      prefixIcon: Icon(
+                        Icons.square,
+                        size: 12,
+                        color: _kAnchorColors[0],
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: Color(0xFF00BFA5)),
+                      ),
+                    ),
+                    validator: (val) {
+                      final n = double.tryParse(val?.trim() ?? '');
+                      if (n == null || n <= 0) return '請輸入大於 0 的有效數字';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  // Mid-to-Right
+                  TextFormField(
+                    controller: botTextCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
+                      labelStyle: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      suffixText: 'm',
+                      suffixStyle: const TextStyle(color: Colors.white60),
+                      prefixIcon: Icon(
+                        Icons.square,
+                        size: 12,
+                        color: _kAnchorColors[4],
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: Color(0xFF00BFA5)),
+                      ),
+                    ),
+                    validator: (val) {
+                      final n = double.tryParse(val?.trim() ?? '');
+                      if (n == null || n <= 0) return '請輸入大於 0 的有效數字';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text(
+                '取消',
+                style: TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  _topCtrl.text = topTextCtrl.text.trim();
+                  _botCtrl.text = botTextCtrl.text.trim();
+                  Navigator.of(dialogCtx).pop(true);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00BFA5),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                '確認並套用',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      _saveAnchorResult();
+    }
   }
 
-  void _confirmAnchor() {
+  void _saveAnchorResult() {
     final result = AnchorResult(
       points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
       leftToMidDistanceM: double.parse(_topCtrl.text),
@@ -958,6 +1202,10 @@ class _FullScreenCameraDialogState
         if (kDebugMode) print('無法恢復相機預覽: $e');
       }
     }
+  }
+
+  void _confirmAnchor() {
+    _showDistanceInputDialog(context);
   }
 
   void _enterAnchorMode() async {
@@ -1000,6 +1248,27 @@ class _FullScreenCameraDialogState
     }
   }
 
+  void _recaptureSnapshot() async {
+    if (_isCapturing) return;
+    setState(() => _isCapturing = true);
+
+    try {
+      final xFile = await widget.cameraViewState._controller?.takePicture();
+      final bytes = await xFile?.readAsBytes();
+      if (mounted && bytes != null) {
+        setState(() {
+          _snapshotBytes = bytes;
+          _isCapturing = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('重新擷取設定錨點預覽圖失敗: $e');
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
+    }
+  }
+
   // ── Gesture handlers ────────────────────────────────────────
   void _onTapDown(TapDownDetails d) {
     _pendingTapNorm = _norm(d.localPosition);
@@ -1008,78 +1277,77 @@ class _FullScreenCameraDialogState
   void _onTap() {
     final pos = _pendingTapNorm;
     _pendingTapNorm = null;
-    if (pos == null || _full) return;
-    if (_nearestIdx(pos) != null) return;
-    setState(() {
-      _pts.add(pos);
-      if (_pts.length == 4) {
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
-        _pts.add(tm);
-        _pts.add(bm);
-        _t5 = 0.5;
-        _t6 = 0.5;
-      }
-    });
-  }
+    if (pos == null) return;
 
-  void _onPanStart(DragStartDetails d) {
-    if (_pts.isEmpty) return;
-    final norm = _norm(d.localPosition);
-    final idx = _nearestIdx(norm);
-    if (idx != null) {
+    if (_isMobile(context) && _selectedActivePointIdx != null) {
       setState(() {
-        _draggingIdx = idx;
-        _magPos = _pts[idx];
+        final idx = _selectedActivePointIdx!;
+        _updatePointPosition(idx, pos);
+        if (_pts.length < 4) {
+          _selectedActivePointIdx = _pts.length;
+        }
+      });
+    } else {
+      if (_full) return;
+      if (_nearestIdx(pos) != null) return;
+      setState(() {
+        _pts.add(pos);
+        if (_pts.length == 4) {
+          final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+          final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+          _pts.add(tm);
+          _pts.add(bm);
+          _t5 = 0.5;
+          _t6 = 0.5;
+        }
       });
     }
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
-    if (_draggingIdx == null) return;
-    final norm = _norm(d.localPosition);
-    setState(() {
-      if (_draggingIdx == 4) {
-        // Dragging TM (index 4): project onto segment TL-TR (0-1)
-        final A = _pts[0];
-        final B = _pts[1];
-        final AB = B - A;
-        final AP = norm - A;
-        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
-        double t = 0.5;
-        if (abLenSq > 0) {
-          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
-          t = t.clamp(0.0, 1.0);
-        }
-        _t5 = t;
-        _pts[4] = A + AB * t;
-      } else if (_draggingIdx == 5) {
-        // Dragging BM (index 5): project onto segment BL-BR (3-2)
-        final A = _pts[3]; // BL
-        final B = _pts[2]; // BR
-        final AB = B - A;
-        final AP = norm - A;
-        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
-        double t = 0.5;
-        if (abLenSq > 0) {
-          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
-          t = t.clamp(0.0, 1.0);
-        }
-        _t6 = t;
-        _pts[5] = A + AB * t;
-      } else {
-        // Dragging corners (0 to 3)
-        _pts[_draggingIdx!] = norm;
-        if (_pts.length == 6) {
-          final A5 = _pts[0];
-          final B5 = _pts[1];
-          _pts[4] = A5 + (B5 - A5) * _t5;
+  void _onPanStart(DragStartDetails d) {
+    if (_pts.isEmpty && !_isMobile(context)) return;
+    final touchNorm = _norm(d.localPosition);
+    _panStartTouchNorm = touchNorm;
 
-          final A6 = _pts[3];
-          final B6 = _pts[2];
-          _pts[5] = A6 + (B6 - A6) * _t6;
+    if (_isMobile(context) && _selectedActivePointIdx != null) {
+      final idx = _selectedActivePointIdx!;
+      setState(() {
+        if (idx < _pts.length) {
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
+        } else {
+          _updatePointPosition(idx, touchNorm);
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
         }
+      });
+    } else {
+      final idx = _nearestIdx(touchNorm);
+      if (idx != null) {
+        setState(() {
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
+          if (_isMobile(context)) {
+            _selectedActivePointIdx = idx;
+          }
+        });
       }
+    }
+  }
+
+  void _onPanUpdate(DragUpdateDetails d) {
+    if (_draggingIdx == null || _panStartTouchNorm == null || _panStartAnchorPos == null) return;
+    final currentTouch = _norm(d.localPosition);
+    final delta = currentTouch - _panStartTouchNorm!;
+    final newPos = Offset(
+      (_panStartAnchorPos!.dx + delta.dx).clamp(0.0, 1.0),
+      (_panStartAnchorPos!.dy + delta.dy).clamp(0.0, 1.0),
+    );
+    setState(() {
+      _updatePointPosition(_draggingIdx!, newPos);
       _magPos = _pts[_draggingIdx!];
     });
   }
@@ -1088,6 +1356,8 @@ class _FullScreenCameraDialogState
     setState(() {
       _draggingIdx = null;
       _magPos = null;
+      _panStartTouchNorm = null;
+      _panStartAnchorPos = null;
     });
   }
 
@@ -1111,15 +1381,6 @@ class _FullScreenCameraDialogState
               ),
             ),
           ),
-
-          // ── 距離輸入欄位 (在全螢幕的最上方) ──────────────────────
-          if (_anchorMode && _full)
-            Positioned(
-              top: 16,
-              left: 20,
-              right: 20,
-              child: SafeArea(child: _buildCollapsibleDistanceRow()),
-            ),
 
           // 切換按鈕（當不在錨點模式時顯示）
           if (!_anchorMode)
@@ -1220,17 +1481,19 @@ class _FullScreenCameraDialogState
                     final i = e.key;
                     final pt = e.value;
                     final isDragging = i == _draggingIdx;
+                    final isActive = _isMobile(context) && i == _selectedActivePointIdx;
                     return Positioned(
                       left: pt.dx * _imgW - 18,
                       top: pt.dy * _imgH - 18,
                       child: AnimatedScale(
-                        scale: isDragging ? 1.35 : 1.0,
+                        scale: (isDragging || isActive) ? 1.35 : 1.0,
                         duration: const Duration(milliseconds: 150),
                         child: _AnchorMarkerOverlay(
                           label: _kAnchorLabels[i],
                           color: _kAnchorColors[i],
                           index: i + 1,
                           isDragging: isDragging,
+                          isActive: isActive,
                         ),
                       ),
                     );
@@ -1251,16 +1514,91 @@ class _FullScreenCameraDialogState
                       ),
                     ),
 
+                  // ── Re-capture snapshot button (top right) ────────
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: IgnorePointer(
+                      ignoring: _draggingIdx != null,
+                      child: AnimatedOpacity(
+                        opacity: _draggingIdx != null ? 0.08 : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: SafeArea(
+                          child: InkWell(
+                            onTap: _isCapturing ? null : _recaptureSnapshot,
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _isCapturing
+                                      ? const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.camera_alt_outlined,
+                                          size: 15,
+                                          color: Colors.white,
+                                        ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    _isCapturing ? '擷取中...' : '重新擷取',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'NotoSansTC',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   // ── Magnifier ──────────────────────────────
                   if (_draggingIdx != null && _magPos != null)
                     _buildMagnifier(),
 
-                  // ── Action bar (bottom) ────────────────────
+                  // ── Action bar & Anchor point buttons (bottom) ────────────────────
                   Positioned(
-                    bottom: 20,
-                    left: 16,
-                    right: 16,
-                    child: _buildActionBar(),
+                    bottom: 16,
+                    left: 12,
+                    right: 12,
+                    child: IgnorePointer(
+                      ignoring: _draggingIdx != null,
+                      child: AnimatedOpacity(
+                        opacity: _draggingIdx != null ? 0.08 : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isMobile(context)) ...[
+                              _buildAnchorPointButtons(),
+                              const SizedBox(height: 8),
+                            ],
+                            _buildActionBar(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1345,206 +1683,7 @@ class _FullScreenCameraDialogState
     );
   }
 
-  /// Compact chip bar when collapsed; full text fields when expanded.
-  Widget _buildCollapsibleDistanceRow() {
-    final topVal = _topCtrl.text.isEmpty ? '--' : '${_topCtrl.text} m';
-    final botVal = _botCtrl.text.isEmpty ? '--' : '${_botCtrl.text} m';
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: _distanceExpanded
-          // ── Expanded: full input fields ──────────────────────
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header row with collapse button
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.straighten,
-                        size: 14,
-                        color: Colors.white54,
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        '實際距離',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontFamily: 'NotoSansTC',
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => setState(() => _distanceExpanded = false),
-                        child: const Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 20,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Two text fields side by side
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _distanceField(
-                          controller: _topCtrl,
-                          label: '左至中 D1 (m)',
-                          color: _kAnchorColors[0],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _distanceField(
-                          controller: _botCtrl,
-                          label: '中至右 D2 (m)',
-                          color: _kAnchorColors[4],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
-          // ── Collapsed: summary chip ──────────────────────────
-          : InkWell(
-              onTap: () => setState(() => _distanceExpanded = true),
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 9,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.straighten,
-                      size: 14,
-                      color: Colors.white54,
-                    ),
-                    const SizedBox(width: 8),
-                    // Left-to-Middle segment
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _kAnchorColors[0],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      topVal,
-                      style: TextStyle(
-                        color: _topCtrl.text.isEmpty
-                            ? Colors.white38
-                            : Colors.white,
-                        fontSize: 13,
-                        fontFamily: 'NotoSansTC',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Middle-to-Right segment
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _kAnchorColors[4],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      botVal,
-                      style: TextStyle(
-                        color: _botCtrl.text.isEmpty
-                            ? Colors.white38
-                            : Colors.white,
-                        fontSize: 13,
-                        fontFamily: 'NotoSansTC',
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.edit, size: 14, color: Colors.white38),
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-
-  Widget _distanceField({
-    required TextEditingController controller,
-    required String label,
-    required Color color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-                fontFamily: 'NotoSansTC',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-          ],
-          onChanged: (_) => setState(() {}),
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: '例如 1.22',
-            hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-            suffixText: 'm',
-            suffixStyle: const TextStyle(color: Colors.white54),
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.08),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: color, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildActionBar() {
     return Row(
@@ -1569,14 +1708,15 @@ class _FullScreenCameraDialogState
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white70,
             side: const BorderSide(color: Colors.white30),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          icon: const Icon(Icons.close, size: 16),
-          label: const Text('取消', style: TextStyle(fontFamily: 'NotoSansTC')),
+          icon: const Icon(Icons.close, size: 14),
+          label: const Text('取消', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         // Undo
         OutlinedButton.icon(
           onPressed: _pts.isEmpty
@@ -1587,30 +1727,36 @@ class _FullScreenCameraDialogState
                     } else {
                       _pts.removeLast();
                     }
+                    _selectedActivePointIdx = _pts.length;
                   }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white60,
             side: const BorderSide(color: Colors.white24),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          icon: const Icon(Icons.undo, size: 16),
-          label: const Text('復原', style: TextStyle(fontFamily: 'NotoSansTC')),
+          icon: const Icon(Icons.undo, size: 14),
+          label: const Text('復原', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         // Reset
         OutlinedButton.icon(
-          onPressed: _pts.isEmpty ? null : () => setState(() => _pts.clear()),
+          onPressed: _pts.isEmpty ? null : () => setState(() {
+            _pts.clear();
+            _selectedActivePointIdx = 0;
+          }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white38,
             side: const BorderSide(color: Colors.white12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          icon: const Icon(Icons.refresh, size: 16),
-          label: const Text('重設', style: TextStyle(fontFamily: 'NotoSansTC')),
+          icon: const Icon(Icons.refresh, size: 14),
+          label: const Text('重設', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
         ),
         const Spacer(),
         // Confirm
@@ -1622,22 +1768,122 @@ class _FullScreenCameraDialogState
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00BFA5),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            icon: const Icon(Icons.check_circle_outline, size: 18),
+            icon: const Icon(Icons.check_circle_outline, size: 16),
             label: const Text(
               '確認錨點',
               style: TextStyle(
                 fontFamily: 'NotoSansTC',
                 fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAnchorPointButton(int i) {
+    final isSet = i < _pts.length;
+    final isActive = _selectedActivePointIdx == i;
+    final color = _kAnchorColors[i];
+    final isAvailable = i < 4 || _pts.length == 6;
+
+    return Opacity(
+      opacity: isAvailable ? 1.0 : 0.35,
+      child: InkWell(
+        onTap: isAvailable
+            ? () {
+                setState(() {
+                  _selectedActivePointIdx = i;
+                });
+              }
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            color: isActive
+                ? color.withValues(alpha: 0.35)
+                : (isSet
+                      ? color.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.04)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive
+                  ? color
+                  : (isSet ? color.withValues(alpha: 0.5) : Colors.white12),
+              width: isActive ? 1.8 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 15,
+                height: 15,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSet ? color : Colors.transparent,
+                  border: Border.all(
+                    color: isSet ? Colors.white : color.withValues(alpha: 0.7),
+                    width: 1.0,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: isSet
+                    ? const Icon(Icons.check, size: 8, color: Colors.white)
+                    : Text(
+                        '${i + 1}',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 3),
+              Flexible(
+                child: Text(
+                  _kAnchorLabels[i],
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive
+                        ? Colors.white
+                        : (isSet ? Colors.white70 : Colors.white38),
+                    fontSize: 10.5,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    fontFamily: 'NotoSansTC',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnchorPointButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        spacing: 4,
+        children: List.generate(
+          6,
+          (i) => Expanded(child: _buildAnchorPointButton(i)),
+        ),
+      ),
     );
   }
 }
@@ -1681,17 +1927,20 @@ class _AnchorMarkerOverlay extends StatelessWidget {
   final Color color;
   final int index;
   final bool isDragging;
+  final bool isActive;
 
   const _AnchorMarkerOverlay({
     required this.label,
     required this.color,
     required this.index,
     this.isDragging = false,
+    this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final size = isDragging ? 36.0 : 30.0;
+    final highlight = isDragging || isActive;
+    final size = highlight ? 36.0 : 30.0;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1702,14 +1951,14 @@ class _AnchorMarkerOverlay extends StatelessWidget {
             shape: BoxShape.circle,
             color: color,
             border: Border.all(
-              color: isDragging ? Colors.white : Colors.white70,
-              width: isDragging ? 2.5 : 2,
+              color: highlight ? Colors.white : Colors.white70,
+              width: highlight ? 2.5 : 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: isDragging ? 0.85 : 0.55),
-                blurRadius: isDragging ? 16 : 8,
-                spreadRadius: isDragging ? 3 : 1,
+                color: color.withValues(alpha: highlight ? 0.85 : 0.55),
+                blurRadius: highlight ? 16 : 8,
+                spreadRadius: highlight ? 3 : 1,
               ),
             ],
           ),
@@ -1718,7 +1967,7 @@ class _AnchorMarkerOverlay extends StatelessWidget {
             '$index',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isDragging ? 15 : 13,
+              fontSize: highlight ? 15 : 13,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1726,7 +1975,7 @@ class _AnchorMarkerOverlay extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isDragging ? 1.0 : 0.85),
+            color: color.withValues(alpha: highlight ? 1.0 : 0.85),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(

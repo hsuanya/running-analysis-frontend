@@ -166,20 +166,16 @@ class RestBackendRepo implements BackendInterface {
 
   @override
   Future<List<int>> getRunSessionPdf(String runSessionId) async {
-    final response = await Dio().get<List<int>>(
+    return await NetUtils().requestBytes(
       API.getRunSessionPdf(runSessionId)[1],
-      options: Options(responseType: ResponseType.bytes),
     );
-    return response.data ?? [];
   }
 
   @override
   Future<List<int>> getRunSessionCsv(String runSessionId) async {
-    final response = await Dio().get<List<int>>(
+    return await NetUtils().requestBytes(
       API.getRunSessionCsv(runSessionId)[1],
-      options: Options(responseType: ResponseType.bytes),
     );
-    return response.data ?? [];
   }
 
   @override

@@ -91,6 +91,45 @@ class NetUtils {
     }
   }
 
+  Future<List<int>> requestBytes(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    String token = '',
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedToken = prefs.getString('auth_token');
+      if (savedToken != null && savedToken.isNotEmpty) {
+        _dio.options.headers['Authorization'] = 'Bearer $savedToken';
+      } else if (token.isNotEmpty) {
+        _dio.options.headers['Authorization'] = 'Token $token';
+      } else {
+        _dio.options.headers.remove('Authorization');
+      }
+      _dio.options.headers['ngrok-skip-browser-warning'] = true;
+
+      final response = await _dio.get<List<int>>(
+        path,
+        queryParameters: queryParameters,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return response.data ?? [];
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        onUnauthorized?.call();
+      }
+      String? message;
+      if (e.response?.data is Map) {
+        final data = e.response!.data as Map;
+        message = data['detail']?.toString() ?? data['message']?.toString();
+      }
+      message ??= e.message ?? "Unknown Network Error";
+      return Future.error(message);
+    } catch (error) {
+      return Future.error(error);
+    }
+  }
+
   Stream<String> requestStream(
     String path, {
     Map<String, dynamic>? queryParameters,

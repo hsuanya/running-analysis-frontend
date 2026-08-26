@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -103,6 +104,11 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   // Drag / magnifier state
   int? _draggingIdx;
   Offset? _magPos; // normalised position shown in magnifier
+  Offset? _panStartTouchNorm;
+  Offset? _panStartAnchorPos;
+
+  // Active anchor point index to set via tap
+  int? _selectedActivePointIdx;
 
   // Pending tap (set in onTapDown, consumed in onTap)
   Offset? _pendingTapNorm;
@@ -137,6 +143,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       _pts.addAll(prev.points.map((p) => Offset(p.x, p.y)));
       _topCtrl.text = prev.leftToMidDistanceM.toString();
       _botCtrl.text = prev.midToRightDistanceM.toString();
+      _selectedActivePointIdx = null;
 
       if (_pts.length == 6) {
         // Calculate _t5 (TM along TL-TR)
@@ -188,7 +195,13 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     (local.dy / _imgH).clamp(0.0, 1.0),
   );
 
-  /// Find the index of the nearest existing point within _kHitRadius px.
+  bool _isMobile(BuildContext context) {
+    final isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+    final isShortScreen = MediaQuery.of(context).size.shortestSide < 600;
+    return isMobilePlatform || isShortScreen;
+  }
+
   int? _nearestIdx(Offset normPos) {
     int? best;
     double bestDist = double.infinity;
@@ -204,6 +217,56 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     return best;
   }
 
+  void _updatePointPosition(int idx, Offset norm) {
+    if (idx < 4) {
+      if (idx < _pts.length) {
+        _pts[idx] = norm;
+      } else {
+        while (_pts.length < idx) {
+          _pts.add(norm);
+        }
+        _pts.add(norm);
+      }
+      if (_pts.length == 4) {
+        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        _pts.add(tm);
+        _pts.add(bm);
+        _t5 = 0.5;
+        _t6 = 0.5;
+      } else if (_pts.length == 6) {
+        _pts[4] = _pts[0] + (_pts[1] - _pts[0]) * _t5;
+        _pts[5] = _pts[3] + (_pts[2] - _pts[3]) * _t6;
+      }
+    } else if (idx == 4 && _pts.length == 6) {
+      final A = _pts[0];
+      final B = _pts[1];
+      final AB = B - A;
+      final AP = norm - A;
+      final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+      double t = 0.5;
+      if (abLenSq > 0) {
+        t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+        t = t.clamp(0.0, 1.0);
+      }
+      _t5 = t;
+      _pts[4] = A + AB * t;
+    } else if (idx == 5 && _pts.length == 6) {
+      final A = _pts[3];
+      final B = _pts[2];
+      final AB = B - A;
+      final AP = norm - A;
+      final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
+      double t = 0.5;
+      if (abLenSq > 0) {
+        t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
+        t = t.clamp(0.0, 1.0);
+      }
+      _t6 = t;
+      _pts[5] = A + AB * t;
+    }
+  }
+
   // ── Gesture handlers ───────────────────────────────────────
 
   void _onTapDown(TapDownDetails d) {
@@ -213,84 +276,77 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   void _onTap() {
     final pos = _pendingTapNorm;
     _pendingTapNorm = null;
-    if (pos == null || _full) return;
+    if (pos == null) return;
 
-    // Don't add if user touched near an existing point (they probably wanted to drag)
-    if (_nearestIdx(pos) != null) return;
-
-    setState(() {
-      _pts.add(pos);
-      if (_pts.length == 4) {
-        // Auto-generate TM (point 5) and BM (point 6)
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
-        _pts.add(tm);
-        _pts.add(bm);
-        _t5 = 0.5;
-        _t6 = 0.5;
-      }
-    });
-  }
-
-  void _onPanStart(DragStartDetails d) {
-    if (_pts.isEmpty) return;
-    final norm = _norm(d.localPosition);
-    final idx = _nearestIdx(norm);
-    if (idx != null) {
+    if (_isMobile(context) && _selectedActivePointIdx != null) {
       setState(() {
-        _draggingIdx = idx;
-        _magPos = _pts[idx];
+        final idx = _selectedActivePointIdx!;
+        _updatePointPosition(idx, pos);
+        if (_pts.length < 4) {
+          _selectedActivePointIdx = _pts.length;
+        }
+      });
+    } else {
+      if (_full) return;
+      if (_nearestIdx(pos) != null) return;
+      setState(() {
+        _pts.add(pos);
+        if (_pts.length == 4) {
+          final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
+          final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+          _pts.add(tm);
+          _pts.add(bm);
+          _t5 = 0.5;
+          _t6 = 0.5;
+        }
       });
     }
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
-    if (_draggingIdx == null) return;
-    final norm = _norm(d.localPosition);
-    setState(() {
-      if (_draggingIdx == 4) {
-        // Dragging TM (index 4): project onto segment TL-TR (0-1)
-        final A = _pts[0];
-        final B = _pts[1];
-        final AB = B - A;
-        final AP = norm - A;
-        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
-        double t = 0.5;
-        if (abLenSq > 0) {
-          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
-          t = t.clamp(0.0, 1.0);
-        }
-        _t5 = t;
-        _pts[4] = A + AB * t;
-      } else if (_draggingIdx == 5) {
-        // Dragging BM (index 5): project onto segment BL-BR (3-2)
-        final A = _pts[3]; // BL
-        final B = _pts[2]; // BR
-        final AB = B - A;
-        final AP = norm - A;
-        final abLenSq = AB.dx * AB.dx + AB.dy * AB.dy;
-        double t = 0.5;
-        if (abLenSq > 0) {
-          t = (AP.dx * AB.dx + AP.dy * AB.dy) / abLenSq;
-          t = t.clamp(0.0, 1.0);
-        }
-        _t6 = t;
-        _pts[5] = A + AB * t;
-      } else {
-        // Dragging corners (0 to 3)
-        _pts[_draggingIdx!] = norm;
-        if (_pts.length == 6) {
-          // Adjust TM (index 4) based on current _t5 ratio along segment 0-1
-          final A5 = _pts[0];
-          final B5 = _pts[1];
-          _pts[4] = A5 + (B5 - A5) * _t5;
+  void _onPanStart(DragStartDetails d) {
+    if (_pts.isEmpty && !_isMobile(context)) return;
+    final touchNorm = _norm(d.localPosition);
+    _panStartTouchNorm = touchNorm;
 
-          // Adjust BM (index 5) based on current _t6 ratio along segment 3-2 (BL-BR)
-          final A6 = _pts[3];
-          final B6 = _pts[2];
-          _pts[5] = A6 + (B6 - A6) * _t6;
+    if (_isMobile(context) && _selectedActivePointIdx != null) {
+      final idx = _selectedActivePointIdx!;
+      setState(() {
+        if (idx < _pts.length) {
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
+        } else {
+          _updatePointPosition(idx, touchNorm);
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
         }
+      });
+    } else {
+      final idx = _nearestIdx(touchNorm);
+      if (idx != null) {
+        setState(() {
+          _panStartAnchorPos = _pts[idx];
+          _draggingIdx = idx;
+          _magPos = _pts[idx];
+          if (_isMobile(context)) {
+            _selectedActivePointIdx = idx;
+          }
+        });
       }
+    }
+  }
+
+  void _onPanUpdate(DragUpdateDetails d) {
+    if (_draggingIdx == null || _panStartTouchNorm == null || _panStartAnchorPos == null) return;
+    final currentTouch = _norm(d.localPosition);
+    final delta = currentTouch - _panStartTouchNorm!;
+    final newPos = Offset(
+      (_panStartAnchorPos!.dx + delta.dx).clamp(0.0, 1.0),
+      (_panStartAnchorPos!.dy + delta.dy).clamp(0.0, 1.0),
+    );
+    setState(() {
+      _updatePointPosition(_draggingIdx!, newPos);
       _magPos = _pts[_draggingIdx!];
     });
   }
@@ -299,6 +355,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     setState(() {
       _draggingIdx = null;
       _magPos = null;
+      _panStartTouchNorm = null;
+      _panStartAnchorPos = null;
     });
   }
 
@@ -348,6 +406,11 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
 
                     _buildImageArea(),
                     const SizedBox(height: 16),
+
+                    if (_isMobile(context)) ...[
+                      _buildAnchorPointButtons(),
+                      const SizedBox(height: 16),
+                    ],
 
                     // ── 距離輸入 (移回影像下方) ─────────────────────
                     _buildDistanceInputs(),
@@ -512,17 +575,19 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                     final i = e.key;
                     final pt = e.value;
                     final isDragging = i == _draggingIdx;
+                    final isActive = _isMobile(context) && i == _selectedActivePointIdx;
                     return Positioned(
                       left: pt.dx * _imgW - 16,
                       top: pt.dy * _imgH - 16,
                       child: AnimatedScale(
-                        scale: isDragging ? 1.35 : 1.0,
+                        scale: (isDragging || isActive) ? 1.35 : 1.0,
                         duration: const Duration(milliseconds: 150),
                         child: _AnchorMarker(
                           label: _labels[i],
                           color: _colors[i],
                           index: i + 1,
                           isDragging: isDragging,
+                          isActive: isActive,
                         ),
                       ),
                     );
@@ -680,30 +745,39 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildDistanceInputs() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final isMobile = _isMobile(context);
+
+    final field1 = _buildDistanceField(
+      label: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
+      controller: _topCtrl,
+      icon: Icons.straighten,
+      color: const Color(0xFF4FC3F7),
+    );
+
+    final field2 = _buildDistanceField(
+      label: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
+      controller: _botCtrl,
+      icon: Icons.straighten,
+      color: const Color(0xFFFFB74D),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          field1,
+          const SizedBox(height: 12),
+          field2,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
       children: [
-        Row(
-          spacing: 12,
-          children: [
-            Expanded(
-              child: _buildDistanceField(
-                label: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
-                controller: _topCtrl,
-                icon: Icons.straighten,
-                color: const Color(0xFF4FC3F7),
-              ),
-            ),
-            Expanded(
-              child: _buildDistanceField(
-                label: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
-                controller: _botCtrl,
-                icon: Icons.straighten,
-                color: const Color(0xFFFFB74D),
-              ),
-            ),
-          ],
-        ),
+        Expanded(child: field1),
+        Expanded(child: field2),
       ],
     );
   }
@@ -743,6 +817,131 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
           ),
           onChanged: (_) => setState(() {}),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnchorPointButton(int i) {
+    final isSet = i < _pts.length;
+    final isActive = _selectedActivePointIdx == i;
+    final color = _colors[i];
+    final isAvailable = i < 4 || _pts.length == 6;
+
+    return Opacity(
+      opacity: isAvailable ? 1.0 : 0.4,
+      child: InkWell(
+        onTap: isAvailable
+            ? () {
+                setState(() {
+                  _selectedActivePointIdx = i;
+                });
+              }
+            : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: isActive
+                ? color.withValues(alpha: 0.25)
+                : (isSet
+                    ? color.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.03)),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isActive
+                  ? color
+                  : (isSet ? color.withValues(alpha: 0.4) : Colors.white12),
+              width: isActive ? 2 : 1.5,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    )
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSet ? color : Colors.transparent,
+                  border: Border.all(
+                    color: isSet ? Colors.white : color.withValues(alpha: 0.5),
+                    width: 1.5,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: isSet
+                    ? const Icon(Icons.check, size: 10, color: Colors.white)
+                    : Text(
+                        '${i + 1}',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  _labels[i],
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive
+                        ? Colors.white
+                        : (isSet ? Colors.white70 : Colors.white30),
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    fontFamily: 'NotoSansTC',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnchorPointButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '選擇要標註的錨點：',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'NotoSansTC',
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          spacing: 8,
+          children: [
+            Expanded(child: _buildAnchorPointButton(0)),
+            Expanded(child: _buildAnchorPointButton(1)),
+            Expanded(child: _buildAnchorPointButton(2)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          spacing: 8,
+          children: [
+            Expanded(child: _buildAnchorPointButton(3)),
+            Expanded(child: _buildAnchorPointButton(4)),
+            Expanded(child: _buildAnchorPointButton(5)),
+          ],
         ),
       ],
     );
@@ -806,6 +1005,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                     } else {
                       _pts.removeLast();
                     }
+                    _selectedActivePointIdx = _pts.length;
                   }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white70,
@@ -824,6 +1024,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         OutlinedButton.icon(
           onPressed: _pts.isEmpty ? null : () => setState(() {
             _pts.clear();
+            _selectedActivePointIdx = 0;
           }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white54,
@@ -875,34 +1076,37 @@ class _AnchorMarker extends StatelessWidget {
   final Color color;
   final int index;
   final bool isDragging;
+  final bool isActive;
 
   const _AnchorMarker({
     required this.label,
     required this.color,
     required this.index,
     this.isDragging = false,
+    this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final highlight = isDragging || isActive;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: isDragging ? 34 : 28,
-          height: isDragging ? 34 : 28,
+          width: highlight ? 34 : 28,
+          height: highlight ? 34 : 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,
             border: Border.all(
-              color: isDragging ? Colors.white : Colors.white70,
-              width: isDragging ? 2.5 : 2,
+              color: highlight ? Colors.white : Colors.white70,
+              width: highlight ? 2.5 : 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: isDragging ? 0.8 : 0.5),
-                blurRadius: isDragging ? 14 : 8,
-                spreadRadius: isDragging ? 3 : 1,
+                color: color.withValues(alpha: highlight ? 0.8 : 0.5),
+                blurRadius: highlight ? 14 : 8,
+                spreadRadius: highlight ? 3 : 1,
               ),
             ],
           ),
@@ -911,7 +1115,7 @@ class _AnchorMarker extends StatelessWidget {
             '$index',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isDragging ? 14 : 12,
+              fontSize: highlight ? 14 : 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -919,7 +1123,7 @@ class _AnchorMarker extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isDragging ? 1.0 : 0.85),
+            color: color.withValues(alpha: highlight ? 1.0 : 0.85),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(

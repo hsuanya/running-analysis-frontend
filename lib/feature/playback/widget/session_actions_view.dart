@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
-import 'package:frontend/utils/api.dart';
 import 'package:frontend/utils/download_helper/download_helper.dart';
 
 class SessionActionsView extends ConsumerWidget {
@@ -59,17 +57,10 @@ class SessionActionsView extends ConsumerWidget {
                               ? () async {
                                   final filename =
                                       "Runner_Analysis_Report_${video.runSessionId}.pdf";
-                                  if (kIsWeb) {
-                                    final pdfUrl = API.getRunSessionPdf(
-                                      video.runSessionId,
-                                    )[1];
-                                    downloadFileFromUrl(pdfUrl, filename);
-                                  } else {
-                                    final backend = ref.read(backendProvider);
-                                    final bytes = await backend
-                                        .getRunSessionPdf(video.runSessionId);
-                                    await saveBytesToFile(bytes, filename);
-                                  }
+                                  final backend = ref.read(backendProvider);
+                                  final bytes = await backend
+                                      .getRunSessionPdf(video.runSessionId);
+                                  await saveBytesToFile(bytes, filename);
                                 }
                               : null,
                           icon: const Icon(
@@ -106,17 +97,10 @@ class SessionActionsView extends ConsumerWidget {
                               ? () async {
                                   final filename =
                                       "angles_${video.runSessionId}.csv";
-                                  if (kIsWeb) {
-                                    final csvUrl = API.getRunSessionCsv(
-                                      video.runSessionId,
-                                    )[1];
-                                    downloadFileFromUrl(csvUrl, filename);
-                                  } else {
-                                    final backend = ref.read(backendProvider);
-                                    final bytes = await backend
-                                        .getRunSessionCsv(video.runSessionId);
-                                    await saveBytesToFile(bytes, filename);
-                                  }
+                                  final backend = ref.read(backendProvider);
+                                  final bytes = await backend
+                                      .getRunSessionCsv(video.runSessionId);
+                                  await saveBytesToFile(bytes, filename);
                                 }
                               : null,
                           icon: const Icon(

@@ -9,5 +9,10 @@ void downloadFileFromUrl(String url, String filename) {
 }
 
 Future<void> saveBytesToFile(List<int> bytes, String filename) async {
-  // Web doesn't need bytes save this way, as it directly opens/downloads via URL anchor.
+  final blob = html.Blob([bytes]);
+  final url = html.Url.createObjectUrlFromBlob(blob);
+  html.AnchorElement(href: url)
+    ..setAttribute("download", filename)
+    ..click();
+  html.Url.revokeObjectUrl(url);
 }
