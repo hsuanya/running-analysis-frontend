@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/runner_history_shimmer.dart';
 import 'package:frontend/feature/playback/placeholder/runner_history_placeholder.dart';
@@ -18,6 +19,7 @@ class RunnerHistoryView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final runnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
+    final l10n = context.l10n;
 
     if (runnerId == null) {
       return const RunnerHistoryPlaceholder();
@@ -29,21 +31,21 @@ class RunnerHistoryView extends ConsumerWidget {
       loading: const RunnerHistoryShimmer(),
       data: (List<RunSessionInfo> sessions) {
         if (sessions.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.history_toggle_off_outlined,
                     size: 32,
                     color: Colors.grey,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    "尚無跑步紀錄",
-                    style: TextStyle(
+                    l10n.noHistoryFound,
+                    style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -73,17 +75,17 @@ class RunnerHistoryView extends ConsumerWidget {
               case 'done':
                 badgeBgColor = Colors.green.shade50;
                 badgeTextColor = Colors.green.shade700;
-                statusText = "完成";
+                statusText = l10n.statusDone;
                 break;
               case 'failed':
                 badgeBgColor = Colors.red.shade50;
                 badgeTextColor = Colors.red.shade700;
-                statusText = "失敗";
+                statusText = l10n.statusFailed;
                 break;
               case 'processing':
                 badgeBgColor = Colors.orange.shade50;
                 badgeTextColor = Colors.orange.shade700;
-                statusText = "分析中";
+                statusText = l10n.statusProcessing;
                 break;
               default:
                 badgeBgColor = Colors.grey.shade100;
@@ -121,11 +123,11 @@ class RunnerHistoryView extends ConsumerWidget {
                       if (session.status == 'failed') {
                         toastification.show(
                           context: context,
-                          title: const Text(
-                            "分析失敗！",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          title: Text(
+                            l10n.analysisFailedTitle,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          description: const Text("此次影片分析失敗，您可以在右側操作卡片中將其刪除"),
+                          description: Text(l10n.analysisFailedDescription),
                           type: ToastificationType.error,
                           style: ToastificationStyle.minimal,
                           alignment: Alignment.bottomCenter,
@@ -189,7 +191,7 @@ class RunnerHistoryView extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      "${session.cameraCount} 鏡頭",
+                                      "${session.cameraCount} ${l10n.cameras}",
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isSelected

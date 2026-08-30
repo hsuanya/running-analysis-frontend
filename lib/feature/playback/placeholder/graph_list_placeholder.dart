@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/feature/playback/placeholder/one_graph_placeholder_item.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 class GraphListPlaceholder extends StatelessWidget {
   const GraphListPlaceholder({super.key, this.itemCount = 3});
@@ -8,8 +9,17 @@ class GraphListPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ["Distance", "Velocity", "Acceleration"];
-    final yLabels = ["Distance(m)", "Velocity(m/s)", "Acceleration(m/s^2)"];
+    final l10n = context.l10n;
+    final titles = [
+      l10n.metricDistance,
+      l10n.metricVelocity,
+      l10n.metricAcceleration,
+    ];
+    final yLabels = [
+      l10n.metricDistanceUnit,
+      l10n.metricVelocityUnit,
+      l10n.metricAccelerationUnit,
+    ];
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -22,7 +32,7 @@ class GraphListPlaceholder extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: itemCount,
         itemBuilder: (context, index) => Container(
-          padding: EdgeInsets.only(top: 8, bottom: 4, left: 12, right: 24),
+          padding: const EdgeInsets.only(top: 8, bottom: 4, left: 12, right: 24),
           child: OneGraphPlaceholderItem(
             title: titles[index],
             yLabel: yLabels[index],

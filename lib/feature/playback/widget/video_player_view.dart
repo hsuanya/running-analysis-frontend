@@ -6,6 +6,7 @@ import 'package:frontend/feature/playback/playback_provider.dart';
 import 'package:frontend/feature/playback/shimmer/video_player_shimmer.dart';
 import 'package:frontend/feature/playback/widget/video_player_controller.dart';
 import 'package:frontend/feature/playback/widget/video_slider_item.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/processing_progress_widget.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
@@ -85,13 +86,13 @@ class _VideoPlayerViewState extends ConsumerState<VideoPlayerView> {
                         size: 40,
                       ),
                       const SizedBox(height: 16),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Text(
-                              "無影片資料",
-                              style: TextStyle(
+                              context.l10n.noVideoData,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -99,10 +100,10 @@ class _VideoPlayerViewState extends ConsumerState<VideoPlayerView> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Failed',
-                            style: TextStyle(
+                            context.l10n.statusFailed,
+                            style: const TextStyle(
                               color: Colors.redAccent,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

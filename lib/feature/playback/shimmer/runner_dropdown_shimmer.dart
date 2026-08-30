@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class RunnerDropdownShimmer extends StatelessWidget {
@@ -17,18 +18,18 @@ class RunnerDropdownShimmer extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.black26),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.people, size: 16),
-            SizedBox(width: 4),
+            const Icon(Icons.people, size: 16),
+            const SizedBox(width: 4),
             Expanded(
               child: Text(
-                '選擇選手',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                context.l10n.selectRunner,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.arrow_forward_ios_outlined, size: 12),
+            const Icon(Icons.arrow_forward_ios_outlined, size: 12),
           ],
         ),
       ),

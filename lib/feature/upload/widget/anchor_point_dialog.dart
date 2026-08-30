@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 // ── Data classes ──────────────────────────────────────────────
 
@@ -37,7 +37,6 @@ class AnchorResult {
 
 // ── Styling constants ─────────────────────────────────────────
 
-const _labels = ['左上', '右上', '右下', '左下', '上中', '下中'];
 const _colors = [
   Color(0xFF4FC3F7), // 淺藍 – TL
   Color(0xFF81C784), // 淺綠 – TR
@@ -46,6 +45,18 @@ const _colors = [
   Color(0xFFCE93D8), // 淺紫 – TM
   Color(0xFFFFCC80), // 淺橘 – BM
 ];
+
+List<String> _getLabels(BuildContext context) {
+  final l10n = context.l10n;
+  return [
+    l10n.point1,
+    l10n.point2,
+    l10n.point3,
+    l10n.point4,
+    l10n.point5,
+    l10n.point6,
+  ];
+}
 
 /// Hit-test radius for grabbing an existing anchor (logical pixels)
 const _kHitRadius = 16.0;
@@ -171,7 +182,6 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         _pts.add(bm);
         _t5 = 0.5;
         _t6 = 0.5;
-        // For legacy data, distances were topDistanceM and bottomDistanceM. We reuse them directly as leftToMid and midToRight.
       }
     }
   }
@@ -412,7 +422,6 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                       const SizedBox(height: 16),
                     ],
 
-                    // ── 距離輸入 (移回影像下方) ─────────────────────
                     _buildDistanceInputs(),
                     const SizedBox(height: 16),
 
@@ -432,16 +441,12 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   // ── Sub-builders ───────────────────────────────────────────
 
   Widget _buildHeader() {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColorDark,
-        // gradient: LinearGradient(
-        //   colors: [Color(0xFF2979FF), Color(0xFF00BFA5)],
-        //   begin: Alignment.centerLeft,
-        //   end: Alignment.centerRight,
-        // ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         children: [
@@ -449,19 +454,18 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '相機 ${widget.cameraIndex + 1} — 設定錨點',
+              l10n.anchorDialogTitle(widget.cameraIndex + 1),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'NotoSansTC',
               ),
             ),
           ),
           IconButton(
             onPressed: () => Navigator.of(context).pop(null),
             icon: const Icon(Icons.close, color: Colors.white70),
-            tooltip: '略過設定錨點',
+            tooltip: l10n.close,
           ),
         ],
       ),
@@ -496,6 +500,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildImageArea() {
+    final l10n = context.l10n;
+    final labels = _getLabels(context);
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
@@ -545,12 +551,11 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                         color: Colors.black.withValues(alpha: 0.07),
                         alignment: Alignment.center,
                         child: _pts.isEmpty
-                            ? const Text(
-                                '點擊影像選取錨點',
-                                style: TextStyle(
+                            ? Text(
+                                l10n.tapToMarkPoint,
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
-                                  fontFamily: 'NotoSansTC',
                                 ),
                               )
                             : null,
@@ -583,7 +588,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                         scale: (isDragging || isActive) ? 1.35 : 1.0,
                         duration: const Duration(milliseconds: 150),
                         child: _AnchorMarker(
-                          label: _labels[i],
+                          label: labels[i],
                           color: _colors[i],
                           index: i + 1,
                           isDragging: isDragging,
@@ -614,12 +619,11 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '點 ${_nextIdx + 1}：${_labels[_nextIdx]}',
+                            'Pt ${_nextIdx + 1}：${labels[_nextIdx]}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'NotoSansTC',
                             ),
                           ),
                         ),
@@ -640,21 +644,20 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.open_with,
                               size: 12,
                               color: Colors.white70,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              '可拖動錨點微調',
-                              style: TextStyle(
+                              l10n.dragToAdjust,
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 11,
-                                fontFamily: 'NotoSansTC',
                               ),
                             ),
                           ],
@@ -745,17 +748,18 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildDistanceInputs() {
+    final l10n = context.l10n;
     final isMobile = _isMobile(context);
 
     final field1 = _buildDistanceField(
-      label: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
+      label: l10n.distanceLeftToCenter,
       controller: _topCtrl,
       icon: Icons.straighten,
       color: const Color(0xFF4FC3F7),
     );
 
     final field2 = _buildDistanceField(
-      label: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
+      label: l10n.distanceCenterToRight,
       controller: _botCtrl,
       icon: Icons.straighten,
       color: const Color(0xFFFFB74D),
@@ -796,7 +800,6 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
           style: const TextStyle(
             color: Colors.white70,
             fontSize: 12,
-            fontFamily: 'NotoSansTC',
           ),
         ),
         const SizedBox(height: 8),
@@ -823,6 +826,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildAnchorPointButton(int i) {
+    final labels = _getLabels(context);
     final isSet = i < _pts.length;
     final isActive = _selectedActivePointIdx == i;
     final color = _colors[i];
@@ -893,7 +897,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  _labels[i],
+                  labels[i],
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: isActive
@@ -901,7 +905,6 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                         : (isSet ? Colors.white70 : Colors.white30),
                     fontSize: 13,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),
@@ -913,16 +916,16 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildAnchorPointButtons() {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '選擇要標註的錨點：',
-          style: TextStyle(
+        Text(
+          l10n.selectAnchorToMark,
+          style: const TextStyle(
             color: Colors.white70,
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            fontFamily: 'NotoSansTC',
           ),
         ),
         const SizedBox(height: 10),
@@ -948,6 +951,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildGuide() {
+    final l10n = context.l10n;
+    final labels = _getLabels(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -958,17 +963,16 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.white54, size: 14),
-              SizedBox(width: 6),
+              const Icon(Icons.info_outline, color: Colors.white54, size: 14),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '點選四角順序・上中與下中為自動生成之輔助錨點（可沿連線拖動微調）',
-                  style: TextStyle(
+                  l10n.guideDescription,
+                  style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 11,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),
@@ -981,7 +985,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
               4,
               (i) => _GuideStep(
                 index: i + 1,
-                label: _labels[i],
+                label: labels[i],
                 color: _colors[i],
                 done: i < _pts.length,
                 active: i == _draggingIdx,
@@ -994,6 +998,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   Widget _buildActions() {
+    final l10n = context.l10n;
     return Row(
       children: [
         OutlinedButton.icon(
@@ -1015,9 +1020,9 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             ),
           ),
           icon: const Icon(Icons.undo, size: 16),
-          label: const Text(
-            '復原',
-            style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 13),
+          label: Text(
+            l10n.undo,
+            style: const TextStyle(fontSize: 13),
           ),
         ),
         const SizedBox(width: 8),
@@ -1034,9 +1039,9 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             ),
           ),
           icon: const Icon(Icons.refresh, size: 16),
-          label: const Text(
-            '重設',
-            style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 13),
+          label: Text(
+            l10n.clear,
+            style: const TextStyle(fontSize: 13),
           ),
         ),
         const Spacer(),
@@ -1054,10 +1059,9 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
               ),
             ),
             icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: const Text(
-              '確認錨點',
-              style: TextStyle(
-                fontFamily: 'NotoSansTC',
+            label: Text(
+              l10n.confirmAnchor,
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),

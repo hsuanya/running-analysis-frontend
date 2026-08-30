@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 class OneGraphPlaceholderItem extends StatelessWidget {
   const OneGraphPlaceholderItem({
@@ -12,11 +13,12 @@ class OneGraphPlaceholderItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
             fontSize: 20,
@@ -24,25 +26,25 @@ class OneGraphPlaceholderItem extends StatelessWidget {
         ),
         Container(
           height: 200,
-          padding: EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.only(right: 12),
           child: LineChart(
             LineChartData(
-              lineTouchData: LineTouchData(enabled: false),
+              lineTouchData: const LineTouchData(enabled: false),
               titlesData: FlTitlesData(
                 show: true,
-                topTitles: AxisTitles(
+                topTitles: const AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
                 ),
-                rightTitles: AxisTitles(
+                rightTitles: const AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
                 ),
                 bottomTitles: AxisTitles(
                   axisNameSize: 32,
-                  axisNameWidget: const Text(
-                    'Time',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  axisNameWidget: Text(
+                    l10n.timeWithUnit,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
-                  sideTitles: SideTitles(showTitles: true, reservedSize: 35),
+                  sideTitles: const SideTitles(showTitles: true, reservedSize: 35),
                 ),
                 leftTitles: AxisTitles(
                   axisNameSize: 32,

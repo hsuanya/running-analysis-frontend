@@ -14,6 +14,7 @@ import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/date_time_selection_widget.dart';
 import 'package:frontend/feature/upload/widget/unanalyzed_history_view.dart';
 import 'package:frontend/feature/upload/widget/upload_seperately_controller.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/utils/router.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/loading_icon.dart';
@@ -38,17 +39,18 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final runnerId = ref.watch(uploadSelectedRunnerIdProvider);
     final selectedVideoId = ref.watch(uploadSelectedRunSessionIdProvider);
     final formData = ref.watch(uploadSeperatelyFormProvider);
     final formNotifier = ref.read(uploadSeperatelyFormProvider.notifier);
 
     if (runnerId == null) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          '請先選擇跑者',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          l10n.pleaseSelectRunnerFirst,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       );
     }
@@ -63,7 +65,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
       children: [
         CustomSlidingSegmentedControl<SperatedType>(
           customSegmentSettings: CustomSegmentSettings(
-            borderRadius: BorderRadius.all(Radius.circular(25)),
+            borderRadius: const BorderRadius.all(Radius.circular(25)),
           ),
           decoration: BoxDecoration(
             color: CupertinoColors.tertiarySystemFill,
@@ -93,9 +95,9 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
           },
           children: <SperatedType, Widget>{
             SperatedType.newOne: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                '新增紀錄',
+                l10n.newRecord,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: selectedRunnerSource == SperatedType.newOne
@@ -105,9 +107,9 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
               ),
             ),
             SperatedType.selectOne: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                '選擇紀錄',
+                l10n.selectRecord,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: selectedRunnerSource == SperatedType.selectOne
@@ -152,17 +154,16 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Text(
-                      '請選擇欲上傳的紀錄',
-                      style: TextStyle(
+                      l10n.pleaseSelectRecordToUpload,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'NotoSansTC',
                       ),
                     ),
                   ),
@@ -187,30 +188,28 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Text(
-                  '第幾個相機',
-                  style: TextStyle(
+                  l10n.cameraIndexNumber,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton2<int>(
-                  hint: const Row(
+                  hint: Row(
                     children: [
                       Text(
-                        '相機數量',
-                        style: TextStyle(
+                        l10n.cameraCount,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'NotoSansTC',
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -221,11 +220,10 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                         (item) => DropdownMenuItem<int>(
                           value: item,
                           child: Text(
-                            (item + 1).toString(),
+                            '${l10n.camera} ${item + 1}',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'NotoSansTC',
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -241,7 +239,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                     }
                   },
                   buttonStyleData: ButtonStyleData(
-                    width: 100,
+                    width: 120,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     overlayColor: WidgetStateProperty.all(Colors.transparent),
                     decoration: BoxDecoration(
@@ -261,8 +259,8 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    scrollbarTheme: ScrollbarThemeData(
-                      radius: const Radius.circular(40),
+                    scrollbarTheme: const ScrollbarThemeData(
+                      radius: Radius.circular(40),
                     ),
                   ),
                   menuItemStyleData: const MenuItemStyleData(
@@ -392,12 +390,11 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                             )
                           : Center(
                               child: Text(
-                                '相機${_index + 1}\n點擊上傳',
+                                '${l10n.camera} ${_index + 1}\n${l10n.clickToUpload}',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'NotoSansTC',
                                 ),
                               ),
                             ),
@@ -415,7 +412,6 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
             textStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              fontFamily: 'NotoSansTC',
             ),
             padding: const EdgeInsets.symmetric(horizontal: 48),
           ),
@@ -425,14 +421,14 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: const Text('錯誤'),
-                    content: const Text('請上傳影片'),
+                    title: const Text('Error'),
+                    content: Text(l10n.selectVideoFirst),
                     actions: [
                       TextButton(
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
-                        child: const Text('確定'),
+                        child: Text(l10n.confirm),
                       ),
                     ],
                   );
@@ -489,9 +485,9 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: const Text('部分影片上傳完成'),
+                      title: const Text('Notice'),
                       content: Text(
-                        '請上傳其他相機的影片: ${status!.unuploadedCameraIndexes.map((e) => "相機${e + 1}").join(', ')}',
+                        '${l10n.pleaseUploadAllVideos}: ${status!.unuploadedCameraIndexes.map((e) => "${l10n.camera} ${e + 1}").join(', ')}',
                       ),
                       actions: [
                         TextButton(
@@ -504,7 +500,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                                 .resetState();
                             Navigator.of(context).pop();
                           },
-                          child: const Text('確定'),
+                          child: Text(l10n.confirm),
                         ),
                       ],
                     );
@@ -513,7 +509,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
               }
             }
           },
-          child: const Text('上傳'),
+          child: Text(l10n.upload),
         ),
       ],
     );
@@ -528,6 +524,7 @@ class _AnchorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -550,12 +547,11 @@ class _AnchorBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isSet ? '錨點已設定' : '點擊設定錨點',
+            isSet ? l10n.anchorSet : l10n.setAnchor,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              fontFamily: 'NotoSansTC',
             ),
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/utils/download_helper/download_helper.dart';
 
@@ -17,6 +18,7 @@ class SessionActionsView extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    final l10n = context.l10n;
     final videoInfo = ref.watch(videoInfoProvider(videoId));
     return AsyncValueWidget(
       value: videoInfo,
@@ -32,12 +34,12 @@ class SessionActionsView extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: Center(
                 child: Text(
-                  "操作",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  l10n.actions,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -68,9 +70,9 @@ class SessionActionsView extends ConsumerWidget {
                             color: Colors.white,
                             size: 18,
                           ),
-                          label: const Text(
-                            "下載 PDF 報告",
-                            style: TextStyle(
+                          label: Text(
+                            l10n.downloadPdfReport,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -108,9 +110,9 @@ class SessionActionsView extends ConsumerWidget {
                             color: Colors.white,
                             size: 18,
                           ),
-                          label: const Text(
-                            "下載 CSV 數據",
-                            style: TextStyle(
+                          label: Text(
+                            l10n.downloadCsvData,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -133,19 +135,19 @@ class SessionActionsView extends ConsumerWidget {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text("確認刪除"),
-                          content: const Text("您確定要永久刪除此分析紀錄與所有影片檔案嗎？此操作無法還原。"),
+                          title: Text(l10n.deleteSessionConfirmTitle),
+                          content: Text(l10n.deleteSessionConfirmMessage),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text("取消"),
+                              child: Text(l10n.cancel),
                             ),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(true),
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red,
                               ),
-                              child: const Text("刪除"),
+                              child: Text(l10n.delete),
                             ),
                           ],
                         ),
@@ -153,19 +155,14 @@ class SessionActionsView extends ConsumerWidget {
 
                       if (confirm == true) {
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("正在刪除紀錄...")),
-                        );
                         try {
                           final backend = ref.read(backendProvider);
                           await backend.deleteRunSession(video.runSessionId);
 
-                          // 1. Fetch updated history list to select another session
                           final history = await backend.getRunnerHistory(
                             video.runnerId,
                           );
 
-                          // 2. Select next available session or null
                           if (history.isNotEmpty) {
                             ref
                                 .read(
@@ -184,19 +181,12 @@ class SessionActionsView extends ConsumerWidget {
                                 null;
                           }
 
-                          // 3. Invalidate history provider to update UI list
                           ref.invalidate(runnerHistoryProvider(video.runnerId));
-
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("紀錄已成功刪除")),
-                          );
                         } catch (e) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(
                             context,
-                          ).showSnackBar(SnackBar(content: Text("刪除失敗: $e")));
+                          ).showSnackBar(SnackBar(content: Text("$e")));
                         }
                       }
                     },
@@ -205,9 +195,9 @@ class SessionActionsView extends ConsumerWidget {
                       color: Colors.white,
                       size: 18,
                     ),
-                    label: const Text(
-                      "刪除此次紀錄",
-                      style: TextStyle(
+                    label: Text(
+                      l10n.deleteSessionConfirmTitle,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,

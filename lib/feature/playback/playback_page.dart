@@ -6,6 +6,7 @@ import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/feature/playback/widget/video_player_view.dart';
 import 'package:frontend/widget/async_value_widget.dart';
@@ -46,6 +47,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final runners = ref.watch(runnerProvider);
     final selectedRunnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final selectedVideoId = ref.watch(playbackSelectedRunSessionIdProvider);
@@ -130,7 +132,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                           _isSidebarExpanded = !_isSidebarExpanded;
                         });
                       },
-                      tooltip: _isSidebarExpanded ? "收合紀錄列表" : "展開紀錄列表",
+                      tooltip: _isSidebarExpanded ? l10n.close : l10n.analysisHistory,
                     ),
                     const SizedBox(width: 8),
                     // Runner Selector
@@ -187,15 +189,15 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(
+                              Padding(
+                                padding: const EdgeInsets.only(
                                   left: 16,
                                   top: 16,
                                   bottom: 8,
                                 ),
                                 child: Text(
-                                  "跑步紀錄選擇",
-                                  style: TextStyle(
+                                  l10n.analysisHistory,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black54,
@@ -327,20 +329,21 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     String? selectedRunnerId,
     String selectedRunnerName,
   ) {
+    final l10n = context.l10n;
     return Row(
       children: [
         Expanded(
           child: DropdownButtonHideUnderline(
             child: DropdownButton2<String>(
               isExpanded: true,
-              hint: const Row(
+              hint: Row(
                 children: [
-                  Icon(Icons.people, size: 16),
-                  SizedBox(width: 4),
+                  const Icon(Icons.people, size: 16),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      '選擇選手',
-                      style: TextStyle(
+                      l10n.selectRunner,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -409,19 +412,19 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text("確認刪除選手"),
+                  title: Text(l10n.deleteRunnerConfirmTitle),
                   content: Text(
-                    "您確定要永久刪除選手「$selectedRunnerName」嗎？這將會刪除該選手以及他所有的歷史跑步紀錄與分析檔案！此操作無法還原。",
+                    l10n.deleteRunnerConfirmMessage(selectedRunnerName),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text("取消"),
+                      child: Text(l10n.cancel),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: TextButton.styleFrom(foregroundColor: Colors.red),
-                      child: const Text("刪除"),
+                      child: Text(l10n.delete),
                     ),
                   ],
                 ),
@@ -429,9 +432,6 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
 
               if (confirm == true) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text("正在刪除選手...")));
 
                 try {
                   final backend = ref.read(backendProvider);
@@ -444,17 +444,11 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                           .state =
                       null;
                   ref.invalidate(runnerProvider);
-
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text("選手已成功刪除")));
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text("刪除失敗: $e")));
+                  ).showSnackBar(SnackBar(content: Text("$e")));
                 }
               }
             },
@@ -463,7 +457,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
               color: Colors.redAccent,
               size: 24,
             ),
-            tooltip: "刪除此選手",
+            tooltip: l10n.deleteRunnerConfirmTitle,
           ),
         ],
       ],
@@ -471,12 +465,12 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
   }
 
   Widget _buildEmptyPlaceholder() {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Text(
-          "此跑者尚無歷史紀錄，請先上傳",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          context.l10n.noHistoryFound,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -487,6 +481,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     WidgetRef ref,
     RunSessionInfo? activeSession,
   ) {
+    final l10n = context.l10n;
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -507,11 +502,11 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
-                      "選擇跑步紀錄",
-                      style: TextStyle(
+                      l10n.analysisHistory,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -551,9 +546,9 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "目前跑步紀錄",
-                      style: TextStyle(
+                    Text(
+                      l10n.analysisHistory,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
                         fontWeight: FontWeight.w500,
@@ -562,8 +557,8 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                     const SizedBox(height: 2),
                     Text(
                       activeSession != null
-                          ? "${DateFormat('yyyy-MM-dd HH:mm').format(activeSession.date)} (${activeSession.cameraCount}鏡頭)"
-                          : "選擇跑步紀錄",
+                          ? "${DateFormat('yyyy-MM-dd HH:mm').format(activeSession.date)} (${activeSession.cameraCount} ${l10n.cameras})"
+                          : l10n.analysisHistory,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

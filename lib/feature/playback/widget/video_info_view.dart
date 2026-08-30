@@ -4,6 +4,7 @@ import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/placeholder/video_info_placeholder.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/video_info_shimmer.dart';
 import 'package:intl/intl.dart';
@@ -21,6 +22,7 @@ class VideoInfoView extends ConsumerWidget {
       return const VideoInfoPlaceholder();
     }
 
+    final l10n = context.l10n;
     final videoInfo = ref.watch(videoInfoProvider(videoId));
     return AsyncValueWidget(
       value: videoInfo,
@@ -36,17 +38,23 @@ class VideoInfoView extends ConsumerWidget {
           );
         }
 
+        final statusText = video.status == 'failed'
+            ? l10n.statusFailed
+            : (video.status == 'processing'
+                ? l10n.statusProcessing
+                : l10n.statusDone);
+
         final List<MapEntry<String, String>> allInfo = [
-          MapEntry("狀態", video.status == 'failed' ? "分析失敗" : (video.status == 'processing' ? "分析中" : "分析完成")),
-          MapEntry("選手姓名", video.runnerName.toString()),
-          MapEntry("日期時間", DateFormat('yyyy-MM-dd HH:mm').format(video.date)),
-          MapEntry("相機數量", video.cameraCount.toString()),
-          MapEntry("fps", video.fps.toString()),
-          MapEntry("平均速度", video.avgVelocity.toString()),
-          MapEntry("平均加速度", video.avgAcceleration.toString()),
-          MapEntry("平均步幅", video.avgStepLength.toString()),
-          MapEntry("總時間", video.totalTime.toString()),
-          MapEntry("備註", video.note.toString()),
+          MapEntry(l10n.analysisStatus, statusText),
+          MapEntry(l10n.runnerName, video.runnerName.toString()),
+          MapEntry(l10n.dateTime, DateFormat('yyyy-MM-dd HH:mm').format(video.date)),
+          MapEntry(l10n.cameraCount, video.cameraCount.toString()),
+          MapEntry(l10n.fps, video.fps.toString()),
+          MapEntry('${l10n.avgVelocity} (${l10n.unitMps})', video.avgVelocity?.toString() ?? ''),
+          MapEntry('${l10n.avgAcceleration} (${l10n.unitMps2})', video.avgAcceleration?.toString() ?? ''),
+          MapEntry('${l10n.avgStepLength} (${l10n.unitMeters})', video.avgStepLength?.toString() ?? ''),
+          MapEntry('${l10n.totalTime} (${l10n.unitSeconds})', video.totalTime.toString()),
+          MapEntry(l10n.notes, video.note.toString()),
         ];
 
         final validInfo = allInfo.where((e) => e.value != 'null' && e.value.isNotEmpty).toList();

@@ -11,6 +11,7 @@ import 'package:frontend/feature/record/record_controller.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/widget/loading_icon.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:mime/mime.dart';
 import 'package:toastification/toastification.dart';
 import 'package:shimmer/shimmer.dart';
@@ -569,9 +570,9 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        "更換鏡頭",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      Text(
+                        context.l10n.switchLens,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                       const SizedBox(width: 4),
                       const Icon(
@@ -639,7 +640,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                         'Error',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      description: const Text('請先選擇選手才能開始錄影'),
+                      description: Text(context.l10n.pleaseSelectRunnerToRecord),
                       type: ToastificationType.error,
                       style: ToastificationStyle.minimal,
                       alignment: Alignment.bottomCenter,
@@ -655,7 +656,10 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       description: Text(
-                        '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
+                        context.l10n.camerasNotAllConnected(
+                          connectedCameraIndexes.length,
+                          state.expectedCameraCount,
+                        ),
                       ),
                       type: ToastificationType.error,
                       style: ToastificationStyle.minimal,
@@ -672,7 +676,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                         'Warning',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      description: const Text('部分相機尚未橫放裝置 (未就緒)'),
+                      description: Text(context.l10n.camerasNotAllReady),
                       type: ToastificationType.warning,
                       style: ToastificationStyle.minimal,
                       alignment: Alignment.bottomCenter,
@@ -695,7 +699,9 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    state.status == RecordStatus.recording ? "停止錄影" : "開始錄影",
+                    state.status == RecordStatus.recording
+                        ? context.l10n.stopRecording
+                        : context.l10n.startRecording,
                   ),
                 ],
               ),
@@ -708,12 +714,15 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                 color: Colors.black54,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: Colors.white),
-                  SizedBox(height: 8),
-                  Text('自動上傳中...', style: TextStyle(color: Colors.white)),
+                  const CircularProgressIndicator(color: Colors.white),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.l10n.autoUploading,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ],
               ),
             ),
@@ -726,14 +735,14 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                   color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.screen_rotation, color: Colors.white, size: 48),
-                    SizedBox(height: 8),
+                    const Icon(Icons.screen_rotation, color: Colors.white, size: 48),
+                    const SizedBox(height: 8),
                     Text(
-                      '請橫放裝置錄製',
-                      style: TextStyle(
+                      context.l10n.pleaseHoldDeviceHorizontally,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -787,7 +796,9 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      state.anchorIsSet ? '錨點已設定' : '請進入全螢幕設定錨點',
+                      state.anchorIsSet
+                          ? context.l10n.anchorSet
+                          : context.l10n.pleaseSetAnchorFullscreen,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -822,7 +833,18 @@ class _FullScreenCameraDialog extends ConsumerStatefulWidget {
 }
 
 // ── Anchor overlay constants ────────────────────────────────────
-const _kAnchorLabels = ['左上', '右上', '右下', '左下', '上中', '下中'];
+List<String> _getAnchorLabels(BuildContext context) {
+  final l10n = context.l10n;
+  return [
+    l10n.point1,
+    l10n.point2,
+    l10n.point3,
+    l10n.point4,
+    l10n.point5,
+    l10n.point6,
+  ];
+}
+
 const _kAnchorColors = [
   Color(0xFF4FC3F7),
   Color(0xFF81C784),
@@ -1006,6 +1028,7 @@ class _FullScreenCameraDialogState
   bool get _canConfirm => _full;
 
   Future<void> _showDistanceInputDialog(BuildContext context) async {
+    final l10n = context.l10n;
     final formKey = GlobalKey<FormState>();
     final topTextCtrl = TextEditingController(
       text: _topCtrl.text.isNotEmpty ? _topCtrl.text : '10.0',
@@ -1025,16 +1048,15 @@ class _FullScreenCameraDialogState
             side: const BorderSide(color: Colors.white12),
           ),
           title: Row(
-            children: const [
-              Icon(Icons.straighten, color: Color(0xFF00BFA5), size: 22),
-              SizedBox(width: 8),
+            children: [
+              const Icon(Icons.straighten, color: Color(0xFF00BFA5), size: 22),
+              const SizedBox(width: 8),
               Text(
-                '輸入跑道實際距離',
-                style: TextStyle(
+                l10n.distanceDialogTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'NotoSansTC',
                 ),
               ),
             ],
@@ -1046,12 +1068,11 @@ class _FullScreenCameraDialogState
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '請輸入兩段分區的實際物理長度，以利精準校正：',
-                    style: TextStyle(
+                  Text(
+                    l10n.distanceDialogSubtitle,
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1065,7 +1086,7 @@ class _FullScreenCameraDialogState
                     ],
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      labelText: '左線 (1-4) 至中線 (5-6) 實際距離 (公尺)',
+                      labelText: l10n.distanceLeftToCenter,
                       labelStyle: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -1095,7 +1116,7 @@ class _FullScreenCameraDialogState
                     ),
                     validator: (val) {
                       final n = double.tryParse(val?.trim() ?? '');
-                      if (n == null || n <= 0) return '請輸入大於 0 的有效數字';
+                      if (n == null || n <= 0) return l10n.distanceInvalidPrompt;
                       return null;
                     },
                   ),
@@ -1110,7 +1131,7 @@ class _FullScreenCameraDialogState
                     ],
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      labelText: '中線 (5-6) 至右線 (2-3) 實際距離 (公尺)',
+                      labelText: l10n.distanceCenterToRight,
                       labelStyle: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -1140,7 +1161,7 @@ class _FullScreenCameraDialogState
                     ),
                     validator: (val) {
                       final n = double.tryParse(val?.trim() ?? '');
-                      if (n == null || n <= 0) return '請輸入大於 0 的有效數字';
+                      if (n == null || n <= 0) return l10n.distanceInvalidPrompt;
                       return null;
                     },
                   ),
@@ -1151,9 +1172,9 @@ class _FullScreenCameraDialogState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text(
-                '取消',
-                style: TextStyle(color: Colors.white60),
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(color: Colors.white60),
               ),
             ),
             ElevatedButton(
@@ -1171,9 +1192,9 @@ class _FullScreenCameraDialogState
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                '確認並套用',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              child: Text(
+                l10n.applyAndSave,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -1399,6 +1420,7 @@ class _FullScreenCameraDialogState
   }
 
   Widget _buildAnchorToggleButton() {
+    final l10n = context.l10n;
     final isSet = ref.watch(
       recordControllerProvider.select((s) => s.anchorIsSet),
     );
@@ -1430,12 +1452,11 @@ class _FullScreenCameraDialogState
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  isSet ? '錨點已設定' : '設定錨點',
+                  isSet ? l10n.anchorSet : l10n.setAnchor,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ],
@@ -1447,6 +1468,7 @@ class _FullScreenCameraDialogState
   }
 
   Widget _buildAnchorOverlay() {
+    final labels = _getAnchorLabels(context);
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (_, constraints) {
@@ -1489,7 +1511,7 @@ class _FullScreenCameraDialogState
                         scale: (isDragging || isActive) ? 1.35 : 1.0,
                         duration: const Duration(milliseconds: 150),
                         child: _AnchorMarkerOverlay(
-                          label: _kAnchorLabels[i],
+                          label: labels[i],
                           color: _kAnchorColors[i],
                           index: i + 1,
                           isDragging: isDragging,
@@ -1509,7 +1531,7 @@ class _FullScreenCameraDialogState
                         child: _PulsingBadge(
                           color: _kAnchorColors[_nextIdx],
                           label:
-                              '點 ${_nextIdx + 1}：${_kAnchorLabels[_nextIdx]}',
+                              'Pt ${_nextIdx + 1}：${labels[_nextIdx]}',
                         ),
                       ),
                     ),
@@ -1556,12 +1578,11 @@ class _FullScreenCameraDialogState
                                         ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    _isCapturing ? '擷取中...' : '重新擷取',
+                                    _isCapturing ? '...' : '📷',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'NotoSansTC',
                                     ),
                                   ),
                                 ],
@@ -1683,9 +1704,8 @@ class _FullScreenCameraDialogState
     );
   }
 
-
-
   Widget _buildActionBar() {
+    final l10n = context.l10n;
     return Row(
       children: [
         // Cancel
@@ -1714,7 +1734,7 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.close, size: 14),
-          label: const Text('取消', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
+          label: Text(l10n.cancel, style: const TextStyle(fontSize: 12)),
         ),
         const SizedBox(width: 6),
         // Undo
@@ -1738,7 +1758,7 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.undo, size: 14),
-          label: const Text('復原', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
+          label: Text(l10n.undo, style: const TextStyle(fontSize: 12)),
         ),
         const SizedBox(width: 6),
         // Reset
@@ -1756,7 +1776,7 @@ class _FullScreenCameraDialogState
             ),
           ),
           icon: const Icon(Icons.refresh, size: 14),
-          label: const Text('重設', style: TextStyle(fontFamily: 'NotoSansTC', fontSize: 12)),
+          label: Text(l10n.clear, style: const TextStyle(fontSize: 12)),
         ),
         const Spacer(),
         // Confirm
@@ -1774,10 +1794,9 @@ class _FullScreenCameraDialogState
               ),
             ),
             icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: const Text(
-              '確認錨點',
-              style: TextStyle(
-                fontFamily: 'NotoSansTC',
+            label: Text(
+              l10n.confirmAnchor,
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -1789,6 +1808,7 @@ class _FullScreenCameraDialogState
   }
 
   Widget _buildAnchorPointButton(int i) {
+    final labels = _getAnchorLabels(context);
     final isSet = i < _pts.length;
     final isActive = _selectedActivePointIdx == i;
     final color = _kAnchorColors[i];
@@ -1850,7 +1870,7 @@ class _FullScreenCameraDialogState
               const SizedBox(width: 3),
               Flexible(
                 child: Text(
-                  _kAnchorLabels[i],
+                  labels[i],
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: isActive
@@ -1858,7 +1878,6 @@ class _FullScreenCameraDialogState
                         : (isSet ? Colors.white70 : Colors.white38),
                     fontSize: 10.5,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),

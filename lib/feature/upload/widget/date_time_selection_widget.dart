@@ -1,5 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 class DateTimeSelectionWidget extends StatelessWidget {
   const DateTimeSelectionWidget({
@@ -29,6 +30,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       children: [
         Wrap(
@@ -41,17 +43,16 @@ class DateTimeSelectionWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    '日期',
-                    style: TextStyle(
+                    l10n.date,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                 ),
@@ -72,7 +73,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
                     },
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        hintText: '選擇日期',
+                        hintText: l10n.selectDate,
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Theme.of(context).primaryColor,
@@ -101,17 +102,16 @@ class DateTimeSelectionWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    '時間',
-                    style: TextStyle(
+                    l10n.time,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                 ),
@@ -130,7 +130,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
                     },
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        hintText: '選擇時間',
+                        hintText: l10n.time,
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Theme.of(context).primaryColor,
@@ -160,30 +160,28 @@ class DateTimeSelectionWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    '相機數量',
-                    style: TextStyle(
+                    l10n.cameraCount,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                 ),
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<int>(
-                    hint: const Row(
+                    hint: Row(
                       children: [
                         Text(
-                          '相機數量',
-                          style: TextStyle(
+                          l10n.cameraCount,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'NotoSansTC',
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -198,7 +196,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'NotoSansTC',
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -232,8 +229,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      scrollbarTheme: ScrollbarThemeData(
-                        radius: const Radius.circular(40),
+                      scrollbarTheme: const ScrollbarThemeData(
+                        radius: Radius.circular(40),
                       ),
                     ),
                     menuItemStyleData: const MenuItemStyleData(
@@ -249,30 +246,28 @@ class DateTimeSelectionWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    'FPS',
-                    style: TextStyle(
+                    l10n.fps,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                 ),
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<int>(
-                    hint: const Row(
+                    hint: Row(
                       children: [
                         Text(
-                          'FPS',
-                          style: TextStyle(
+                          l10n.fps,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'NotoSansTC',
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -287,7 +282,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'NotoSansTC',
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -321,8 +315,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      scrollbarTheme: ScrollbarThemeData(
-                        radius: const Radius.circular(40),
+                      scrollbarTheme: const ScrollbarThemeData(
+                        radius: Radius.circular(40),
                       ),
                     ),
                     menuItemStyleData: const MenuItemStyleData(
@@ -342,23 +336,21 @@ class DateTimeSelectionWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    '備註',
-                    style: TextStyle(
+                    l10n.notes,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                 ),
                 if (constraints.maxWidth < 800)
                   Expanded(
-                    // width: 500,
                     child: TextField(
                       onChanged: (value) {
                         if (value.isNotEmpty) {
@@ -366,7 +358,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: '備註',
+                        hintText: l10n.notes,
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Theme.of(context).primaryColor,
@@ -393,7 +385,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: '備註',
+                        hintText: l10n.notes,
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Theme.of(context).primaryColor,

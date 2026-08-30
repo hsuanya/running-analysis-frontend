@@ -10,6 +10,7 @@ import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/record/widget/record_camera_view.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
 import 'package:frontend/entities/runner_info.dart';
@@ -38,6 +39,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(recordControllerProvider);
     final controller = ref.read(recordControllerProvider.notifier);
 
@@ -64,7 +66,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             'Success',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          description: const Text('影片上傳成功！'),
+          description: Text(l10n.uploadSuccess),
           type: ToastificationType.success,
           style: ToastificationStyle.minimal,
           alignment: Alignment.bottomCenter,
@@ -98,22 +100,22 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(
-              title: const Text('主控權轉移要求'),
-              content: Text('設備 $next 正在要求此房間的主控權，您同意轉移嗎？'),
+              title: Text(l10n.controlTransferRequest),
+              content: Text(l10n.controlTransferMessage(next)),
               actions: [
                 TextButton(
                   onPressed: () {
                     controller.respondControlRequest(next, false);
                     Navigator.of(context).pop();
                   },
-                  child: const Text('拒絕'),
+                  child: Text(l10n.reject),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     controller.respondControlRequest(next, true);
                     Navigator.of(context).pop();
                   },
-                  child: const Text('同意'),
+                  child: Text(l10n.approve),
                 ),
               ],
             ),
@@ -140,6 +142,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   }
 
   Widget _buildInitialView(RecordState state, RecordController controller) {
+    final l10n = context.l10n;
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -172,21 +175,21 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               size: 48,
                               color: Theme.of(context).primaryColorDark,
                             ),
-                            const Text(
-                              '主控裝置',
-                              style: TextStyle(
+                            Text(
+                              l10n.masterDevice,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Text(
-                              '負責控制所有裝置的開始與結束錄影',
+                            Text(
+                              l10n.masterDeviceDescription,
                               textAlign: TextAlign.center,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('預計連線裝置數: '),
+                                Text(l10n.expectedDeviceCount),
                                 DropdownButton2<int>(
                                   value: _createExpectedCount,
                                   items: [1, 2, 3, 4, 5]
@@ -225,17 +228,17 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               ),
                               onPressed: () =>
                                   controller.createRoom(_createExpectedCount),
-                              child: const Text(
-                                '建立錄影房間',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              child: Text(
+                                l10n.createRecordingRoom,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Text(
-                        '或',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.orDivider,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Container(
                         padding: const EdgeInsets.all(24),
@@ -255,33 +258,33 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               size: 48,
                               color: Theme.of(context).primaryColorDark,
                             ),
-                            const Text(
-                              '錄影手機',
-                              style: TextStyle(
+                            Text(
+                              l10n.slaveDevice,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             TextField(
                               controller: _roomController,
-                              decoration: const InputDecoration(
-                                hintText: '輸入房間號碼',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.meeting_room),
+                              decoration: InputDecoration(
+                                hintText: l10n.enterRoomNumber,
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.meeting_room),
                               ),
                             ),
                             DropdownButtonFormField<int>(
                               value: _selectedCameraIndex,
-                              decoration: const InputDecoration(
-                                labelText: '選擇相機位置',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.camera_alt),
+                              decoration: InputDecoration(
+                                labelText: l10n.selectCameraPosition,
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.camera_alt),
                               ),
                               items: List.generate(
                                 5,
                                 (i) => DropdownMenuItem(
                                   value: i,
-                                  child: Text('相機 ${i + 1}'),
+                                  child: Text('${l10n.camera} ${i + 1}'),
                                 ),
                               ),
                               onChanged: (v) =>
@@ -301,9 +304,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                   );
                                 }
                               },
-                              child: const Text(
-                                '加入錄影房間',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              child: Text(
+                                l10n.joinRecordingRoom,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -321,6 +324,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   }
 
   Widget _buildRoomView(RecordState state, RecordController controller) {
+    final l10n = context.l10n;
     final connectedCameraIndexes = state.members
         .map((m) => m.cameraIndex)
         .whereType<int>()
@@ -358,7 +362,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                     spacing: 24,
                     children: [
                       Text(
-                        '房間號碼: ${state.roomId}',
+                        '${l10n.roomNumber}: ${state.roomId}',
                         style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -376,7 +380,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '目前身份: ${state.role == RecordRole.master ? "主控端 (Master)" : "錄影端 (Slave)"}',
+                          '${l10n.currentRole}: ${state.role == RecordRole.master ? l10n.roleMaster : l10n.roleSlave}',
                           style: TextStyle(
                             color: state.role == RecordRole.master
                                 ? Colors.amber[900]
@@ -414,13 +418,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                   }
                                 }
                               },
-                              title: const Text(
-                                '本機參與錄影',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              title: Text(
+                                l10n.localRecording,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: state.isRecordingEnabled
-                                  ? Text('目前作為相機 ${state.myCameraIndex! + 1}')
-                                  : const Text('僅作為主控端'),
+                                  ? Text('${l10n.camera} ${state.myCameraIndex! + 1}')
+                                  : Text(l10n.roleMaster),
                               trailing: Switch(
                                 value: state.isRecordingEnabled,
                                 onChanged: (v) {
@@ -445,9 +449,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     children: [
                                       const Divider(),
                                       const SizedBox(height: 8),
-                                      const Text(
-                                        '選擇本機相機編號:',
-                                        style: TextStyle(
+                                      Text(
+                                        l10n.selectCameraPosition,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                         ),
@@ -461,7 +465,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                             state.expectedCameraCount,
                                             (i) {
                                               return ChoiceChip(
-                                                label: Text('相機 ${i + 1}'),
+                                                label: Text('${l10n.camera} ${i + 1}'),
                                                 selected:
                                                     state.myCameraIndex == i,
                                                 onSelected: (selected) {
@@ -488,9 +492,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       ],
                       if (state.role == RecordRole.slave &&
                           state.status != RecordStatus.recording) ...[
-                        const Text(
-                          '更改相機位置:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Text(
+                          l10n.changeCameraPosition,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         DropdownButtonFormField<int>(
                           value:
@@ -511,7 +515,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 : 5,
                             (i) => DropdownMenuItem(
                               value: i,
-                              child: Text('相機 ${i + 1}'),
+                              child: Text('${l10n.camera} ${i + 1}'),
                             ),
                           ).toList(),
                           onChanged: (v) {
@@ -521,18 +525,18 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           },
                         ),
                       ],
-                      const Text(
-                        '已連線設備清單:',
-                        style: TextStyle(
+                      Text(
+                        l10n.connectedDevices,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       RoundedBoxWidget(
                         child: state.members.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(32),
-                                child: Text('等待連線中...'),
+                            ? Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Text(l10n.waitingForConnection),
                               )
                             : ListView.separated(
                                 shrinkWrap: true,
@@ -548,7 +552,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     ),
                                     title: Row(
                                       children: [
-                                        Text('設備 ID: ${member.id}'),
+                                        Text('ID: ${member.id}'),
                                         if (member.isMaster) ...[
                                           const SizedBox(width: 8),
                                           Container(
@@ -562,7 +566,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                                   BorderRadius.circular(4),
                                             ),
                                             child: Text(
-                                              '房主',
+                                              l10n.roomHost,
                                               style: TextStyle(
                                                 color: Colors.amber[900],
                                                 fontSize: 10,
@@ -575,8 +579,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     ),
                                     subtitle: Text(
                                       member.cameraIndex != null
-                                          ? '相機 ${member.cameraIndex! + 1}'
-                                          : '尚未分配相機',
+                                          ? '${l10n.camera} ${member.cameraIndex! + 1}'
+                                          : l10n.cameraNotAssigned,
                                     ),
                                     trailing: Icon(
                                       member.isReady
@@ -592,14 +596,14 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       ),
                       if (state.role == RecordRole.master) ...[
                         if (state.status == RecordStatus.recording) ...[
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SpinKitDoubleBounce(color: Colors.red, size: 20),
-                              SizedBox(width: 8),
+                              const SpinKitDoubleBounce(color: Colors.red, size: 20),
+                              const SizedBox(width: 8),
                               Text(
-                                '正在錄影中...',
-                                style: TextStyle(
+                                l10n.recordingInProgress,
+                                style: const TextStyle(
                                   color: Colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -620,9 +624,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               ),
                             ),
                             onPressed: () => controller.stopRecording(),
-                            child: const Text(
-                              '停止錄影並上傳',
-                              style: TextStyle(fontSize: 20),
+                            child: Text(
+                              l10n.stopRecordingAndUpload,
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
                         ] else ...[
@@ -648,7 +652,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  description: const Text('請先選擇選手才能開始錄影'),
+                                  description: Text(l10n.selectRunnerRequired),
                                   type: ToastificationType.error,
                                   style: ToastificationStyle.minimal,
                                   alignment: Alignment.bottomCenter,
@@ -666,7 +670,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     ),
                                   ),
                                   description: Text(
-                                    '尚有相機未連線 (目前: ${connectedCameraIndexes.length}/${state.expectedCameraCount})',
+                                    '${l10n.cameraNotAssigned} (${connectedCameraIndexes.length}/${state.expectedCameraCount})',
                                   ),
                                   type: ToastificationType.error,
                                   style: ToastificationStyle.minimal,
@@ -679,13 +683,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               if (!areAllParticipatingReady) {
                                 toastification.show(
                                   context: context,
-                                  title: Text(
+                                  title: const Text(
                                     'Warning',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  description: Text('部分相機尚未橫放裝置 (未就緒)'),
+                                  description: Text(l10n.orientationLandscapeRequired),
                                   alignment: Alignment.bottomCenter,
                                   type: ToastificationType.warning,
                                   style: ToastificationStyle.minimal,
@@ -695,9 +699,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               }
                               controller.startRecording();
                             },
-                            child: const Text(
-                              '開始同步錄影',
-                              style: TextStyle(fontSize: 20),
+                            child: Text(
+                              l10n.startSyncRecording,
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
                         ],
@@ -707,7 +711,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                         const RecordCameraView(),
                         if (state.role != RecordRole.master) ...[
                           const SizedBox(height: 16),
-                          const Text('請留在本頁影面，等待主控端發送錄影指令...'),
+                          Text(l10n.waitingForConnection),
                         ],
                       ],
                       if (state.role == RecordRole.slave) ...[
@@ -739,10 +743,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               : () => controller.requestControl(),
                           label: Text(
                             state.isWaitingForControlApproval
-                                ? '等待房主審核中...'
+                                ? l10n.waitingForControlApproval
                                 : (state.members.any((m) => m.isMaster)
-                                    ? '要求主控權'
-                                    : '取得主控權'),
+                                    ? l10n.requestControl
+                                    : l10n.takeControl),
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -750,7 +754,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       TextButton.icon(
                         icon: const Icon(Icons.exit_to_app),
                         onPressed: () => controller.leaveRoom(),
-                        label: const Text('離開房間'),
+                        label: Text(l10n.leaveRoom),
                       ),
                     ],
                   ),
@@ -764,6 +768,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   }
 
   Widget _buildConfigSection(RecordState state, RecordController controller) {
+    final l10n = context.l10n;
     final runners = ref.watch(uploadRunnerListProvider);
 
     return Container(
@@ -776,9 +781,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       child: Column(
         spacing: 16,
         children: [
-          const Text(
-            '錄影參數設定',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            l10n.cameraSettings,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Wrap(
             spacing: 16,
@@ -806,7 +811,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   RunnerSource.select: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '選擇選手',
+                      l10n.selectRunner,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: state.runnerSource == RunnerSource.select
@@ -818,7 +823,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   RunnerSource.add: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '新增選手',
+                      l10n.addRunner,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: state.runnerSource == RunnerSource.add
@@ -844,18 +849,17 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                         decoration: const BoxDecoration(
                           border: Border(bottom: BorderSide()),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '選擇選手',
-                              style: TextStyle(
+                              l10n.selectRunner,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'NotoSansTC',
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios_outlined, size: 12),
+                            const Icon(Icons.arrow_forward_ios_outlined, size: 12),
                           ],
                         ),
                       ),
@@ -863,14 +867,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                     data: (List<RunnerInfo> items) =>
                         DropdownButtonHideUnderline(
                           child: DropdownButton2<String>(
-                            hint: const Row(
+                            hint: Row(
                               children: [
                                 Text(
-                                  '選擇選手',
-                                  style: TextStyle(
+                                  l10n.selectRunner,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    fontFamily: 'NotoSansTC',
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -885,7 +888,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        fontFamily: 'NotoSansTC',
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -915,8 +917,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              scrollbarTheme: ScrollbarThemeData(
-                                radius: const Radius.circular(40),
+                              scrollbarTheme: const ScrollbarThemeData(
+                                radius: Radius.circular(40),
                               ),
                             ),
                             menuItemStyleData: const MenuItemStyleData(
@@ -938,11 +940,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'NotoSansTC',
                           ),
                           decoration: InputDecoration(
                             isDense: true,
-                            hintText: '選手姓名',
+                            hintText: l10n.enterRunnerName,
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Theme.of(context).primaryColor,
@@ -974,12 +975,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             });
                           }
                         },
-                        label: const Text(
-                          '新增',
-                          style: TextStyle(
+                        label: Text(
+                          l10n.save,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'NotoSansTC',
                           ),
                         ),
                         icon: const Icon(
@@ -1005,23 +1005,21 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(25),
                 ),
-                child: const Text(
-                  'FPS',
-                  style: TextStyle(
+                child: Text(
+                  l10n.fps,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton2<int>(
-                  hint: const Text(
-                    'FPS',
-                    style: TextStyle(
+                  hint: Text(
+                    l10n.fps,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'NotoSansTC',
                     ),
                   ),
                   value: state.fps,
@@ -1034,7 +1032,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'NotoSansTC',
                             ),
                           ),
                         ),
@@ -1083,12 +1080,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(25),
                 ),
-                child: const Text(
-                  '備註',
-                  style: TextStyle(
+                child: Text(
+                  l10n.notes,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'NotoSansTC',
                   ),
                 ),
               ),
@@ -1097,11 +1093,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'NotoSansTC',
                   ),
                   decoration: InputDecoration(
                     isDense: true,
-                    hintText: '備註(選填)',
+                    hintText: l10n.notes,
                     enabledBorder: UnderlineInputBorder(
                       borderSide: BorderSide(
                         color: Theme.of(context).primaryColor,

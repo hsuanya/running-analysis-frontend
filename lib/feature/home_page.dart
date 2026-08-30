@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
 import 'package:frontend/feature/auth/auth_state.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/utils/router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sidebarx/sidebarx.dart';
@@ -72,15 +73,17 @@ class _HomePageState extends ConsumerState<HomePage>
     final size = MediaQuery.of(context).size;
     final isPortrait = size.height > size.width;
     final authState = ref.watch(authProvider);
+    final currentLocale = ref.watch(localeProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           _controller.selectedIndex == 0
-              ? "回放"
+              ? l10n.navPlayback
               : _controller.selectedIndex == 1
-              ? "上傳"
-              : "錄影",
+              ? l10n.navUpload
+              : l10n.navRecord,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color.fromARGB(255, 121, 169, 234),
@@ -100,7 +103,7 @@ class _HomePageState extends ConsumerState<HomePage>
         actions: [
           if (authState.status == AuthStatus.authenticated && authState.username != null)
             Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
                 children: [
                   const Icon(Icons.account_circle, color: Colors.white, size: 20),
@@ -116,19 +119,79 @@ class _HomePageState extends ConsumerState<HomePage>
                 ],
               ),
             ),
+          PopupMenuButton<String>(
+            position: PopupMenuPosition.under,
+            offset: const Offset(0, 4),
+            icon: const Icon(Icons.language, color: Colors.white),
+            tooltip: l10n.switchLanguage,
+            color: const Color(0xFF1E2638),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Colors.white24),
+            ),
+            onSelected: (code) {
+              ref.read(localeProvider.notifier).setLocale(Locale(code));
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'zh',
+                child: Row(
+                  children: [
+                    Text(
+                      '🇹🇼 繁體中文',
+                      style: TextStyle(
+                        color: currentLocale.languageCode == 'zh'
+                            ? const Color(0xFF79A9EA)
+                            : Colors.white,
+                        fontWeight: currentLocale.languageCode == 'zh'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    if (currentLocale.languageCode == 'zh') ...[
+                      const Spacer(),
+                      const Icon(Icons.check, size: 16, color: Color(0xFF79A9EA)),
+                    ],
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'en',
+                child: Row(
+                  children: [
+                    Text(
+                      '🇺🇸 English',
+                      style: TextStyle(
+                        color: currentLocale.languageCode == 'en'
+                            ? const Color(0xFF79A9EA)
+                            : Colors.white,
+                        fontWeight: currentLocale.languageCode == 'en'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    if (currentLocale.languageCode == 'en') ...[
+                      const Spacer(),
+                      const Icon(Icons.check, size: 16, color: Color(0xFF79A9EA)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: '登出',
+            tooltip: l10n.navLogout,
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('確認登出'),
-                  content: const Text('您確定要登出跑姿分析系統嗎？'),
+                  title: Text(l10n.logoutConfirmTitle),
+                  content: Text(l10n.logoutConfirmMessage),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('取消'),
+                      child: Text(l10n.cancel),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -138,7 +201,7 @@ class _HomePageState extends ConsumerState<HomePage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                       ),
-                      child: const Text('登出', style: TextStyle(color: Colors.white)),
+                      child: Text(l10n.navLogout, style: const TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
@@ -155,14 +218,14 @@ class _HomePageState extends ConsumerState<HomePage>
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: _isSidebarOpen ? 100 : 0),
+                constraints: BoxConstraints(maxWidth: _isSidebarOpen ? 120 : 0),
                 child: SidebarX(
                   controller: _controller,
                   showToggleButton: false,
                   items: [
-                    SidebarXItem(icon: Icons.play_arrow, label: "回放"),
-                    SidebarXItem(icon: Icons.upload, label: "上傳"),
-                    SidebarXItem(icon: Icons.videocam, label: "錄影"),
+                    SidebarXItem(icon: Icons.play_arrow, label: l10n.navPlayback),
+                    SidebarXItem(icon: Icons.upload, label: l10n.navUpload),
+                    SidebarXItem(icon: Icons.videocam, label: l10n.navRecord),
                   ],
                 ),
               ),

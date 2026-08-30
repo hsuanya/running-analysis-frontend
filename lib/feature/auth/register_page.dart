@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
 import 'package:frontend/feature/auth/auth_state.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -40,6 +41,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: Container(
@@ -96,10 +98,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        '註冊帳號',
+                      Text(
+                        l10n.register,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF2A3E5C),
@@ -107,10 +109,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        '加入 Running Analysis 跑姿分析系統',
+                      Text(
+                        l10n.appTitle,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF6B7280),
                         ),
@@ -122,7 +124,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         controller: _usernameController,
                         style: const TextStyle(color: Color(0xFF1F2937)),
                         decoration: InputDecoration(
-                          labelText: '使用者名稱',
+                          labelText: l10n.username,
                           labelStyle: const TextStyle(
                             color: Color(0xFF6B7280),
                           ),
@@ -151,10 +153,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return '請輸入使用者名稱';
-                          }
-                          if (value.trim().length < 3) {
-                            return '使用者名稱長度最少需要 3 個字元';
+                            return l10n.usernameHint;
                           }
                           return null;
                         },
@@ -167,7 +166,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         obscureText: _obscurePassword,
                         style: const TextStyle(color: Color(0xFF1F2937)),
                         decoration: InputDecoration(
-                          labelText: '密碼',
+                          labelText: l10n.password,
                           labelStyle: const TextStyle(
                             color: Color(0xFF6B7280),
                           ),
@@ -209,10 +208,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '請輸入密碼';
-                          }
-                          if (value.length < 6) {
-                            return '密碼長度最少需要 6 個字元';
+                            return l10n.passwordHint;
                           }
                           return null;
                         },
@@ -225,7 +221,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         obscureText: _obscureConfirmPassword,
                         style: const TextStyle(color: Color(0xFF1F2937)),
                         decoration: InputDecoration(
-                          labelText: '確認密碼',
+                          labelText: l10n.confirmPassword,
                           labelStyle: const TextStyle(
                             color: Color(0xFF6B7280),
                           ),
@@ -267,10 +263,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '請再次確認密碼';
+                            return l10n.confirmPasswordHint;
                           }
                           if (value != _passwordController.text) {
-                            return '密碼不一致，請重新檢查';
+                            return l10n.passwordsDoNotMatch;
                           }
                           return null;
                         },
@@ -309,9 +305,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                 color: Colors.white,
                                 size: 20,
                               )
-                            : const Text(
-                                '註冊',
-                                style: TextStyle(
+                            : Text(
+                                l10n.register,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -325,9 +321,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            '已經有帳號了？',
-                            style: TextStyle(
+                          Text(
+                            l10n.alreadyHaveAccount,
+                            style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontSize: 14,
                             ),
@@ -336,9 +332,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             onPressed: () {
                               context.pop();
                             },
-                            child: const Text(
-                              '立即登入',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.login,
+                              style: const TextStyle(
                                 color: Color(0xFF508FE8),
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,

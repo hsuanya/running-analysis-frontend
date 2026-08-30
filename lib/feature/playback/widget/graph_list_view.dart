@@ -7,6 +7,7 @@ import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/video_playback.dart';
 import 'package:frontend/feature/playback/placeholder/graph_list_placeholder.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/graph_list_shimmer.dart';
 import 'package:frontend/widget/processing_progress_widget.dart';
@@ -25,6 +26,7 @@ class GraphListView extends ConsumerWidget {
       return const GraphListPlaceholder();
     }
 
+    final l10n = context.l10n;
     final videoInfo = ref.watch(videoInfoProvider(videoId));
     final videoPlayback = ref.watch(videoPlaybackStateProvider);
 
@@ -59,13 +61,13 @@ class GraphListView extends ConsumerWidget {
                         size: 40,
                       ),
                       const SizedBox(height: 16),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Text(
-                              "無圖表數據",
-                              style: TextStyle(
+                              l10n.noChartData,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -73,10 +75,10 @@ class GraphListView extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Failed',
-                            style: TextStyle(
+                            l10n.statusFailed,
+                            style: const TextStyle(
                               color: Colors.redAccent,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -129,7 +131,7 @@ class GraphListView extends ConsumerWidget {
               children: [
                 RoundedBoxWidget(
                   child: _GraphSection(
-                    title: 'Distance, Velocity & Acceleration',
+                    title: l10n.tabOverallPerformance,
                     icon: Icons.speed_rounded,
                     graphs: metricsGraphs,
                     videoPlayback: videoPlayback,
@@ -139,7 +141,7 @@ class GraphListView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 RoundedBoxWidget(
                   child: _GraphSection(
-                    title: 'Joint Angles',
+                    title: l10n.tabJointAngles,
                     icon: Icons.accessibility_new_rounded,
                     graphs: anglesGraphs,
                     videoPlayback: videoPlayback,
@@ -232,6 +234,45 @@ class _GraphSection extends StatelessWidget {
           ),
       ];
 
+  String _localizeTitle(BuildContext context, String rawTitle) {
+    final l10n = context.l10n;
+    switch (rawTitle.toLowerCase().trim()) {
+      case 'distance':
+        return l10n.metricDistance;
+      case 'velocity':
+        return l10n.metricVelocity;
+      case 'acceleration':
+        return l10n.metricAcceleration;
+      case 'knee angle':
+        return l10n.chartKneeAngle;
+      case 'hip angle':
+        return l10n.chartHipAngle;
+      case 'elbow flexion':
+      case 'elbow flexion angle':
+        return l10n.chartElbowFlexion;
+      case 'pelvis-torso angle':
+      case 'pelvis torso angle':
+        return l10n.chartPelvisTorsoAngle;
+      default:
+        return rawTitle;
+    }
+  }
+
+  String _localizeYLabel(BuildContext context, String rawYLabel) {
+    final l10n = context.l10n;
+    final normalized = rawYLabel.toLowerCase().trim();
+    if (normalized.startsWith('distance')) {
+      return l10n.metricDistanceUnit;
+    } else if (normalized.startsWith('velocity')) {
+      return l10n.metricVelocityUnit;
+    } else if (normalized.startsWith('acceleration')) {
+      return l10n.metricAccelerationUnit;
+    } else if (normalized.startsWith('angle')) {
+      return l10n.angleUnit;
+    }
+    return rawYLabel;
+  }
+
   SideTitles _leftTitles(double yMax) => SideTitles(
     showTitles: true,
     interval: yMax > 10 ? 150 : 1,
@@ -261,13 +302,13 @@ class _GraphSection extends StatelessWidget {
 
   FlTitlesData _titlesData(BuildContext context, String yLabel, double yMax) =>
       FlTitlesData(
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           axisNameSize: 32,
-          axisNameWidget: const Text(
-            'Time',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+          axisNameWidget: Text(
+            context.l10n.timeWithUnit,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
           sideTitles: SideTitles(
             interval: 1.0,
@@ -337,19 +378,22 @@ class _GraphSection extends StatelessWidget {
       spots: spots,
       color: Colors.white.withValues(alpha: 0.5),
       barWidth: 3,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
     final redLine = LineChartBarData(
       spots: playedSpots,
       color: primaryColor,
       barWidth: 4,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
+
+    final displayTitle = _localizeTitle(context, graph.title);
+    final displayYLabel = _localizeYLabel(context, graph.yLabel);
 
     return _chartContainer(
       context: context,
       titleWidget: Text(
-        graph.title,
+        displayTitle,
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -379,11 +423,11 @@ class _GraphSection extends StatelessWidget {
           lineBarsData: [whiteLine, redLine],
           minY: graph.yMin,
           maxY: graph.yMax,
-          clipData: FlClipData.none(),
+          clipData: const FlClipData.none(),
           extraLinesData: ExtraLinesData(
             verticalLines: _secondTicks(context, graph.x),
           ),
-          titlesData: _titlesData(context, graph.yLabel, graph.yMax),
+          titlesData: _titlesData(context, displayYLabel, graph.yMax),
           borderData: _borderData(context),
         ),
       ),
@@ -393,6 +437,7 @@ class _GraphSection extends StatelessWidget {
   // ── 2 series → paired left/right chart ──────────────────────────────────
 
   Widget _buildPairedChart(BuildContext context, GraphData graph) {
+    final l10n = context.l10n;
     final primaryColor = Theme.of(context).primaryColorDark;
     final leftY = graph.series[0].y; // name == "left"
     final rightY = graph.series[1].y; // name == "right"
@@ -419,34 +464,37 @@ class _GraphSection extends StatelessWidget {
       spots: leftSpots,
       color: leftFaded,
       barWidth: 3,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
     final rightFade = LineChartBarData(
       spots: rightSpots,
       color: rightFaded,
       barWidth: 3,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
     // Vivid "played" lines  (index 2 = leftLive, index 3 = rightLive in lineBarsData)
     final leftLive = LineChartBarData(
       spots: leftPlayed,
       color: primaryColor,
       barWidth: 4,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
     final rightLive = LineChartBarData(
       spots: rightPlayed,
       color: Colors.white,
       barWidth: 4,
-      dotData: FlDotData(show: false),
+      dotData: const FlDotData(show: false),
     );
+
+    final displayTitle = _localizeTitle(context, graph.title);
+    final displayYLabel = _localizeYLabel(context, graph.yLabel);
 
     return _chartContainer(
       context: context,
       titleWidget: Column(
         children: [
           Text(
-            graph.title,
+            displayTitle,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -459,16 +507,16 @@ class _GraphSection extends StatelessWidget {
             children: [
               _legendDot(primaryColor),
               const SizedBox(width: 4),
-              const Text(
-                'Left',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+              Text(
+                l10n.legendLeft,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(width: 16),
               _legendDot(Colors.white),
               const SizedBox(width: 4),
-              const Text(
-                'Right',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+              Text(
+                l10n.legendRight,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
             ],
           ),
@@ -489,8 +537,9 @@ class _GraphSection extends StatelessWidget {
                 if (idx == 1 && spotIdx <= rightCI) return null;
 
                 final isLeft = idx == 0 || idx == 2;
+                final sideLabel = isLeft ? l10n.legendLeft : l10n.legendRight;
                 return LineTooltipItem(
-                  '${isLeft ? "L" : "R"}: ${spot.y.toStringAsFixed(1)}°',
+                  '$sideLabel: ${spot.y.toStringAsFixed(1)}°',
                   TextStyle(
                     fontSize: 16,
                     color: isLeft ? primaryColor : Colors.white,
@@ -502,11 +551,11 @@ class _GraphSection extends StatelessWidget {
           lineBarsData: [leftFade, rightFade, leftLive, rightLive],
           minY: graph.yMin,
           maxY: graph.yMax,
-          clipData: FlClipData.none(),
+          clipData: const FlClipData.none(),
           extraLinesData: ExtraLinesData(
             verticalLines: _secondTicks(context, graph.x),
           ),
-          titlesData: _titlesData(context, graph.yLabel, graph.yMax),
+          titlesData: _titlesData(context, displayYLabel, graph.yMax),
           borderData: _borderData(context),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/feature/upload/upload_provider.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/runner_history_shimmer.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +15,7 @@ class UnanalyzedHistoryView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final runnerId = ref.watch(uploadSelectedRunnerIdProvider);
     final videoId = ref.watch(uploadSelectedRunSessionIdProvider);
     if (runnerId == null) {
@@ -29,17 +31,21 @@ class UnanalyzedHistoryView extends ConsumerWidget {
           return Container(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              "目前沒有未分析的紀錄",
-              style: TextStyle(
+              l10n.noUnanalyzedRecords,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Noto Sans TC',
               ),
             ),
           );
         }
 
-        final List<String> headers = ["日期時間", "跑者", "攝影機數量", "備註"];
+        final List<String> headers = [
+          l10n.dateTime,
+          l10n.runnerName,
+          l10n.cameraCount,
+          l10n.notes,
+        ];
         final List<List<String>> values = [
           videos
               .map(
@@ -173,10 +179,10 @@ class UnanalyzedHistoryView extends ConsumerWidget {
                     ),
                     children: [
                       TableRow(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           borderRadius: BorderRadius.only(
-                            bottomLeft: const Radius.circular(25),
-                            bottomRight: const Radius.circular(25),
+                            bottomLeft: Radius.circular(25),
+                            bottomRight: Radius.circular(25),
                           ),
                         ),
                         children: [

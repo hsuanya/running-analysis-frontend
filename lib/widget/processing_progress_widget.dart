@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 class ProcessingProgressWidget extends StatelessWidget {
   final int progress;
   const ProcessingProgressWidget({super.key, required this.progress});
 
-  String _getStatusText(int progress) {
-    if (progress >= 100) return '全部結束並存檔';
-    if (progress >= 90) return '資料後處理完成';
-    if (progress >= 80) return '姿勢估計 (Pose Estimation) 完成';
-    if (progress >= 40) return '影片追蹤 (Tracking) 完成';
-    if (progress >= 15) return '影片轉檔完成';
-    if (progress >= 5) return '準備轉檔';
-    return '準備中...';
+  String _getStatusText(BuildContext context, int progress) {
+    final l10n = context.l10n;
+    if (progress >= 100) return l10n.progressSaved;
+    if (progress >= 90) return l10n.progressPostProcessing;
+    if (progress >= 80) return l10n.progressPose;
+    if (progress >= 40) return l10n.progressTracking;
+    if (progress >= 15) return l10n.progressTranscode;
+    return l10n.statusProcessing;
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusText = _getStatusText(progress);
+    final statusText = _getStatusText(context, progress);
     final theme = Theme.of(context);
 
     return LayoutBuilder(

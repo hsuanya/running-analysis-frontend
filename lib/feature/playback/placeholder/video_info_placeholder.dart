@@ -1,38 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/locale_provider.dart';
 
 class VideoInfoPlaceholder extends StatelessWidget {
   const VideoInfoPlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final List<String> headers = [
-      "選手姓名",
-      "日期時間",
-      "相機數量",
-      "fps",
-      "平均速度",
-      "平均加速度",
-      "平均步幅",
-      "總時間",
-      "備註",
+      l10n.analysisStatus,
+      l10n.runnerName,
+      l10n.dateTime,
+      l10n.cameraCount,
+      l10n.fps,
+      l10n.avgVelocity,
+      l10n.avgAcceleration,
+      l10n.avgStepLength,
+      l10n.totalTime,
+      l10n.notes,
     ];
 
     final List<String> values = [
-      "選手姓名",
-      "年-月-日 時:分:秒",
+      l10n.statusDone,
+      l10n.runnerName,
+      "YYYY-MM-DD HH:mm:ss",
       "{1, 2, 3, 4, 5}",
       "{30, 60}",
-      "平均速度",
-      "平均加速度",
-      "平均步幅",
-      "總時間",
-      "備註",
+      l10n.avgVelocity,
+      l10n.avgAcceleration,
+      l10n.avgStepLength,
+      l10n.totalTime,
+      l10n.notes,
     ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Table(
-        border: TableBorder(
+        border: const TableBorder(
           horizontalInside: BorderSide(
             width: 3,
             color: Colors.white,

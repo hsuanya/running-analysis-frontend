@@ -8,6 +8,7 @@ import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/upload_provider.dart';
 import 'package:frontend/feature/upload/widget/upload_all_view.dart';
 import 'package:frontend/feature/upload/widget/upload_seperately_view.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_ui.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/loading_overlay.dart';
@@ -25,6 +26,7 @@ class UploadPage extends ConsumerStatefulWidget {
 class _UploadPageState extends ConsumerState<UploadPage> {
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final selectedUploadType = ref.watch(uploadTypeProvider);
     final selectedRunnerSource = ref.watch(runnerSourceProvider);
     final name = ref.watch(runnerNameInputProvider);
@@ -58,7 +60,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                   CustomSlidingSegmentedControl<RunnerSource>(
                     initialValue: selectedRunnerSource,
                     customSegmentSettings: CustomSegmentSettings(
-                      borderRadius: BorderRadius.all(Radius.circular(25)),
+                      borderRadius: const BorderRadius.all(Radius.circular(25)),
                     ),
                     decoration: BoxDecoration(
                       color: CupertinoColors.tertiarySystemFill,
@@ -74,9 +76,9 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                     },
                     children: <RunnerSource, Widget>{
                       RunnerSource.select: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          '選擇選手',
+                          l10n.selectRunner,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight:
@@ -87,9 +89,9 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                         ),
                       ),
                       RunnerSource.add: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          '新增選手',
+                          l10n.addRunner,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: selectedRunnerSource == RunnerSource.add
@@ -111,21 +113,20 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                         child: Container(
                           width: 100,
                           height: 40,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             border: Border(bottom: BorderSide()),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '選擇選手',
-                                style: TextStyle(
+                                l10n.selectRunner,
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'NotoSansTC',
                                 ),
                               ),
-                              Icon(Icons.arrow_forward_ios_outlined, size: 12),
+                              const Icon(Icons.arrow_forward_ios_outlined, size: 12),
                             ],
                           ),
                         ),
@@ -133,14 +134,13 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                       data: (List<RunnerInfo> items) {
                         return DropdownButtonHideUnderline(
                           child: DropdownButton2<String>(
-                            hint: const Row(
+                            hint: Row(
                               children: [
                                 Text(
-                                  '選擇選手',
-                                  style: TextStyle(
+                                  l10n.selectRunner,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    fontFamily: 'NotoSansTC',
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -155,7 +155,6 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        fontFamily: 'NotoSansTC',
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -193,8 +192,8 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              scrollbarTheme: ScrollbarThemeData(
-                                radius: const Radius.circular(40),
+                              scrollbarTheme: const ScrollbarThemeData(
+                                radius: Radius.circular(40),
                               ),
                             ),
                             menuItemStyleData: const MenuItemStyleData(
@@ -214,14 +213,13 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                     SizedBox(
                       width: 100,
                       child: TextField(
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'NotoSansTC',
                         ),
                         decoration: InputDecoration(
                           isDense: true,
-                          hintText: '選手姓名',
+                          hintText: l10n.enterRunnerName,
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
                               color: Theme.of(context).primaryColor,
@@ -232,7 +230,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onChanged: (value) {
                           nameNotifier.state = value;
@@ -255,19 +253,17 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                                 .state =
                             newRunner.id;
                       },
-                      label: const Text(
-                        '新增',
-                        style: TextStyle(
+                      label: Text(
+                        l10n.save,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'NotoSansTC',
                         ),
                       ),
                       icon: const Icon(
                         Icons.add_circle_rounded,
                         color: Colors.white,
                         size: 24,
-                        // weight: 800,
                       ),
                     ),
                   ],
@@ -276,7 +272,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
               if (selectedRunnerSource != RunnerSource.add)
                 CustomSlidingSegmentedControl<UploadType>(
                   customSegmentSettings: CustomSegmentSettings(
-                    borderRadius: BorderRadius.all(Radius.circular(25)),
+                    borderRadius: const BorderRadius.all(Radius.circular(25)),
                   ),
                   initialValue: selectedUploadType,
                   onValueChanged: (UploadType? value) {
@@ -293,9 +289,9 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                   ),
                   children: <UploadType, Widget>{
                     UploadType.all: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        '一起上傳',
+                        l10n.uploadAll,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: selectedUploadType == UploadType.all
@@ -305,9 +301,9 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                       ),
                     ),
                     UploadType.seperated: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        '分別上傳',
+                        l10n.uploadSeparately,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: selectedUploadType == UploadType.seperated

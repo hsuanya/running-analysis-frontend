@@ -7,6 +7,7 @@ import 'package:frontend/feature/upload/upload_provider.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_all_controller.dart';
 import 'package:frontend/feature/upload/widget/date_time_selection_widget.dart';
+import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/utils/router.dart';
 import 'package:frontend/widget/loading_icon.dart';
 import 'package:frontend/backend/backend_provider.dart';
@@ -24,6 +25,7 @@ class UploadAllView extends ConsumerStatefulWidget {
 class _UploadAllViewState extends ConsumerState<UploadAllView> {
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(uploadAllControllerProvider);
     final runnerId = ref.watch(uploadSelectedRunnerIdProvider);
     final formData = ref.watch(uploadAllFormProvider);
@@ -195,12 +197,11 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                                 )
                               : Center(
                                   child: Text(
-                                    '相機${index + 1}\n點擊上傳',
+                                    '${l10n.camera} ${index + 1}\n${l10n.clickToUpload}',
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'NotoSansTC',
                                     ),
                                   ),
                                 ),
@@ -218,7 +219,6 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                 textStyle: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'NotoSansTC',
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 48),
               ),
@@ -228,14 +228,14 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('錯誤'),
-                        content: const Text('請選擇跑者'),
+                        title: const Text('Error'),
+                        content: Text(l10n.pleaseSelectRunnerFirst),
                         actions: [
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: const Text('確定'),
+                            child: Text(l10n.confirm),
                           ),
                         ],
                       );
@@ -248,14 +248,14 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('錯誤'),
-                        content: const Text('請上傳所有視頻'),
+                        title: const Text('Error'),
+                        content: Text(l10n.pleaseUploadAllVideos),
                         actions: [
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: const Text('確定'),
+                            child: Text(l10n.confirm),
                           ),
                         ],
                       );
@@ -294,7 +294,7 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                   }
                 }
               },
-              child: const Text('上傳'),
+              child: Text(l10n.upload),
             ),
           ],
         ),
@@ -311,6 +311,7 @@ class _AnchorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -333,12 +334,11 @@ class _AnchorBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isSet ? '錨點已設定' : '點擊設定錨點',
+            isSet ? l10n.anchorSet : l10n.setAnchor,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              fontFamily: 'NotoSansTC',
             ),
           ),
         ],
