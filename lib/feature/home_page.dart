@@ -26,7 +26,7 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _controller.addListener(() {
       if (_updatingFromRouter) return;
       final index = _controller.selectedIndex;
@@ -38,6 +38,7 @@ class _HomePageState extends ConsumerState<HomePage>
       if (index == 0) context.goNamed(AppRoute.playback.name);
       if (index == 1) context.goNamed(AppRoute.upload.name);
       if (index == 2) context.goNamed(AppRoute.record.name);
+      if (index == 3) context.goNamed(AppRoute.trialReview.name);
     });
   }
 
@@ -63,6 +64,9 @@ class _HomePageState extends ConsumerState<HomePage>
     } else if (location.startsWith('/record')) {
       _controller.selectIndex(2);
       _tabController.index = 2;
+    } else if (location.startsWith('/trial_review')) {
+      _controller.selectIndex(3);
+      _tabController.index = 3;
     }
     _isSidebarOpen = false;
     _updatingFromRouter = false;
@@ -83,8 +87,18 @@ class _HomePageState extends ConsumerState<HomePage>
               ? l10n.navPlayback
               : _controller.selectedIndex == 1
               ? l10n.navUpload
-              : l10n.navRecord,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              : _controller.selectedIndex == 2
+              ? l10n.navRecord
+              // TODO: not wired into the l10n ARB files yet (see
+              // conversation -- this feature was reconstructed after the
+              // original working copy was lost). Add navTrialReview to the
+              // .arb files and swap this literal for l10n.navTrialReview
+              // when doing a proper localization pass.
+              : '賽事回顧',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: const Color.fromARGB(255, 121, 169, 234),
         elevation: 4,
@@ -101,12 +115,17 @@ class _HomePageState extends ConsumerState<HomePage>
                 },
               ),
         actions: [
-          if (authState.status == AuthStatus.authenticated && authState.username != null)
+          if (authState.status == AuthStatus.authenticated &&
+              authState.username != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
                 children: [
-                  const Icon(Icons.account_circle, color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.account_circle,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     authState.username!,
@@ -150,7 +169,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     ),
                     if (currentLocale.languageCode == 'zh') ...[
                       const Spacer(),
-                      const Icon(Icons.check, size: 16, color: Color(0xFF79A9EA)),
+                      const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Color(0xFF79A9EA),
+                      ),
                     ],
                   ],
                 ),
@@ -172,7 +195,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     ),
                     if (currentLocale.languageCode == 'en') ...[
                       const Spacer(),
-                      const Icon(Icons.check, size: 16, color: Color(0xFF79A9EA)),
+                      const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Color(0xFF79A9EA),
+                      ),
                     ],
                   ],
                 ),
@@ -201,7 +228,10 @@ class _HomePageState extends ConsumerState<HomePage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                       ),
-                      child: Text(l10n.navLogout, style: const TextStyle(color: Colors.white)),
+                      child: Text(
+                        l10n.navLogout,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -223,9 +253,14 @@ class _HomePageState extends ConsumerState<HomePage>
                   controller: _controller,
                   showToggleButton: false,
                   items: [
-                    SidebarXItem(icon: Icons.play_arrow, label: l10n.navPlayback),
+                    SidebarXItem(
+                      icon: Icons.play_arrow,
+                      label: l10n.navPlayback,
+                    ),
                     SidebarXItem(icon: Icons.upload, label: l10n.navUpload),
                     SidebarXItem(icon: Icons.videocam, label: l10n.navRecord),
+                    // TODO: not wired into l10n yet, see AppBar title note.
+                    const SidebarXItem(icon: Icons.emoji_events, label: '賽事回顧'),
                   ],
                 ),
               ),
@@ -243,6 +278,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 TabItem(icon: Icons.play_arrow),
                 TabItem(icon: Icons.upload),
                 TabItem(icon: Icons.videocam),
+                TabItem(icon: Icons.emoji_events),
               ],
               backgroundColor: const Color.fromARGB(255, 121, 169, 234),
             )

@@ -7,6 +7,7 @@ import 'package:frontend/feature/record/record_page.dart';
 import 'package:frontend/feature/splash/splash_page.dart';
 import 'package:frontend/feature/policy/policy_page.dart';
 import 'package:frontend/feature/support/support_page.dart';
+import 'package:frontend/feature/trial_review/trial_review_page.dart';
 import 'package:frontend/feature/auth/login_page.dart';
 import 'package:frontend/feature/auth/register_page.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
@@ -14,7 +15,7 @@ import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
-enum AppRoute { playback, upload, record }
+enum AppRoute { playback, upload, record, trialReview }
 
 Page<dynamic> _buildFadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage(
@@ -68,13 +69,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isRegistering = state.uri.path == '/register';
 
       // 載入期間或初始狀態不重導向
-      if (auth.status == AuthStatus.loading || auth.status == AuthStatus.initial) {
+      if (auth.status == AuthStatus.loading ||
+          auth.status == AuthStatus.initial) {
         return null;
       }
 
       if (!isLoggedIn) {
         // 未登入：非登入/註冊/隱私/支援頁，強制導向登入頁
-        if (!isLoggingIn && !isRegistering && state.uri.path != '/policy' && state.uri.path != '/support') {
+        if (!isLoggingIn &&
+            !isRegistering &&
+            state.uri.path != '/policy' &&
+            state.uri.path != '/support') {
           return '/login';
         }
       } else {
@@ -138,6 +143,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             name: AppRoute.record.name,
             pageBuilder: (context, state) {
               return _buildFadePage(state, const RecordPage());
+            },
+          ),
+          GoRoute(
+            path: '/trial_review',
+            name: AppRoute.trialReview.name,
+            pageBuilder: (context, state) {
+              final runnerId = state.uri.queryParameters['runnerId'];
+              final videoId = state.uri.queryParameters['videoId'];
+              return _buildFadePage(
+                state,
+                TrialReviewPage(runnerId: runnerId, videoId: videoId),
+              );
             },
           ),
         ],

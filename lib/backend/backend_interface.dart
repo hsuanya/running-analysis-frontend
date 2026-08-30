@@ -1,5 +1,7 @@
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
+import 'package:frontend/entities/step_data.dart';
+import 'package:frontend/entities/toe_path_data.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
@@ -46,4 +48,9 @@ abstract class BackendInterface {
   Future<List<int>> getRunSessionCsv(String runSessionId);
   Future<void> deleteRunSession(String runSessionId);
   Future<void> deleteRunner(String runnerId);
+
+  // -- Trial review (long-jump 賽事回顧 page) --
+  Future<StepsData> getRunSessionSteps(String runSessionId);
+  Future<ToePathData> getRunSessionToePath(String runSessionId);
+  Future<List<int>> getTopdownReviewCameraIndices(String runSessionId);
 }

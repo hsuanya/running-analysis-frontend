@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
+import 'package:frontend/entities/step_data.dart';
+import 'package:frontend/entities/toe_path_data.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
@@ -237,5 +239,30 @@ class FakeBackendRepo implements BackendInterface {
     kRunners.removeWhere((runner) => runner.id == runnerId);
     kVideos.removeWhere((video) => video.runnerId == runnerId);
     return Future.value();
+  }
+
+  @override
+  Future<StepsData> getRunSessionSteps(String runSessionId) {
+    return Future.delayed(
+      const Duration(seconds: 1),
+      () => StepsData(steps: const []),
+    );
+  }
+
+  @override
+  Future<ToePathData> getRunSessionToePath(String runSessionId) {
+    return Future.delayed(
+      const Duration(seconds: 1),
+      () => ToePathData(
+        keypointNames: const [],
+        hasWorldCoords: false,
+        frames: const [],
+      ),
+    );
+  }
+
+  @override
+  Future<List<int>> getTopdownReviewCameraIndices(String runSessionId) {
+    return Future.value(const []);
   }
 }

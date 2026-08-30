@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:frontend/backend/backend_interface.dart';
 import 'package:frontend/entities/graph_data.dart';
 import 'package:frontend/entities/runner_info.dart';
+import 'package:frontend/entities/step_data.dart';
+import 'package:frontend/entities/toe_path_data.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/entities/upload_video_file.dart';
@@ -166,16 +168,12 @@ class RestBackendRepo implements BackendInterface {
 
   @override
   Future<List<int>> getRunSessionPdf(String runSessionId) async {
-    return await NetUtils().requestBytes(
-      API.getRunSessionPdf(runSessionId)[1],
-    );
+    return await NetUtils().requestBytes(API.getRunSessionPdf(runSessionId)[1]);
   }
 
   @override
   Future<List<int>> getRunSessionCsv(String runSessionId) async {
-    return await NetUtils().requestBytes(
-      API.getRunSessionCsv(runSessionId)[1],
-    );
+    return await NetUtils().requestBytes(API.getRunSessionCsv(runSessionId)[1]);
   }
 
   @override
@@ -192,5 +190,32 @@ class RestBackendRepo implements BackendInterface {
       API.deleteRunner(runnerId)[1],
       method: API.deleteRunner(runnerId)[0],
     );
+  }
+
+  @override
+  Future<StepsData> getRunSessionSteps(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getRunSessionSteps(runSessionId)[1],
+      method: API.getRunSessionSteps(runSessionId)[0],
+    );
+    return StepsData.fromJson(response);
+  }
+
+  @override
+  Future<ToePathData> getRunSessionToePath(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getRunSessionToePath(runSessionId)[1],
+      method: API.getRunSessionToePath(runSessionId)[0],
+    );
+    return ToePathData.fromJson(response);
+  }
+
+  @override
+  Future<List<int>> getTopdownReviewCameraIndices(String runSessionId) async {
+    final response = await NetUtils().reqeustData(
+      API.getTopdownReviewCameraIndices(runSessionId)[1],
+      method: API.getTopdownReviewCameraIndices(runSessionId)[0],
+    );
+    return (response['cameraIndices'] as List).map((e) => e as int).toList();
   }
 }
