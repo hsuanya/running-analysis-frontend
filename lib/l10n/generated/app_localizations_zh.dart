@@ -269,13 +269,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distanceDialogTitle => '實際距離設定 (公尺)';
 
   @override
-  String get distanceDialogSubtitle => '請輸入跑道分段的實際測量距離，以進行精確公尺換算：';
+  String get distanceDialogSubtitle => '請輸入兩段跑道縱向距離與跑道寬度，以進行精確公尺換算：';
 
   @override
-  String get distanceLeftToCenter => '左線 (1-4) 至中線 (5-6) 實際距離 (m)';
+  String get distanceLeftToCenter => '左線 (1-4) 至中線 (5-6) 縱向距離 (m)';
 
   @override
-  String get distanceCenterToRight => '中線 (5-6) 至右線 (2-3) 實際距離 (m)';
+  String get distanceCenterToRight => '中線 (5-6) 至右線 (2-3) 縱向距離 (m)';
+
+  @override
+  String get runwayWidth => '跑道寬度 (m)';
 
   @override
   String get distanceInvalidPrompt => '請輸入大於 0 的有效數值';

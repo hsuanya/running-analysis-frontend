@@ -485,10 +485,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                 Positioned.fill(
                   child: RotatedBox(
                     quarterTurns: quarterTurns,
-                    child: Image.memory(
-                      snapshotBytes,
-                      fit: BoxFit.cover,
-                    ),
+                    child: Image.memory(snapshotBytes, fit: BoxFit.cover),
                   ),
                 ),
               // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
@@ -572,7 +569,10 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                     children: [
                       Text(
                         context.l10n.switchLens,
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       const Icon(
@@ -640,7 +640,9 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                         'Error',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      description: Text(context.l10n.pleaseSelectRunnerToRecord),
+                      description: Text(
+                        context.l10n.pleaseSelectRunnerToRecord,
+                      ),
                       type: ToastificationType.error,
                       style: ToastificationStyle.minimal,
                       alignment: Alignment.bottomCenter,
@@ -738,7 +740,11 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.screen_rotation, color: Colors.white, size: 48),
+                    const Icon(
+                      Icons.screen_rotation,
+                      color: Colors.white,
+                      size: 48,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       context.l10n.pleaseHoldDeviceHorizontally,
@@ -883,6 +889,7 @@ class _FullScreenCameraDialogState
   // Distance text controllers
   final _topCtrl = TextEditingController();
   final _botCtrl = TextEditingController();
+  final _widthCtrl = TextEditingController();
 
   // Snapshot taken when entering anchor mode (for magnifier)
   Uint8List? _snapshotBytes;
@@ -899,6 +906,7 @@ class _FullScreenCameraDialogState
       _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
       _topCtrl.text = existing.leftToMidDistanceM.toString();
       _botCtrl.text = existing.midToRightDistanceM.toString();
+      _widthCtrl.text = existing.runwayWidthM.toString();
       _selectedActivePointIdx = null;
 
       if (_pts.length == 6) {
@@ -908,7 +916,9 @@ class _FullScreenCameraDialogState
         final AB5 = B5 - A5;
         final AP5 = P5 - A5;
         final lenSq5 = AB5.dx * AB5.dx + AB5.dy * AB5.dy;
-        _t5 = lenSq5 > 0 ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0) : 0.5;
+        _t5 = lenSq5 > 0
+            ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0)
+            : 0.5;
 
         final A6 = _pts[3];
         final B6 = _pts[2];
@@ -916,10 +926,18 @@ class _FullScreenCameraDialogState
         final AB6 = B6 - A6;
         final AP6 = P6 - A6;
         final lenSq6 = AB6.dx * AB6.dx + AB6.dy * AB6.dy;
-        _t6 = lenSq6 > 0 ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0) : 0.5;
+        _t6 = lenSq6 > 0
+            ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0)
+            : 0.5;
       } else if (_pts.length == 4) {
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        final tm = Offset(
+          (_pts[0].dx + _pts[1].dx) / 2,
+          (_pts[0].dy + _pts[1].dy) / 2,
+        );
+        final bm = Offset(
+          (_pts[2].dx + _pts[3].dx) / 2,
+          (_pts[2].dy + _pts[3].dy) / 2,
+        );
         _pts.add(tm);
         _pts.add(bm);
         _t5 = 0.5;
@@ -933,6 +951,7 @@ class _FullScreenCameraDialogState
     widget.cameraViewState.removeListener(_handleStateChange);
     _topCtrl.dispose();
     _botCtrl.dispose();
+    _widthCtrl.dispose();
     final controller = widget.cameraViewState._controller;
     if (controller != null && controller.value.isInitialized) {
       try {
@@ -954,7 +973,8 @@ class _FullScreenCameraDialogState
   );
 
   bool _isMobile(BuildContext context) {
-    final isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
+    final isMobilePlatform =
+        defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS;
     final isShortScreen = MediaQuery.of(context).size.shortestSide < 600;
     return isMobilePlatform || isShortScreen;
@@ -971,8 +991,14 @@ class _FullScreenCameraDialogState
         _pts.add(norm);
       }
       if (_pts.length == 4) {
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        final tm = Offset(
+          (_pts[0].dx + _pts[1].dx) / 2,
+          (_pts[0].dy + _pts[1].dy) / 2,
+        );
+        final bm = Offset(
+          (_pts[2].dx + _pts[3].dx) / 2,
+          (_pts[2].dy + _pts[3].dy) / 2,
+        );
         _pts.add(tm);
         _pts.add(bm);
         _t5 = 0.5;
@@ -1036,6 +1062,7 @@ class _FullScreenCameraDialogState
     final botTextCtrl = TextEditingController(
       text: _botCtrl.text.isNotEmpty ? _botCtrl.text : '10.0',
     );
+    final widthTextCtrl = TextEditingController(text: _widthCtrl.text);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1070,17 +1097,15 @@ class _FullScreenCameraDialogState
                 children: [
                   Text(
                     l10n.distanceDialogSubtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                   // Left-to-Mid
                   TextFormField(
                     controller: topTextCtrl,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
@@ -1110,13 +1135,13 @@ class _FullScreenCameraDialogState
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            const BorderSide(color: Color(0xFF00BFA5)),
+                        borderSide: const BorderSide(color: Color(0xFF00BFA5)),
                       ),
                     ),
                     validator: (val) {
                       final n = double.tryParse(val?.trim() ?? '');
-                      if (n == null || n <= 0) return l10n.distanceInvalidPrompt;
+                      if (n == null || n <= 0)
+                        return l10n.distanceInvalidPrompt;
                       return null;
                     },
                   ),
@@ -1124,8 +1149,9 @@ class _FullScreenCameraDialogState
                   // Mid-to-Right
                   TextFormField(
                     controller: botTextCtrl,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
@@ -1155,13 +1181,59 @@ class _FullScreenCameraDialogState
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            const BorderSide(color: Color(0xFF00BFA5)),
+                        borderSide: const BorderSide(color: Color(0xFF00BFA5)),
                       ),
                     ),
                     validator: (val) {
                       final n = double.tryParse(val?.trim() ?? '');
-                      if (n == null || n <= 0) return l10n.distanceInvalidPrompt;
+                      if (n == null || n <= 0)
+                        return l10n.distanceInvalidPrompt;
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: widthTextCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: l10n.runwayWidth,
+                      labelStyle: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      suffixText: 'm',
+                      suffixStyle: const TextStyle(color: Colors.white60),
+                      prefixIcon: const Icon(
+                        Icons.compare_arrows,
+                        size: 18,
+                        color: Color(0xFF81C784),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFF00BFA5)),
+                      ),
+                    ),
+                    validator: (val) {
+                      final n = double.tryParse(val?.trim() ?? '');
+                      if (n == null || n <= 0) {
+                        return l10n.distanceInvalidPrompt;
+                      }
                       return null;
                     },
                   ),
@@ -1182,6 +1254,7 @@ class _FullScreenCameraDialogState
                 if (formKey.currentState?.validate() ?? false) {
                   _topCtrl.text = topTextCtrl.text.trim();
                   _botCtrl.text = botTextCtrl.text.trim();
+                  _widthCtrl.text = widthTextCtrl.text.trim();
                   Navigator.of(dialogCtx).pop(true);
                 }
               },
@@ -1202,6 +1275,10 @@ class _FullScreenCameraDialogState
       },
     );
 
+    topTextCtrl.dispose();
+    botTextCtrl.dispose();
+    widthTextCtrl.dispose();
+
     if (confirmed == true) {
       _saveAnchorResult();
     }
@@ -1212,6 +1289,7 @@ class _FullScreenCameraDialogState
       points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
       leftToMidDistanceM: double.parse(_topCtrl.text),
       midToRightDistanceM: double.parse(_botCtrl.text),
+      runwayWidthM: double.parse(_widthCtrl.text),
     );
     ref.read(recordControllerProvider.notifier).setAnchor(result);
     setState(() => _anchorMode = false);
@@ -1249,9 +1327,11 @@ class _FullScreenCameraDialogState
             _pts.addAll(existing.points.map((p) => Offset(p.x, p.y)));
             _topCtrl.text = existing.leftToMidDistanceM.toString();
             _botCtrl.text = existing.midToRightDistanceM.toString();
+            _widthCtrl.text = existing.runwayWidthM.toString();
           } else {
             _topCtrl.clear();
             _botCtrl.clear();
+            _widthCtrl.clear();
           }
           _snapshotBytes = bytes;
           _anchorMode = true;
@@ -1314,8 +1394,14 @@ class _FullScreenCameraDialogState
       setState(() {
         _pts.add(pos);
         if (_pts.length == 4) {
-          final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-          final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+          final tm = Offset(
+            (_pts[0].dx + _pts[1].dx) / 2,
+            (_pts[0].dy + _pts[1].dy) / 2,
+          );
+          final bm = Offset(
+            (_pts[2].dx + _pts[3].dx) / 2,
+            (_pts[2].dy + _pts[3].dy) / 2,
+          );
           _pts.add(tm);
           _pts.add(bm);
           _t5 = 0.5;
@@ -1360,7 +1446,10 @@ class _FullScreenCameraDialogState
   }
 
   void _onPanUpdate(DragUpdateDetails d) {
-    if (_draggingIdx == null || _panStartTouchNorm == null || _panStartAnchorPos == null) return;
+    if (_draggingIdx == null ||
+        _panStartTouchNorm == null ||
+        _panStartAnchorPos == null)
+      return;
     final currentTouch = _norm(d.localPosition);
     final delta = currentTouch - _panStartTouchNorm!;
     final newPos = Offset(
@@ -1503,7 +1592,8 @@ class _FullScreenCameraDialogState
                     final i = e.key;
                     final pt = e.value;
                     final isDragging = i == _draggingIdx;
-                    final isActive = _isMobile(context) && i == _selectedActivePointIdx;
+                    final isActive =
+                        _isMobile(context) && i == _selectedActivePointIdx;
                     return Positioned(
                       left: pt.dx * _imgW - 18,
                       top: pt.dy * _imgH - 18,
@@ -1530,8 +1620,7 @@ class _FullScreenCameraDialogState
                       child: Center(
                         child: _PulsingBadge(
                           color: _kAnchorColors[_nextIdx],
-                          label:
-                              'Pt ${_nextIdx + 1}：${labels[_nextIdx]}',
+                          label: 'Pt ${_nextIdx + 1}：${labels[_nextIdx]}',
                         ),
                       ),
                     ),
@@ -1742,13 +1831,13 @@ class _FullScreenCameraDialogState
           onPressed: _pts.isEmpty
               ? null
               : () => setState(() {
-                    if (_pts.length == 6) {
-                      _pts.removeRange(3, 6);
-                    } else {
-                      _pts.removeLast();
-                    }
-                    _selectedActivePointIdx = _pts.length;
-                  }),
+                  if (_pts.length == 6) {
+                    _pts.removeRange(3, 6);
+                  } else {
+                    _pts.removeLast();
+                  }
+                  _selectedActivePointIdx = _pts.length;
+                }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white60,
             side: const BorderSide(color: Colors.white24),
@@ -1763,10 +1852,12 @@ class _FullScreenCameraDialogState
         const SizedBox(width: 6),
         // Reset
         OutlinedButton.icon(
-          onPressed: _pts.isEmpty ? null : () => setState(() {
-            _pts.clear();
-            _selectedActivePointIdx = 0;
-          }),
+          onPressed: _pts.isEmpty
+              ? null
+              : () => setState(() {
+                  _pts.clear();
+                  _selectedActivePointIdx = 0;
+                }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white38,
             side: const BorderSide(color: Colors.white12),
@@ -1796,10 +1887,7 @@ class _FullScreenCameraDialogState
             icon: const Icon(Icons.check_circle_outline, size: 16),
             label: Text(
               l10n.confirmAnchor,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
         ),
@@ -2038,7 +2126,8 @@ class _AnchorQuadPainter extends CustomPainter {
 
     if (pts.length == 6) {
       final drawLine = (int pA, int pB, Color color) {
-        final isDragEdge = draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
+        final isDragEdge =
+            draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
         paint
           ..color = color.withValues(alpha: isDragEdge ? 1.0 : 0.8)
           ..strokeWidth = isDragEdge ? 2.8 : 2.2;
@@ -2071,7 +2160,8 @@ class _AnchorQuadPainter extends CustomPainter {
     } else {
       // Legacy / intermediate drawing (less than 6 points)
       for (int i = 0; i < pts.length - 1; i++) {
-        final isDragEdge = draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
+        final isDragEdge =
+            draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
         paint
           ..color = _kAnchorColors[i].withValues(alpha: isDragEdge ? 1.0 : 0.8)
           ..strokeWidth = isDragEdge ? 2.8 : 2.2;
@@ -2079,7 +2169,8 @@ class _AnchorQuadPainter extends CustomPainter {
       }
 
       if (pts.length == 4) {
-        final isDragEdge = draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
+        final isDragEdge =
+            draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
         paint
           ..color = _kAnchorColors[3].withValues(alpha: isDragEdge ? 1.0 : 0.8)
           ..strokeWidth = isDragEdge ? 2.8 : 2.2;
