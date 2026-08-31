@@ -25,6 +25,9 @@ class RecordState {
   // Calibration
   final AnchorResult? anchorResult;
 
+  // Upload Progress
+  final bool isAllUploaded;
+
   // Room Control Request
   final String? pendingControlRequestFrom;
   final bool isWaitingForControlApproval;
@@ -47,6 +50,7 @@ class RecordState {
     this.fps = 60,
     this.note = '',
     this.anchorResult,
+    this.isAllUploaded = false,
     this.pendingControlRequestFrom,
     this.isWaitingForControlApproval = false,
   });
@@ -71,6 +75,7 @@ class RecordState {
     int? fps,
     String? note,
     AnchorResult? anchorResult,
+    bool? isAllUploaded,
     bool clearAnchor = false,
     bool clearSharedRunSessionId = false,
     String? pendingControlRequestFrom,
@@ -97,6 +102,7 @@ class RecordState {
       fps: fps ?? this.fps,
       note: note ?? this.note,
       anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
+      isAllUploaded: isAllUploaded ?? this.isAllUploaded,
       pendingControlRequestFrom: clearPendingControlRequest
           ? null
           : (pendingControlRequestFrom ?? this.pendingControlRequestFrom),
