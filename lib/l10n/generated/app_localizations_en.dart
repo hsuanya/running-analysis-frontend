@@ -272,14 +272,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get distanceDialogSubtitle =>
-      'Please enter actual track segment distances for metric calibration:';
+      'Enter the two longitudinal runway distances and runway width for metric calibration:';
 
   @override
-  String get distanceLeftToCenter => 'Left (1-4) to Center (5-6) Distance (m)';
+  String get distanceLeftToCenter =>
+      'Left (1-4) to Center (5-6) Longitudinal Distance (m)';
 
   @override
   String get distanceCenterToRight =>
-      'Center (5-6) to Right (2-3) Distance (m)';
+      'Center (5-6) to Right (2-3) Longitudinal Distance (m)';
+
+  @override
+  String get runwayWidth => 'Runway Width (m)';
 
   @override
   String get distanceInvalidPrompt =>

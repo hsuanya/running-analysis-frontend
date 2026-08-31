@@ -16,23 +16,45 @@ class AnchorPoint {
   Map<String, double> toJson() => {'x': x, 'y': y};
 }
 
-/// Result: 4 points (TL → TR → BR → BL) + top/bottom real distances (m)
+/// Six image anchors plus the measured runway dimensions used for calibration.
 class AnchorResult {
   final List<AnchorPoint> points;
   final double leftToMidDistanceM;
   final double midToRightDistanceM;
+  final double runwayWidthM;
 
   const AnchorResult({
     required this.points,
     required this.leftToMidDistanceM,
     required this.midToRightDistanceM,
+    required this.runwayWidthM,
   });
 
-  Map<String, dynamic> toJson() => {
-    'points': points.map((p) => p.toJson()).toList(),
-    'leftToMidDistanceM': leftToMidDistanceM,
-    'midToRightDistanceM': midToRightDistanceM,
-  };
+  Map<String, dynamic> toJson() {
+    final totalLengthM = leftToMidDistanceM + midToRightDistanceM;
+    final worldCoordinates = <(double, double)>[
+      (0, 0),
+      (totalLengthM, 0),
+      (totalLengthM, runwayWidthM),
+      (0, runwayWidthM),
+      (leftToMidDistanceM, 0),
+      (leftToMidDistanceM, runwayWidthM),
+    ];
+
+    return {
+      'points': points.asMap().entries.map((entry) {
+        final pointJson = <String, double>{...entry.value.toJson()};
+        if (points.length == 6) {
+          final (worldX, worldY) = worldCoordinates[entry.key];
+          pointJson['world_x_m'] = worldX;
+          pointJson['world_y_m'] = worldY;
+        }
+        return pointJson;
+      }).toList(),
+      'leftToMidDistanceM': leftToMidDistanceM,
+      'midToRightDistanceM': midToRightDistanceM,
+    };
+  }
 }
 
 // ── Styling constants ─────────────────────────────────────────
@@ -131,6 +153,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   // Distance inputs
   final _topCtrl = TextEditingController();
   final _botCtrl = TextEditingController();
+  final _widthCtrl = TextEditingController();
 
   // Pulse animation for "next point" badge
   late AnimationController _pulse;
@@ -154,6 +177,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       _pts.addAll(prev.points.map((p) => Offset(p.x, p.y)));
       _topCtrl.text = prev.leftToMidDistanceM.toString();
       _botCtrl.text = prev.midToRightDistanceM.toString();
+      _widthCtrl.text = prev.runwayWidthM.toString();
       _selectedActivePointIdx = null;
 
       if (_pts.length == 6) {
@@ -164,7 +188,9 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         final AB5 = B5 - A5;
         final AP5 = P5 - A5;
         final lenSq5 = AB5.dx * AB5.dx + AB5.dy * AB5.dy;
-        _t5 = lenSq5 > 0 ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0) : 0.5;
+        _t5 = lenSq5 > 0
+            ? ((AP5.dx * AB5.dx + AP5.dy * AB5.dy) / lenSq5).clamp(0.0, 1.0)
+            : 0.5;
 
         // Calculate _t6 (BM along BL-BR)
         final A6 = _pts[3];
@@ -173,11 +199,19 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         final AB6 = B6 - A6;
         final AP6 = P6 - A6;
         final lenSq6 = AB6.dx * AB6.dx + AB6.dy * AB6.dy;
-        _t6 = lenSq6 > 0 ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0) : 0.5;
+        _t6 = lenSq6 > 0
+            ? ((AP6.dx * AB6.dx + AP6.dy * AB6.dy) / lenSq6).clamp(0.0, 1.0)
+            : 0.5;
       } else if (_pts.length == 4) {
         // Dynamic upgrade of legacy 4 points to 6 points
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        final tm = Offset(
+          (_pts[0].dx + _pts[1].dx) / 2,
+          (_pts[0].dy + _pts[1].dy) / 2,
+        );
+        final bm = Offset(
+          (_pts[2].dx + _pts[3].dx) / 2,
+          (_pts[2].dy + _pts[3].dy) / 2,
+        );
         _pts.add(tm);
         _pts.add(bm);
         _t5 = 0.5;
@@ -190,6 +224,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   void dispose() {
     _topCtrl.dispose();
     _botCtrl.dispose();
+    _widthCtrl.dispose();
     _pulse.dispose();
     super.dispose();
   }
@@ -206,7 +241,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   );
 
   bool _isMobile(BuildContext context) {
-    final isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
+    final isMobilePlatform =
+        defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS;
     final isShortScreen = MediaQuery.of(context).size.shortestSide < 600;
     return isMobilePlatform || isShortScreen;
@@ -238,8 +274,14 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
         _pts.add(norm);
       }
       if (_pts.length == 4) {
-        final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-        final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+        final tm = Offset(
+          (_pts[0].dx + _pts[1].dx) / 2,
+          (_pts[0].dy + _pts[1].dy) / 2,
+        );
+        final bm = Offset(
+          (_pts[2].dx + _pts[3].dx) / 2,
+          (_pts[2].dy + _pts[3].dy) / 2,
+        );
         _pts.add(tm);
         _pts.add(bm);
         _t5 = 0.5;
@@ -302,8 +344,14 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       setState(() {
         _pts.add(pos);
         if (_pts.length == 4) {
-          final tm = Offset((_pts[0].dx + _pts[1].dx) / 2, (_pts[0].dy + _pts[1].dy) / 2);
-          final bm = Offset((_pts[2].dx + _pts[3].dx) / 2, (_pts[2].dy + _pts[3].dy) / 2);
+          final tm = Offset(
+            (_pts[0].dx + _pts[1].dx) / 2,
+            (_pts[0].dy + _pts[1].dy) / 2,
+          );
+          final bm = Offset(
+            (_pts[2].dx + _pts[3].dx) / 2,
+            (_pts[2].dy + _pts[3].dy) / 2,
+          );
           _pts.add(tm);
           _pts.add(bm);
           _t5 = 0.5;
@@ -348,7 +396,10 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
   }
 
   void _onPanUpdate(DragUpdateDetails d) {
-    if (_draggingIdx == null || _panStartTouchNorm == null || _panStartAnchorPos == null) return;
+    if (_draggingIdx == null ||
+        _panStartTouchNorm == null ||
+        _panStartAnchorPos == null)
+      return;
     final currentTouch = _norm(d.localPosition);
     final delta = currentTouch - _panStartTouchNorm!;
     final newPos = Offset(
@@ -376,7 +427,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
     if (!_full) return false;
     final t = double.tryParse(_topCtrl.text);
     final b = double.tryParse(_botCtrl.text);
-    return t != null && t > 0 && b != null && b > 0;
+    final w = double.tryParse(_widthCtrl.text);
+    return t != null && t > 0 && b != null && b > 0 && w != null && w > 0;
   }
 
   void _confirm() {
@@ -384,6 +436,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       points: _pts.map((o) => AnchorPoint(o.dx, o.dy)).toList(),
       leftToMidDistanceM: double.parse(_topCtrl.text),
       midToRightDistanceM: double.parse(_botCtrl.text),
+      runwayWidthM: double.parse(_widthCtrl.text),
     );
     Navigator.of(context).pop(result);
   }
@@ -580,7 +633,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                     final i = e.key;
                     final pt = e.value;
                     final isDragging = i == _draggingIdx;
-                    final isActive = _isMobile(context) && i == _selectedActivePointIdx;
+                    final isActive =
+                        _isMobile(context) && i == _selectedActivePointIdx;
                     return Positioned(
                       left: pt.dx * _imgW - 16,
                       top: pt.dy * _imgH - 16,
@@ -765,6 +819,13 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       color: const Color(0xFFFFB74D),
     );
 
+    final field3 = _buildDistanceField(
+      label: l10n.runwayWidth,
+      controller: _widthCtrl,
+      icon: Icons.compare_arrows,
+      color: const Color(0xFF81C784),
+    );
+
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -772,6 +833,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
           field1,
           const SizedBox(height: 12),
           field2,
+          const SizedBox(height: 12),
+          field3,
         ],
       );
     }
@@ -782,6 +845,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       children: [
         Expanded(child: field1),
         Expanded(child: field2),
+        Expanded(child: field3),
       ],
     );
   }
@@ -797,10 +861,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -849,8 +910,8 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             color: isActive
                 ? color.withValues(alpha: 0.25)
                 : (isSet
-                    ? color.withValues(alpha: 0.08)
-                    : Colors.white.withValues(alpha: 0.03)),
+                      ? color.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isActive
@@ -864,7 +925,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
                       color: color.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 1,
-                    )
+                    ),
                   ]
                 : null,
           ),
@@ -970,10 +1031,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
               Expanded(
                 child: Text(
                   l10n.guideDescription,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
               ),
             ],
@@ -1005,13 +1063,13 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
           onPressed: _pts.isEmpty
               ? null
               : () => setState(() {
-                    if (_pts.length == 6) {
-                      _pts.removeRange(3, 6);
-                    } else {
-                      _pts.removeLast();
-                    }
-                    _selectedActivePointIdx = _pts.length;
-                  }),
+                  if (_pts.length == 6) {
+                    _pts.removeRange(3, 6);
+                  } else {
+                    _pts.removeLast();
+                  }
+                  _selectedActivePointIdx = _pts.length;
+                }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white70,
             side: const BorderSide(color: Colors.white24),
@@ -1020,17 +1078,16 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             ),
           ),
           icon: const Icon(Icons.undo, size: 16),
-          label: Text(
-            l10n.undo,
-            style: const TextStyle(fontSize: 13),
-          ),
+          label: Text(l10n.undo, style: const TextStyle(fontSize: 13)),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
-          onPressed: _pts.isEmpty ? null : () => setState(() {
-            _pts.clear();
-            _selectedActivePointIdx = 0;
-          }),
+          onPressed: _pts.isEmpty
+              ? null
+              : () => setState(() {
+                  _pts.clear();
+                  _selectedActivePointIdx = 0;
+                }),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.white54,
             side: const BorderSide(color: Colors.white12),
@@ -1039,10 +1096,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             ),
           ),
           icon: const Icon(Icons.refresh, size: 16),
-          label: Text(
-            l10n.clear,
-            style: const TextStyle(fontSize: 13),
-          ),
+          label: Text(l10n.clear, style: const TextStyle(fontSize: 13)),
         ),
         const Spacer(),
         AnimatedOpacity(
@@ -1061,10 +1115,7 @@ class _AnchorPointDialogState extends State<_AnchorPointDialog>
             icon: const Icon(Icons.check_circle_outline, size: 18),
             label: Text(
               l10n.confirmAnchor,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
         ),
@@ -1243,7 +1294,8 @@ class _QuadPainter extends CustomPainter {
     if (pts.length == 6) {
       // Draw lines for 6-point layout
       final drawLine = (int pA, int pB, Color color) {
-        final isDragEdge = draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
+        final isDragEdge =
+            draggingIdx != null && (draggingIdx == pA || draggingIdx == pB);
         linePaint
           ..color = color.withValues(alpha: isDragEdge ? 1.0 : 0.75)
           ..strokeWidth = isDragEdge ? 2.5 : 2.0;
@@ -1276,7 +1328,8 @@ class _QuadPainter extends CustomPainter {
     } else {
       // Legacy / intermediate drawing (less than 6 points)
       for (int i = 0; i < pts.length - 1; i++) {
-        final isDragEdge = draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
+        final isDragEdge =
+            draggingIdx != null && (i == draggingIdx || i + 1 == draggingIdx);
         linePaint
           ..color = _colors[i].withValues(alpha: isDragEdge ? 1.0 : 0.75)
           ..strokeWidth = isDragEdge ? 2.5 : 2.0;
@@ -1284,7 +1337,8 @@ class _QuadPainter extends CustomPainter {
       }
 
       if (pts.length == 4) {
-        final isDragEdge = draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
+        final isDragEdge =
+            draggingIdx != null && (draggingIdx == 3 || draggingIdx == 0);
         linePaint
           ..color = _colors[3].withValues(alpha: isDragEdge ? 1.0 : 0.75)
           ..strokeWidth = isDragEdge ? 2.5 : 2.0;

@@ -617,20 +617,26 @@ abstract class AppLocalizations {
   /// No description provided for @distanceDialogSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'請輸入跑道分段的實際測量距離，以進行精確公尺換算：'**
+  /// **'請輸入兩段跑道縱向距離與跑道寬度，以進行精確公尺換算：'**
   String get distanceDialogSubtitle;
 
   /// No description provided for @distanceLeftToCenter.
   ///
   /// In zh, this message translates to:
-  /// **'左線 (1-4) 至中線 (5-6) 實際距離 (m)'**
+  /// **'左線 (1-4) 至中線 (5-6) 縱向距離 (m)'**
   String get distanceLeftToCenter;
 
   /// No description provided for @distanceCenterToRight.
   ///
   /// In zh, this message translates to:
-  /// **'中線 (5-6) 至右線 (2-3) 實際距離 (m)'**
+  /// **'中線 (5-6) 至右線 (2-3) 縱向距離 (m)'**
   String get distanceCenterToRight;
+
+  /// No description provided for @runwayWidth.
+  ///
+  /// In zh, this message translates to:
+  /// **'跑道寬度 (m)'**
+  String get runwayWidth;
 
   /// No description provided for @distanceInvalidPrompt.
   ///
