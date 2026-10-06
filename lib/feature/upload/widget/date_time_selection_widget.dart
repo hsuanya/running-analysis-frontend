@@ -1,5 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/utils/locale_provider.dart';
 
 class DateTimeSelectionWidget extends StatelessWidget {
@@ -9,6 +10,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
     required this.onTimeSelected,
     required this.onCameraCountSelected,
     required this.onFpsSelected,
+    this.selectedTrackWidth = 1.22,
+    required this.onTrackWidthSelected,
     required this.selectedDate,
     required this.selectedTime,
     required this.selectedCameraCount,
@@ -21,6 +24,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
   final Function(TimeOfDay) onTimeSelected;
   final Function(int) onCameraCountSelected;
   final Function(int) onFpsSelected;
+  final double selectedTrackWidth;
+  final Function(double) onTrackWidthSelected;
   final DateTime selectedDate;
   final TimeOfDay selectedTime;
   final int selectedCameraCount;
@@ -271,6 +276,51 @@ class DateTimeSelectionWidget extends StatelessWidget {
                       height: 40,
                       padding: EdgeInsets.only(left: 12, right: 12),
                     ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              spacing: 16,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Text(
+                    l10n.trackWidth,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: TextFormField(
+                    initialValue: selectedTrackWidth.toString(),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      suffixText: 'm',
+                      suffixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onChanged: (value) {
+                      final parsed = double.tryParse(value);
+                      if (parsed != null && parsed > 0) {
+                        onTrackWidthSelected(parsed);
+                      }
+                    },
                   ),
                 ),
               ],

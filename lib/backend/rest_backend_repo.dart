@@ -74,8 +74,9 @@ class RestBackendRepo implements BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<Map<String, dynamic>> videos,
-  ) async {
+    List<Map<String, dynamic>> videos, {
+    double trackWidth = 1.22,
+  }) async {
     final response = await NetUtils().reqeustData(
       API.uploadAllInfo[1],
       method: API.uploadAllInfo[0],
@@ -84,6 +85,7 @@ class RestBackendRepo implements BackendInterface {
         "date": DateFormat('yyyy-MM-dd HH:mm:ss').format(date),
         "cameraCount": cameraCount,
         "fps": fps,
+        "trackWidth": trackWidth,
         "note": note,
         "videos": videos,
       },
@@ -125,8 +127,9 @@ class RestBackendRepo implements BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
-    AnchorResult? anchors,
-  ) async {
+    AnchorResult? anchors, {
+    double trackWidth = 1.22,
+  }) async {
     final response = await NetUtils().reqeustData(
       API.uploadSeperatelyNew[1],
       method: API.uploadSeperatelyNew[0],
@@ -135,6 +138,7 @@ class RestBackendRepo implements BackendInterface {
         "date": DateFormat('yyyy-MM-dd HH:mm:ss').format(date),
         "cameraCount": cameraCount,
         "fps": fps,
+        "trackWidth": trackWidth,
         "note": note,
         "cameraIndex": cameraIndex,
         "tempVideoId": tempVideoId,

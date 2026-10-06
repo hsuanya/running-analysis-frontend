@@ -52,6 +52,10 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
               onFpsSelected: (fps) {
                 formNotifier.state = formData.copyWith(fps: fps);
               },
+              selectedTrackWidth: formData.trackWidth,
+              onTrackWidthSelected: (trackWidth) {
+                formNotifier.state = formData.copyWith(trackWidth: trackWidth);
+              },
               onNoteSelected: (note) {
                 formNotifier.state = formData.copyWith(note: note);
               },
@@ -276,6 +280,7 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                             },
                           )
                           .toList(),
+                      trackWidth: formData.trackWidth,
                     );
 
                 if (mounted && videoId != null) {

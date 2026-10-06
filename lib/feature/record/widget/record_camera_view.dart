@@ -254,6 +254,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
           currentState.myCameraIndex!,
           tempVideoId,
           currentState.anchorResult,
+          trackWidth: currentState.trackWidth,
         );
         controller.notifyUploadComplete(
           status.runSessionId,

@@ -114,8 +114,9 @@ class FakeBackendRepo implements BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<Map<String, dynamic>> videos,
-  ) async {
+    List<Map<String, dynamic>> videos, {
+    double trackWidth = 1.22,
+  }) async {
     final videoId = 'videoId${kVideos.length}';
     kVideos.add(
       RunSessionInfo(
@@ -125,6 +126,7 @@ class FakeBackendRepo implements BackendInterface {
         date: date,
         cameraCount: cameraCount,
         fps: fps,
+        trackWidth: trackWidth,
         avgVelocity: 0,
         totalTime: 0,
         note: note,
@@ -147,6 +149,7 @@ class FakeBackendRepo implements BackendInterface {
           date: DateTime.parse('2025-12-27 10:00:00'),
           cameraCount: 5,
           fps: 60,
+          trackWidth: 1.22,
           note: 'note',
           unuploadedCameraIndexes: [0, 4],
           videoPaths: ['videoPath0', 'videoPath1'],
@@ -158,6 +161,7 @@ class FakeBackendRepo implements BackendInterface {
           date: DateTime.parse('2025-10-27 10:04:00'),
           cameraCount: 5,
           fps: 60,
+          trackWidth: 1.22,
           note: 'note',
           unuploadedCameraIndexes: [1, 4],
           videoPaths: ['videoPath0', 'videoPath1'],
@@ -177,6 +181,7 @@ class FakeBackendRepo implements BackendInterface {
         date: DateTime.now(),
         cameraCount: 5,
         fps: 60,
+        trackWidth: 1.22,
         note: 'shared session',
         unuploadedCameraIndexes: [1, 2],
         videoPaths: ['videoPath0'],
@@ -193,8 +198,9 @@ class FakeBackendRepo implements BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
-    AnchorResult? anchors,
-  ) {
+    AnchorResult? anchors, {
+    double trackWidth = 1.22,
+  }) {
     return Future.delayed(
       const Duration(seconds: 1),
       () => UploadSeperatelyStatus(

@@ -5,6 +5,7 @@ class UnanalyzedRunSessionInfo {
   DateTime date;
   int cameraCount;
   int fps;
+  double? trackWidth;
   String note;
   List<int> unuploadedCameraIndexes;
   List<String?> videoPaths;
@@ -16,6 +17,7 @@ class UnanalyzedRunSessionInfo {
     required this.date,
     required this.cameraCount,
     required this.fps,
+    this.trackWidth,
     required this.note,
     required this.unuploadedCameraIndexes,
     required this.videoPaths,
@@ -29,6 +31,7 @@ class UnanalyzedRunSessionInfo {
       date: DateTime.parse(json['date']),
       cameraCount: json['cameraCount'],
       fps: json['fps'],
+      trackWidth: json['trackWidth'] != null ? (json['trackWidth'] as num).toDouble() : 1.22,
       note: json['note'],
       unuploadedCameraIndexes: List<int>.from(json['unuploadedCameraIndexes']),
       videoPaths: List<String?>.from(json['videoPaths']),
@@ -42,6 +45,7 @@ class UnanalyzedRunSessionInfo {
     DateTime? date,
     int? cameraCount,
     int? fps,
+    double? trackWidth,
     String? note,
     List<int>? unuploadedCameraIndexes,
     List<String?>? videoPaths,
@@ -53,6 +57,7 @@ class UnanalyzedRunSessionInfo {
       date: date ?? this.date,
       cameraCount: cameraCount ?? this.cameraCount,
       fps: fps ?? this.fps,
+      trackWidth: trackWidth ?? this.trackWidth,
       note: note ?? this.note,
       unuploadedCameraIndexes: unuploadedCameraIndexes ?? this.unuploadedCameraIndexes,
       videoPaths: videoPaths ?? this.videoPaths,

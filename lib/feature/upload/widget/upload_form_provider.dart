@@ -6,12 +6,14 @@ class UploadFormData {
   final DateTime selectedDate;
   final TimeOfDay selectedTime;
   final int fps;
+  final double trackWidth;
   final String note;
 
   UploadFormData({
     required this.selectedDate,
     required this.selectedTime,
     required this.fps,
+    this.trackWidth = 1.22,
     required this.note,
   });
 
@@ -19,12 +21,14 @@ class UploadFormData {
     DateTime? selectedDate,
     TimeOfDay? selectedTime,
     int? fps,
+    double? trackWidth,
     String? note,
   }) {
     return UploadFormData(
       selectedDate: selectedDate ?? this.selectedDate,
       selectedTime: selectedTime ?? this.selectedTime,
       fps: fps ?? this.fps,
+      trackWidth: trackWidth ?? this.trackWidth,
       note: note ?? this.note,
     );
   }
@@ -33,6 +37,7 @@ class UploadFormData {
     selectedDate: DateTime.now(),
     selectedTime: TimeOfDay.now(),
     fps: 60,
+    trackWidth: 1.22,
     note: '',
   );
 }

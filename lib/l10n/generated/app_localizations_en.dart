@@ -172,6 +172,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraCount => 'Camera Count';
 
   @override
+  String get trackWidth => 'Track Width';
+
+  @override
   String get totalTime => 'Total Time';
 
   @override

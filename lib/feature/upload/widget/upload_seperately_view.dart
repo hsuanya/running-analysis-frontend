@@ -137,6 +137,10 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
             selectedTime: formData.selectedTime,
             selectedCameraCount: _selectedCameraCount,
             selectedFps: formData.fps,
+            selectedTrackWidth: formData.trackWidth,
+            onTrackWidthSelected: (trackWidth) {
+              formNotifier.state = formData.copyWith(trackWidth: trackWidth);
+            },
             note: formData.note,
             onDateSelected: (date) {
               formNotifier.state = formData.copyWith(selectedDate: date);
@@ -482,6 +486,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                           effectiveIndex,
                           state.tempVideoId!,
                           state.anchorResult,
+                          trackWidth: formData.trackWidth,
                         );
                   }
                   if (selectedRunnerSource == SperatedType.selectOne) {

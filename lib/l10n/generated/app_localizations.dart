@@ -422,6 +422,12 @@ abstract class AppLocalizations {
   /// **'相機數量'**
   String get cameraCount;
 
+  /// No description provided for @trackWidth.
+  ///
+  /// In zh, this message translates to:
+  /// **'跑道寬度'**
+  String get trackWidth;
+
   /// No description provided for @totalTime.
   ///
   /// In zh, this message translates to:

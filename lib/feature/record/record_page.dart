@@ -1125,7 +1125,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             ],
           ),
           Row(
-            spacing: 16,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -1138,6 +1138,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
+              const SizedBox(width: 8),
               DropdownButtonHideUnderline(
                 child: DropdownButton2<int>(
                   hint: Text(
@@ -1158,7 +1159,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       .toList(),
                   onChanged: (v) => v != null ? controller.setFps(v) : null,
                   buttonStyleData: ButtonStyleData(
-                    width: 100,
+                    width: 80,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     overlayColor: WidgetStateProperty.all(Colors.transparent),
                     decoration: BoxDecoration(
@@ -1177,6 +1178,48 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                     height: 40,
                     padding: EdgeInsets.only(left: 12, right: 12),
                   ),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Text(
+                  l10n.trackWidth,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 80,
+                child: TextFormField(
+                  initialValue: state.trackWidth.toString(),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    suffixText: 'm',
+                    suffixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onChanged: (v) {
+                    final parsed = double.tryParse(v);
+                    if (parsed != null && parsed > 0) {
+                      controller.setTrackWidth(parsed);
+                    }
+                  },
                 ),
               ),
             ],

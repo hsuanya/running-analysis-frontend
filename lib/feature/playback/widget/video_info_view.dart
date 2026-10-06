@@ -48,16 +48,28 @@ class VideoInfoView extends ConsumerWidget {
           MapEntry(l10n.dateTime, DateFormat('yyyy-MM-dd HH:mm').format(video.date)),
           MapEntry(l10n.cameraCount, video.cameraCount.toString()),
           MapEntry(l10n.fps, video.fps.toString()),
-          MapEntry('${l10n.avgVelocity} (${l10n.unitMps})', video.avgVelocity?.toString() ?? ''),
           MapEntry(
-            '${l10n.avgAcceleration} (${l10n.unitMps2})',
-            video.avgAcceleration?.toString() ?? '',
+            l10n.trackWidth,
+            video.trackWidth != null ? '${video.trackWidth} ${l10n.unitMeters}' : '1.22 ${l10n.unitMeters}',
           ),
           MapEntry(
-            '${l10n.avgStepLength} (${l10n.unitMeters})',
-            video.avgStepLength?.toString() ?? '',
+            l10n.avgVelocity,
+            video.avgVelocity != null ? '${video.avgVelocity} ${l10n.unitMps}' : '',
           ),
-          MapEntry('${l10n.totalTime} (${l10n.unitSeconds})', video.totalTime.toString()),
+          MapEntry(
+            l10n.avgAcceleration,
+            video.avgAcceleration != null ? '${video.avgAcceleration} ${l10n.unitMps2}' : '',
+          ),
+          MapEntry(
+            l10n.avgStepLength,
+            video.avgStepLength != null ? '${video.avgStepLength} ${l10n.unitMeters}' : '',
+          ),
+          MapEntry(
+            l10n.totalTime,
+            (video.totalTime != null && video.totalTime.toString() != 'null')
+                ? '${video.totalTime} ${l10n.unitSeconds}'
+                : '',
+          ),
           MapEntry(l10n.notes, video.note.toString()),
         ];
 

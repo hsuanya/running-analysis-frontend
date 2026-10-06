@@ -82,6 +82,7 @@ class RecordController extends StateNotifier<RecordState> {
           runnerId: msg.data['runnerId'],
           runnerName: msg.data['runnerName'],
           fps: msg.data['fps'] ?? 60,
+          trackWidth: (msg.data['trackWidth'] as num?)?.toDouble() ?? 1.22,
           note: msg.data['note'] ?? '',
           clearSharedRunSessionId: true,
           isAllUploaded: false,
@@ -226,6 +227,10 @@ class RecordController extends StateNotifier<RecordState> {
     state = state.copyWith(fps: fps);
   }
 
+  void setTrackWidth(double trackWidth) {
+    state = state.copyWith(trackWidth: trackWidth);
+  }
+
   void setNote(String note) {
     state = state.copyWith(note: note);
   }
@@ -238,6 +243,7 @@ class RecordController extends StateNotifier<RecordState> {
         'runnerId': state.runnerId,
         'runnerName': state.runnerName,
         'fps': state.fps,
+        'trackWidth': state.trackWidth,
         'note': state.note,
       },
     );

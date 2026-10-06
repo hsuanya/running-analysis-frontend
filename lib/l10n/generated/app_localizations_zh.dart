@@ -171,6 +171,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraCount => '相機數量';
 
   @override
+  String get trackWidth => '跑道寬度';
+
+  @override
   String get totalTime => '總時間';
 
   @override

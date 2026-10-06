@@ -13,6 +13,7 @@ class VideoInfoPlaceholder extends StatelessWidget {
       l10n.dateTime,
       l10n.cameraCount,
       l10n.fps,
+      l10n.trackWidth,
       l10n.avgVelocity,
       l10n.avgAcceleration,
       l10n.avgStepLength,
@@ -26,10 +27,11 @@ class VideoInfoPlaceholder extends StatelessWidget {
       "YYYY-MM-DD HH:mm:ss",
       "{1, 2, 3, 4, 5}",
       "{30, 60}",
-      l10n.avgVelocity,
-      l10n.avgAcceleration,
-      l10n.avgStepLength,
-      l10n.totalTime,
+      "1.22 ${l10n.unitMeters}",
+      "5.2 ${l10n.unitMps}",
+      "0.5 ${l10n.unitMps2}",
+      "1.8 ${l10n.unitMeters}",
+      "10.5 ${l10n.unitSeconds}",
       l10n.notes,
     ];
 

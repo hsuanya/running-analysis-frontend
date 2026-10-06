@@ -22,8 +22,9 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     String note,
     int cameraIndex,
     String tempVideoId,
-    AnchorResult? anchors,
-  ) async {
+    AnchorResult? anchors, {
+    double trackWidth = 1.22,
+  }) async {
     try {
       state = const AsyncLoading();
       final status = await backend.uploadSeperatelyNew(
@@ -35,6 +36,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         cameraIndex,
         tempVideoId,
         anchors,
+        trackWidth: trackWidth,
       );
       state = const AsyncValue.data(null);
       return status;
@@ -75,8 +77,9 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     int cameraCount,
     int fps,
     String note,
-    List<Map<String, dynamic>> videos,
-  ) async {
+    List<Map<String, dynamic>> videos, {
+    double trackWidth = 1.22,
+  }) async {
     try {
       state = const AsyncLoading();
       final videoId = await backend.uploadAllInfo(
@@ -86,6 +89,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         fps,
         note,
         videos,
+        trackWidth: trackWidth,
       );
       state = const AsyncValue.data(null);
       return videoId;

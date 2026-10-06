@@ -5,6 +5,7 @@ class RunSessionInfo {
   DateTime date;
   int cameraCount;
   int fps;
+  double? trackWidth;
   double? avgVelocity;
   double? avgAcceleration;
   double? avgStepLength;
@@ -20,6 +21,7 @@ class RunSessionInfo {
     required this.date,
     required this.cameraCount,
     required this.fps,
+    this.trackWidth,
     this.avgVelocity,
     this.avgAcceleration,
     this.avgStepLength,
@@ -37,6 +39,7 @@ class RunSessionInfo {
       date: DateTime.parse(json['date']),
       cameraCount: json['cameraCount'],
       fps: json['fps'],
+      trackWidth: json['trackWidth'] != null ? (json['trackWidth'] as num).toDouble() : 1.22,
       avgVelocity: json['avgVelocity'],
       avgAcceleration: json['avgAcceleration'],
       avgStepLength: json['avgStepLength'],

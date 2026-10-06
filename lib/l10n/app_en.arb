@@ -57,6 +57,7 @@
   "analysisStatus": "Analysis Status",
   "dateTime": "Date & Time",
   "cameraCount": "Camera Count",
+  "trackWidth": "Track Width",
   "totalTime": "Total Time",
   "avgVelocity": "Average Velocity",
   "avgAcceleration": "Average Acceleration",

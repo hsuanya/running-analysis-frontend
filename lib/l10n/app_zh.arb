@@ -57,6 +57,7 @@
   "analysisStatus": "分析狀態",
   "dateTime": "日期時間",
   "cameraCount": "相機數量",
+  "trackWidth": "跑道寬度",
   "totalTime": "總時間",
   "avgVelocity": "平均速度",
   "avgAcceleration": "平均加速度",

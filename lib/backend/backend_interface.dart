@@ -21,8 +21,9 @@ abstract class BackendInterface {
     int cameraCount,
     int fps,
     String note,
-    List<Map<String, dynamic>> videos,
-  );
+    List<Map<String, dynamic>> videos, {
+    double trackWidth = 1.22,
+  });
   Future<UploadSeperatelyStatus> uploadSeperatelyNew(
     String runnerId,
     DateTime date,
@@ -31,8 +32,9 @@ abstract class BackendInterface {
     String note,
     int cameraIndex,
     String tempVideoId,
-    AnchorResult? anchors,
-  );
+    AnchorResult? anchors, {
+    double trackWidth = 1.22,
+  });
   Future<UploadSeperatelyStatus> uploadSeperatelySelect(
     String runnerId,
     String runSessionId,
