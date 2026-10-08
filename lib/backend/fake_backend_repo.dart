@@ -116,6 +116,7 @@ class FakeBackendRepo implements BackendInterface {
     String note,
     List<Map<String, dynamic>> videos, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) async {
     final videoId = 'videoId${kVideos.length}';
     kVideos.add(
@@ -127,6 +128,7 @@ class FakeBackendRepo implements BackendInterface {
         cameraCount: cameraCount,
         fps: fps,
         trackWidth: trackWidth,
+        runningDirection: runningDirection,
         avgVelocity: 0,
         totalTime: 0,
         note: note,
@@ -200,6 +202,7 @@ class FakeBackendRepo implements BackendInterface {
     String tempVideoId,
     AnchorResult? anchors, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) {
     return Future.delayed(
       const Duration(seconds: 1),

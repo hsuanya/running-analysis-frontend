@@ -23,6 +23,7 @@ abstract class BackendInterface {
     String note,
     List<Map<String, dynamic>> videos, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   });
   Future<UploadSeperatelyStatus> uploadSeperatelyNew(
     String runnerId,
@@ -34,6 +35,7 @@ abstract class BackendInterface {
     String tempVideoId,
     AnchorResult? anchors, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   });
   Future<UploadSeperatelyStatus> uploadSeperatelySelect(
     String runnerId,

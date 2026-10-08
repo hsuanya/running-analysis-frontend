@@ -428,6 +428,24 @@ abstract class AppLocalizations {
   /// **'跑道寬度'**
   String get trackWidth;
 
+  /// No description provided for @runningDirection.
+  ///
+  /// In zh, this message translates to:
+  /// **'跑步方向'**
+  String get runningDirection;
+
+  /// No description provided for @leftToRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'從左到右'**
+  String get leftToRight;
+
+  /// No description provided for @rightToLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'從右到左'**
+  String get rightToLeft;
+
   /// No description provided for @totalTime.
   ///
   /// In zh, this message translates to:

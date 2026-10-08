@@ -76,6 +76,7 @@ class RestBackendRepo implements BackendInterface {
     String note,
     List<Map<String, dynamic>> videos, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) async {
     final response = await NetUtils().reqeustData(
       API.uploadAllInfo[1],
@@ -86,6 +87,7 @@ class RestBackendRepo implements BackendInterface {
         "cameraCount": cameraCount,
         "fps": fps,
         "trackWidth": trackWidth,
+        "runningDirection": runningDirection,
         "note": note,
         "videos": videos,
       },
@@ -129,6 +131,7 @@ class RestBackendRepo implements BackendInterface {
     String tempVideoId,
     AnchorResult? anchors, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) async {
     final response = await NetUtils().reqeustData(
       API.uploadSeperatelyNew[1],
@@ -139,6 +142,7 @@ class RestBackendRepo implements BackendInterface {
         "cameraCount": cameraCount,
         "fps": fps,
         "trackWidth": trackWidth,
+        "runningDirection": runningDirection,
         "note": note,
         "cameraIndex": cameraIndex,
         "tempVideoId": tempVideoId,

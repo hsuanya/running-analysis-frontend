@@ -6,6 +6,7 @@ class RunSessionInfo {
   int cameraCount;
   int fps;
   double? trackWidth;
+  String runningDirection;
   double? avgVelocity;
   double? avgAcceleration;
   double? avgStepLength;
@@ -22,6 +23,7 @@ class RunSessionInfo {
     required this.cameraCount,
     required this.fps,
     this.trackWidth,
+    this.runningDirection = 'left_to_right',
     this.avgVelocity,
     this.avgAcceleration,
     this.avgStepLength,
@@ -40,6 +42,7 @@ class RunSessionInfo {
       cameraCount: json['cameraCount'],
       fps: json['fps'],
       trackWidth: json['trackWidth'] != null ? (json['trackWidth'] as num).toDouble() : 1.22,
+      runningDirection: json['runningDirection'] ?? 'left_to_right',
       avgVelocity: json['avgVelocity'],
       avgAcceleration: json['avgAcceleration'],
       avgStepLength: json['avgStepLength'],

@@ -24,6 +24,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     String tempVideoId,
     AnchorResult? anchors, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) async {
     try {
       state = const AsyncLoading();
@@ -37,6 +38,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         tempVideoId,
         anchors,
         trackWidth: trackWidth,
+        runningDirection: runningDirection,
       );
       state = const AsyncValue.data(null);
       return status;
@@ -79,6 +81,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
     String note,
     List<Map<String, dynamic>> videos, {
     double trackWidth = 1.22,
+    String runningDirection = 'left_to_right',
   }) async {
     try {
       state = const AsyncLoading();
@@ -90,6 +93,7 @@ class UploadController extends StateNotifier<AsyncValue<void>> {
         note,
         videos,
         trackWidth: trackWidth,
+        runningDirection: runningDirection,
       );
       state = const AsyncValue.data(null);
       return videoId;

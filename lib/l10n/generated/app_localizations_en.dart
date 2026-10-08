@@ -175,6 +175,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackWidth => 'Track Width';
 
   @override
+  String get runningDirection => 'Running Direction';
+
+  @override
+  String get leftToRight => 'Left to Right';
+
+  @override
+  String get rightToLeft => 'Right to Left';
+
+  @override
   String get totalTime => 'Total Time';
 
   @override

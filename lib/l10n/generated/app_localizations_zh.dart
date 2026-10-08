@@ -174,6 +174,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trackWidth => '跑道寬度';
 
   @override
+  String get runningDirection => '跑步方向';
+
+  @override
+  String get leftToRight => '從左到右';
+
+  @override
+  String get rightToLeft => '從右到左';
+
+  @override
   String get totalTime => '總時間';
 
   @override

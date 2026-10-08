@@ -6,6 +6,7 @@ class UnanalyzedRunSessionInfo {
   int cameraCount;
   int fps;
   double? trackWidth;
+  String runningDirection;
   String note;
   List<int> unuploadedCameraIndexes;
   List<String?> videoPaths;
@@ -18,6 +19,7 @@ class UnanalyzedRunSessionInfo {
     required this.cameraCount,
     required this.fps,
     this.trackWidth,
+    this.runningDirection = 'left_to_right',
     required this.note,
     required this.unuploadedCameraIndexes,
     required this.videoPaths,
@@ -32,6 +34,7 @@ class UnanalyzedRunSessionInfo {
       cameraCount: json['cameraCount'],
       fps: json['fps'],
       trackWidth: json['trackWidth'] != null ? (json['trackWidth'] as num).toDouble() : 1.22,
+      runningDirection: json['runningDirection'] ?? 'left_to_right',
       note: json['note'],
       unuploadedCameraIndexes: List<int>.from(json['unuploadedCameraIndexes']),
       videoPaths: List<String?>.from(json['videoPaths']),
@@ -46,6 +49,7 @@ class UnanalyzedRunSessionInfo {
     int? cameraCount,
     int? fps,
     double? trackWidth,
+    String? runningDirection,
     String? note,
     List<int>? unuploadedCameraIndexes,
     List<String?>? videoPaths,
@@ -58,6 +62,7 @@ class UnanalyzedRunSessionInfo {
       cameraCount: cameraCount ?? this.cameraCount,
       fps: fps ?? this.fps,
       trackWidth: trackWidth ?? this.trackWidth,
+      runningDirection: runningDirection ?? this.runningDirection,
       note: note ?? this.note,
       unuploadedCameraIndexes: unuploadedCameraIndexes ?? this.unuploadedCameraIndexes,
       videoPaths: videoPaths ?? this.videoPaths,

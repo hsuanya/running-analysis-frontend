@@ -141,6 +141,10 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
             onTrackWidthSelected: (trackWidth) {
               formNotifier.state = formData.copyWith(trackWidth: trackWidth);
             },
+            selectedRunningDirection: formData.runningDirection,
+            onRunningDirectionSelected: (direction) {
+              formNotifier.state = formData.copyWith(runningDirection: direction);
+            },
             note: formData.note,
             onDateSelected: (date) {
               formNotifier.state = formData.copyWith(selectedDate: date);
@@ -487,6 +491,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                           state.tempVideoId!,
                           state.anchorResult,
                           trackWidth: formData.trackWidth,
+                          runningDirection: formData.runningDirection,
                         );
                   }
                   if (selectedRunnerSource == SperatedType.selectOne) {

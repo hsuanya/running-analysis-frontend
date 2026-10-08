@@ -12,6 +12,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
     required this.onFpsSelected,
     this.selectedTrackWidth = 1.22,
     required this.onTrackWidthSelected,
+    this.selectedRunningDirection = 'left_to_right',
+    required this.onRunningDirectionSelected,
     required this.selectedDate,
     required this.selectedTime,
     required this.selectedCameraCount,
@@ -26,6 +28,8 @@ class DateTimeSelectionWidget extends StatelessWidget {
   final Function(int) onFpsSelected;
   final double selectedTrackWidth;
   final Function(double) onTrackWidthSelected;
+  final String selectedRunningDirection;
+  final Function(String) onRunningDirectionSelected;
   final DateTime selectedDate;
   final TimeOfDay selectedTime;
   final int selectedCameraCount;
@@ -37,6 +41,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Column(
+      spacing: 16,
       children: [
         Wrap(
           spacing: 32,
@@ -211,6 +216,13 @@ class DateTimeSelectionWidget extends StatelessWidget {
                 ),
               ],
             ),
+          ],
+        ),
+        Wrap(
+          spacing: 32,
+          runSpacing: 16,
+          alignment: WrapAlignment.center,
+          children: [
             Row(
               spacing: 16,
               mainAxisSize: MainAxisSize.min,
@@ -321,6 +333,72 @@ class DateTimeSelectionWidget extends StatelessWidget {
                         onTrackWidthSelected(parsed);
                       }
                     },
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              spacing: 16,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Text(
+                    l10n.runningDirection,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton2<String>(
+                    value: selectedRunningDirection,
+                    items: [
+                      DropdownMenuItem<String>(
+                        value: 'left_to_right',
+                        child: Text(
+                          l10n.leftToRight,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'right_to_left',
+                        child: Text(
+                          l10n.rightToLeft,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        onRunningDirectionSelected(value);
+                      }
+                    },
+                    buttonStyleData: ButtonStyleData(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      width: 140,
+                      overlayColor: WidgetStateProperty.all(Colors.transparent),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
+                      ),
+                    ),
+                    iconStyleData: const IconStyleData(
+                      icon: Icon(Icons.arrow_forward_ios_outlined),
+                      iconSize: 12,
+                    ),
+                    dropdownStyleData: DropdownStyleData(
+                      maxHeight: 200,
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                      scrollbarTheme: const ScrollbarThemeData(radius: Radius.circular(40)),
+                    ),
+                    menuItemStyleData: const MenuItemStyleData(
+                      height: 40,
+                      padding: EdgeInsets.only(left: 12, right: 12),
+                    ),
                   ),
                 ),
               ],

@@ -83,6 +83,7 @@ class RecordController extends StateNotifier<RecordState> {
           runnerName: msg.data['runnerName'],
           fps: msg.data['fps'] ?? 60,
           trackWidth: (msg.data['trackWidth'] as num?)?.toDouble() ?? 1.22,
+          runningDirection: msg.data['runningDirection'] ?? 'left_to_right',
           note: msg.data['note'] ?? '',
           clearSharedRunSessionId: true,
           isAllUploaded: false,
@@ -231,6 +232,10 @@ class RecordController extends StateNotifier<RecordState> {
     state = state.copyWith(trackWidth: trackWidth);
   }
 
+  void setRunningDirection(String direction) {
+    state = state.copyWith(runningDirection: direction);
+  }
+
   void setNote(String note) {
     state = state.copyWith(note: note);
   }
@@ -244,6 +249,7 @@ class RecordController extends StateNotifier<RecordState> {
         'runnerName': state.runnerName,
         'fps': state.fps,
         'trackWidth': state.trackWidth,
+        'runningDirection': state.runningDirection,
         'note': state.note,
       },
     );

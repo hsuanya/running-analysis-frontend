@@ -56,6 +56,10 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
               onTrackWidthSelected: (trackWidth) {
                 formNotifier.state = formData.copyWith(trackWidth: trackWidth);
               },
+              selectedRunningDirection: formData.runningDirection,
+              onRunningDirectionSelected: (direction) {
+                formNotifier.state = formData.copyWith(runningDirection: direction);
+              },
               onNoteSelected: (note) {
                 formNotifier.state = formData.copyWith(note: note);
               },
@@ -281,6 +285,7 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
                           )
                           .toList(),
                       trackWidth: formData.trackWidth,
+                      runningDirection: formData.runningDirection,
                     );
 
                 if (mounted && videoId != null) {

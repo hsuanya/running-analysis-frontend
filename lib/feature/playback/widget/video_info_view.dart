@@ -53,6 +53,10 @@ class VideoInfoView extends ConsumerWidget {
             video.trackWidth != null ? '${video.trackWidth} ${l10n.unitMeters}' : '1.22 ${l10n.unitMeters}',
           ),
           MapEntry(
+            l10n.runningDirection,
+            video.runningDirection == 'right_to_left' ? l10n.rightToLeft : l10n.leftToRight,
+          ),
+          MapEntry(
             l10n.avgVelocity,
             video.avgVelocity != null ? '${video.avgVelocity} ${l10n.unitMps}' : '',
           ),

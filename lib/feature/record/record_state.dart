@@ -21,6 +21,7 @@ class RecordState {
   final String? runnerName; // For "Add New Runner" case
   final int fps;
   final double trackWidth;
+  final String runningDirection;
   final String note;
 
   // Calibration
@@ -50,6 +51,7 @@ class RecordState {
     this.runnerName,
     this.fps = 60,
     this.trackWidth = 1.22,
+    this.runningDirection = 'left_to_right',
     this.note = '',
     this.anchorResult,
     this.isAllUploaded = false,
@@ -76,6 +78,7 @@ class RecordState {
     String? runnerName,
     int? fps,
     double? trackWidth,
+    String? runningDirection,
     String? note,
     AnchorResult? anchorResult,
     bool? isAllUploaded,
@@ -104,6 +107,7 @@ class RecordState {
       runnerName: runnerName ?? this.runnerName,
       fps: fps ?? this.fps,
       trackWidth: trackWidth ?? this.trackWidth,
+      runningDirection: runningDirection ?? this.runningDirection,
       note: note ?? this.note,
       anchorResult: clearAnchor ? null : (anchorResult ?? this.anchorResult),
       isAllUploaded: isAllUploaded ?? this.isAllUploaded,
