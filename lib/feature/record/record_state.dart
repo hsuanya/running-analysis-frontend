@@ -11,6 +11,7 @@ class RecordState {
   final int? myDeviceInfoIndex; // For Slave to know which camera it is
   final int? myCameraIndex; // Assigned camera index (0-4)
   final String? sharedRunSessionId; // Synced after first upload
+  final String? myMemberId; // Unique member ID of this connection
   final int expectedCameraCount;
   final bool isRecordingEnabled; // For Master
   final bool isPhysicallyReady; // Track local physical orientation (landscape)
@@ -34,6 +35,9 @@ class RecordState {
   final String? pendingControlRequestFrom;
   final bool isWaitingForControlApproval;
 
+  // Not Ready Alert Tick
+  final int notReadyAlertTick;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -43,6 +47,7 @@ class RecordState {
     this.myDeviceInfoIndex,
     this.myCameraIndex,
     this.sharedRunSessionId,
+    this.myMemberId,
     this.expectedCameraCount = 0,
     this.isRecordingEnabled = false,
     this.isPhysicallyReady = false,
@@ -57,6 +62,7 @@ class RecordState {
     this.isAllUploaded = false,
     this.pendingControlRequestFrom,
     this.isWaitingForControlApproval = false,
+    this.notReadyAlertTick = 0,
   });
 
   bool get anchorIsSet => anchorResult != null;
@@ -70,6 +76,7 @@ class RecordState {
     int? myDeviceInfoIndex,
     int? myCameraIndex,
     String? sharedRunSessionId,
+    String? myMemberId,
     int? expectedCameraCount,
     bool? isRecordingEnabled,
     bool? isPhysicallyReady,
@@ -87,6 +94,7 @@ class RecordState {
     String? pendingControlRequestFrom,
     bool? isWaitingForControlApproval,
     bool clearPendingControlRequest = false,
+    int? notReadyAlertTick,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -99,6 +107,7 @@ class RecordState {
       sharedRunSessionId: clearSharedRunSessionId
           ? null
           : (sharedRunSessionId ?? this.sharedRunSessionId),
+      myMemberId: myMemberId ?? this.myMemberId,
       expectedCameraCount: expectedCameraCount ?? this.expectedCameraCount,
       isRecordingEnabled: isRecordingEnabled ?? this.isRecordingEnabled,
       isPhysicallyReady: isPhysicallyReady ?? this.isPhysicallyReady,
@@ -115,6 +124,7 @@ class RecordState {
           ? null
           : (pendingControlRequestFrom ?? this.pendingControlRequestFrom),
       isWaitingForControlApproval: isWaitingForControlApproval ?? this.isWaitingForControlApproval,
+      notReadyAlertTick: notReadyAlertTick ?? this.notReadyAlertTick,
     );
   }
 }

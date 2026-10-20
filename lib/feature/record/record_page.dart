@@ -18,6 +18,8 @@ import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/widget/rounded_box_widget.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/feature/record/widget/record_room_share_dialog.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:toastification/toastification.dart';
@@ -39,6 +41,19 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   String _newRunnerName = '';
   final ExpansibleController _expansionController = ExpansibleController();
 
+  void _tryAutoJoin() {
+    final auth = ref.read(authProvider);
+    if (auth.status != AuthStatus.authenticated) return;
+
+    if (widget.initialRoomId != null && widget.initialRoomId!.isNotEmpty) {
+      final currentState = ref.read(recordControllerProvider);
+      if (currentState.status == RecordStatus.idle || currentState.roomId != widget.initialRoomId) {
+        final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
+        ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,12 +64,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       _roomController.text = widget.initialRoomId!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final currentState = ref.read(recordControllerProvider);
-        if (currentState.status == RecordStatus.idle ||
-            currentState.roomId != widget.initialRoomId) {
-          final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
-          ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
-        }
+        _tryAutoJoin();
       });
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,22 +90,35 @@ class _RecordPageState extends ConsumerState<RecordPage> {
         widget.initialRoomId!.isNotEmpty &&
         widget.initialRoomId != oldWidget.initialRoomId) {
       _roomController.text = widget.initialRoomId!;
-      final currentState = ref.read(recordControllerProvider);
-      if (currentState.status == RecordStatus.idle || currentState.roomId != widget.initialRoomId) {
-        final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
-        ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
-      }
+      _tryAutoJoin();
     }
   }
 
   @override
   void dispose() {
     _roomController.dispose();
+    final recordState = ref.read(recordControllerProvider);
+    if (recordState.status != RecordStatus.recording &&
+        recordState.status != RecordStatus.uploading) {
+      ref.read(recordControllerProvider.notifier).leaveRoom();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated && previous?.status != AuthStatus.authenticated) {
+        _tryAutoJoin();
+      }
+    });
+
+    if (auth.status != AuthStatus.authenticated) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final l10n = context.l10n;
     final state = ref.watch(recordControllerProvider);
     final controller = ref.read(recordControllerProvider.notifier);
@@ -111,6 +134,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             expectedCameraCount: 2,
             isRecordingEnabled: demoRole == RecordRole.master,
             myCameraIndex: demoRole == RecordRole.master ? 0 : 1,
+            myMemberId: demoRole == RecordRole.master ? 'Master-01' : 'Slave-02',
             runnerSource: RunnerSource.select,
             fps: 60,
             note: '100m 衝刺同步錄影',
@@ -151,6 +175,26 @@ class _RecordPageState extends ConsumerState<RecordPage> {
           title: const Text('Error', style: TextStyle(fontWeight: FontWeight.bold)),
           description: Text(next),
           type: ToastificationType.error,
+          style: ToastificationStyle.minimal,
+          alignment: Alignment.bottomCenter,
+          autoCloseDuration: const Duration(seconds: 4),
+        );
+      }
+    });
+
+    ref.listen(recordControllerProvider.select((s) => s.notReadyAlertTick), (prev, next) {
+      if (next > 0 && next != prev) {
+        final currentRecordState = ref.read(recordControllerProvider);
+        final prompt = !currentRecordState.isPhysicallyReady && !currentRecordState.anchorIsSet
+            ? l10n.hostPromptRotateAndAnchor
+            : (!currentRecordState.isPhysicallyReady
+                  ? l10n.hostPromptRotateOnly
+                  : l10n.hostPromptAnchorOnly);
+        toastification.show(
+          context: context,
+          title: const Text('Warning', style: TextStyle(fontWeight: FontWeight.bold)),
+          description: Text(prompt),
+          type: ToastificationType.warning,
           style: ToastificationStyle.minimal,
           alignment: Alignment.bottomCenter,
           autoCloseDuration: const Duration(seconds: 4),
@@ -670,19 +714,92 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 child: Text(l10n.waitingForConnection),
                               )
                             : ListView.separated(
+                                padding: EdgeInsets.zero,
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.members.length,
-                                separatorBuilder: (context, index) => const Divider(),
+                                separatorBuilder: (context, index) => Divider(
+                                  height: 2,
+                                  thickness: 2,
+                                  color: Theme.of(context).scaffoldBackgroundColor,
+                                ),
                                 itemBuilder: (context, index) {
                                   final member = state.members[index];
+                                  final isThisDevice = state.myMemberId != null
+                                      ? member.id == state.myMemberId
+                                      : (state.role == RecordRole.master && member.isMaster);
                                   return ListTile(
-                                    leading: CircleAvatar(child: Text('${index + 1}')),
-                                    title: Row(
+                                    titleAlignment: ListTileTitleAlignment.center,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    tileColor: isThisDevice
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : null,
+                                    leading: CircleAvatar(
+                                      backgroundColor: isThisDevice
+                                          ? const Color(0xFF1E40AF)
+                                          : Colors.white.withValues(alpha: 0.7),
+                                      foregroundColor: isThisDevice
+                                          ? Colors.white
+                                          : const Color(0xFF1E293B),
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    title: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 4,
                                       children: [
-                                        Text('ID: ${member.id}'),
-                                        if (member.isMaster) ...[
-                                          const SizedBox(width: 8),
+                                        Text(
+                                          'ID: ${member.id}',
+                                          style: TextStyle(
+                                            fontWeight: isThisDevice
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                        if (isThisDevice)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(6),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.08),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 1),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.smartphone_rounded,
+                                                  size: 13,
+                                                  color: Color(0xFF1E40AF),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  l10n.thisDevice,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF1E40AF),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        if (member.isMaster)
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 6,
@@ -701,7 +818,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                               ),
                                             ),
                                           ),
-                                        ],
                                       ],
                                     ),
                                     subtitle: Text(
@@ -839,13 +955,42 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               }
 
                               if (!areAllParticipatingReady) {
+                                final notReadyMembers = participatingMembers
+                                    .where((m) => !m.isReady)
+                                    .toList();
+                                final isMasterCamera =
+                                    state.isRecordingEnabled && state.myCameraIndex != null;
+                                final isMasterNotReady =
+                                    isMasterCamera &&
+                                    (!state.isPhysicallyReady || !state.anchorIsSet);
+                                final notReadySlaves = notReadyMembers
+                                    .where((m) => !(m.isMaster && state.isRecordingEnabled))
+                                    .toList();
+
+                                String warningMsg;
+                                if (notReadySlaves.isNotEmpty) {
+                                  final cameraNames = notReadySlaves
+                                      .map((m) => '${l10n.camera} ${(m.cameraIndex ?? 0) + 1}')
+                                      .join('、');
+                                  if (isMasterNotReady) {
+                                    warningMsg =
+                                        '${l10n.orientationLandscapeRequired}\n${l10n.slavesNotReadyWarning(cameraNames)}';
+                                  } else {
+                                    warningMsg = l10n.slavesNotReadyWarning(cameraNames);
+                                  }
+                                } else {
+                                  warningMsg = l10n.orientationLandscapeRequired;
+                                }
+
+                                controller.notifyNotReady();
+
                                 toastification.show(
                                   context: context,
                                   title: const Text(
                                     'Warning',
                                     style: TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                  description: Text(l10n.orientationLandscapeRequired),
+                                  description: Text(warningMsg),
                                   alignment: Alignment.bottomCenter,
                                   type: ToastificationType.warning,
                                   style: ToastificationStyle.minimal,
@@ -1208,9 +1353,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                     child: TextFormField(
                       initialValue: state.trackWidth.toString(),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
                         isDense: true,

@@ -1130,6 +1130,12 @@ abstract class AppLocalizations {
   /// **'房主'**
   String get roomHost;
 
+  /// No description provided for @thisDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'此裝置'**
+  String get thisDevice;
+
   /// No description provided for @recordingInProgress.
   ///
   /// In zh, this message translates to:
@@ -1303,6 +1309,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'部分相機尚未橫放裝置 (未就緒)'**
   String get camerasNotAllReady;
+
+  /// No description provided for @slavesNotReadyWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'{cameras} 尚未準備就緒 (請確認橫放與錨點設定)'**
+  String slavesNotReadyWarning(String cameras);
+
+  /// No description provided for @hostPromptRotateAndAnchor.
+  ///
+  /// In zh, this message translates to:
+  /// **'房主已嘗試啟動錄影，請將手機橫放並設定錨點以準備就緒！'**
+  String get hostPromptRotateAndAnchor;
+
+  /// No description provided for @hostPromptRotateOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'房主已嘗試啟動錄影，請將手機橫放以準備就緒！'**
+  String get hostPromptRotateOnly;
+
+  /// No description provided for @hostPromptAnchorOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'房主已嘗試啟動錄影，請設定錨點以準備就緒！'**
+  String get hostPromptAnchorOnly;
 
   /// No description provided for @autoUploading.
   ///

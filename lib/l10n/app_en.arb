@@ -180,6 +180,7 @@
   "connectedDevices": "Connected Devices:",
   "waitingForConnection": "Waiting for connection...",
   "roomHost": "Host",
+  "thisDevice": "This Device",
   "recordingInProgress": "Recording in progress...",
   "stopRecordingAndUpload": "Stop Recording & Upload",
   "startSyncRecording": "Start Synchronized Recording",
@@ -209,6 +210,17 @@
   "pleaseSelectRunnerToRecord": "Please select a runner before recording",
   "camerasNotAllConnected": "Cameras not all connected (Current: {current}/{total})",
   "camerasNotAllReady": "Some cameras are not oriented horizontally (Not ready)",
+  "slavesNotReadyWarning": "{cameras} not ready (please check orientation and anchor)",
+  "@slavesNotReadyWarning": {
+    "placeholders": {
+      "cameras": {
+        "type": "String"
+      }
+    }
+  },
+  "hostPromptRotateAndAnchor": "Host attempted to start recording. Please rotate your device to landscape mode and set anchor!",
+  "hostPromptRotateOnly": "Host attempted to start recording. Please rotate your device to landscape mode to get ready!",
+  "hostPromptAnchorOnly": "Host attempted to start recording. Please set anchor calibration to get ready!",
   "autoUploading": "Auto uploading...",
   "pleaseHoldDeviceHorizontally": "Please hold device horizontally to record",
   "pleaseSetAnchorFullscreen": "Tap to set anchors in fullscreen",

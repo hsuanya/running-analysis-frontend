@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/playback/playback_provider.dart';
+import 'package:frontend/feature/playback/widget/delete_session_dialog.dart';
 import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/utils/download_helper/download_helper.dart';
@@ -17,24 +18,32 @@ class SessionActionsView extends ConsumerWidget {
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
 
     if (runnerId == null || videoId == null) {
-      return _buildActionsContent(context, l10n: l10n, isEnabled: false);
+      return _buildActionsContent(
+        context,
+        l10n: l10n,
+        isDownloadEnabled: false,
+        isDeleteEnabled: false,
+      );
     }
 
     final videoInfo = ref.watch(videoInfoProvider(videoId));
     return AsyncValueWidget(
       value: videoInfo,
-      loading: _buildActionsContent(context, l10n: l10n, isEnabled: false),
+      loading: _buildActionsContent(
+        context,
+        l10n: l10n,
+        isDownloadEnabled: false,
+        isDeleteEnabled: false,
+      ),
       data: (RunSessionInfo video) {
-        if (video.status == 'processing') {
-          return _buildActionsContent(context, l10n: l10n, isEnabled: false);
-        }
-
         final isDone = video.status == 'done';
+        final isFailed = video.status == 'failed';
 
         return _buildActionsContent(
           context,
           l10n: l10n,
-          isEnabled: isDone,
+          isDownloadEnabled: isDone,
+          isDeleteEnabled: isDone || isFailed,
           onPdf: () async {
             final filename = "Runner_Analysis_Report_${video.runSessionId}.pdf";
             final backend = ref.read(backendProvider);
@@ -47,48 +56,12 @@ class SessionActionsView extends ConsumerWidget {
             final bytes = await backend.getRunSessionCsv(video.runSessionId);
             await saveBytesToFile(bytes, filename);
           },
-          onDelete: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(l10n.deleteSessionConfirmTitle),
-                content: Text(l10n.deleteSessionConfirmMessage),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(l10n.cancel),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: Text(l10n.delete),
-                  ),
-                ],
-              ),
-            );
-
-            if (confirm == true) {
-              if (!context.mounted) return;
-              try {
-                final backend = ref.read(backendProvider);
-                await backend.deleteRunSession(video.runSessionId);
-
-                final history = await backend.getRunnerHistory(video.runnerId);
-
-                if (history.isNotEmpty) {
-                  ref.read(playbackSelectedRunSessionIdProvider.notifier).state =
-                      history.last.runSessionId;
-                } else {
-                  ref.read(playbackSelectedRunSessionIdProvider.notifier).state = null;
-                }
-
-                ref.invalidate(runnerHistoryProvider(video.runnerId));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("$e")));
-              }
-            }
-          },
+          onDelete: () => showDeleteRunSessionDialog(
+            context: context,
+            ref: ref,
+            runSessionId: video.runSessionId,
+            runnerId: video.runnerId,
+          ),
         );
       },
     );
@@ -97,7 +70,8 @@ class SessionActionsView extends ConsumerWidget {
   Widget _buildActionsContent(
     BuildContext context, {
     required dynamic l10n,
-    required bool isEnabled,
+    required bool isDownloadEnabled,
+    required bool isDeleteEnabled,
     VoidCallback? onPdf,
     VoidCallback? onCsv,
     VoidCallback? onDelete,
@@ -127,7 +101,7 @@ class SessionActionsView extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: isEnabled ? onPdf : null,
+                      onPressed: isDownloadEnabled ? onPdf : null,
                       icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 18),
                       label: Text(
                         l10n.downloadPdfReport,
@@ -149,7 +123,7 @@ class SessionActionsView extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: isEnabled ? onCsv : null,
+                      onPressed: isDownloadEnabled ? onCsv : null,
                       icon: const Icon(Icons.table_chart, color: Colors.white, size: 18),
                       label: Text(
                         l10n.downloadCsvData,
@@ -172,7 +146,7 @@ class SessionActionsView extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
-                onPressed: isEnabled ? onDelete : null,
+                onPressed: isDeleteEnabled ? onDelete : null,
                 icon: const Icon(Icons.delete, color: Colors.white, size: 18),
                 label: Text(
                   l10n.deleteSessionConfirmTitle,

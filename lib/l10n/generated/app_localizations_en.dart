@@ -543,6 +543,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roomHost => 'Host';
 
   @override
+  String get thisDevice => 'This Device';
+
+  @override
   String get recordingInProgress => 'Recording in progress...';
 
   @override
@@ -634,6 +637,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get camerasNotAllReady =>
       'Some cameras are not oriented horizontally (Not ready)';
+
+  @override
+  String slavesNotReadyWarning(String cameras) {
+    return '$cameras not ready (please check orientation and anchor)';
+  }
+
+  @override
+  String get hostPromptRotateAndAnchor =>
+      'Host attempted to start recording. Please rotate your device to landscape mode and set anchor!';
+
+  @override
+  String get hostPromptRotateOnly =>
+      'Host attempted to start recording. Please rotate your device to landscape mode to get ready!';
+
+  @override
+  String get hostPromptAnchorOnly =>
+      'Host attempted to start recording. Please set anchor calibration to get ready!';
 
   @override
   String get autoUploading => 'Auto uploading...';

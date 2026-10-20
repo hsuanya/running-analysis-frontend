@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:frontend/feature/auth/auth_provider.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
@@ -13,6 +13,11 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RecordController extends StateNotifier<RecordState> {
   WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
+  Timer? _heartbeatTimer;
+  Timer? _reconnectTimer;
+  bool _isIntentionalClose = false;
+  bool _isReconnecting = false;
   final Ref _ref;
 
   RecordController(this._ref) : super(RecordState());
@@ -35,103 +40,263 @@ class RecordController extends StateNotifier<RecordState> {
     return '${baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://')}/ws';
   }
 
+  void _disconnect({bool intentional = true}) {
+    _isIntentionalClose = intentional;
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    if (_subscription != null) {
+      try {
+        _subscription?.cancel();
+      } catch (_) {}
+      _subscription = null;
+    }
+
+    if (_channel != null) {
+      try {
+        _channel?.sink.close();
+      } catch (_) {}
+      _channel = null;
+    }
+  }
+
   void _connect() {
-    _channel?.sink.close();
-    _channel = WebSocketChannel.connect(Uri.parse(_wsUrl));
-    _channel!.ready.catchError((e) {
+    _disconnect(intentional: true);
+    _isIntentionalClose = false;
+
+    try {
+      final uri = Uri.parse(_wsUrl);
+      debugPrint('🔌 [WS] 連線中: $uri');
+      final channel = WebSocketChannel.connect(uri);
+      _channel = channel;
+
+      _subscription = channel.stream.listen(
+        _listen,
+        onError: _onError,
+        onDone: _onDone,
+        cancelOnError: true,
+      );
+
+      channel.ready.then((_) {
+        debugPrint('✅ [WS] 連線成功 (ready)');
+        _startHeartbeat();
+      }).catchError((e) {
+        debugPrint('❌ [WS] ready error: $e');
+        _onError(e);
+      });
+    } catch (e) {
+      debugPrint('❌ [WS] connect error: $e');
       _onError(e);
+    }
+  }
+
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (_channel != null && !_isIntentionalClose) {
+        final nowStr = DateTime.now().toUtc().toIso8601String();
+        final msg = RecordMessage(
+          type: RecordMessageType.sync,
+          data: {'clientSendTime': nowStr},
+        );
+        try {
+          final payload = jsonEncode(msg.toJson());
+          _channel?.sink.add(payload);
+        } catch (e) {
+          debugPrint('⚠️ [WS] 心跳發送失敗: $e');
+        }
+      }
     });
-    _channel!.stream.listen(_listen, onError: _onError, onDone: _onDone);
   }
 
   Future<void> _send(RecordMessage msg) async {
+    final payload = jsonEncode(msg.toJson());
+    debugPrint('🚀 [WS] 發送: ${msg.type.name}, payload: $payload');
     try {
       if (_channel == null) {
+        debugPrint('⚠️ [WS] _channel 為空，進行連線');
         _connect();
       }
       await _channel?.ready;
-      _channel?.sink.add(jsonEncode(msg.toJson()));
-    } catch (e) {
-      _onError(e);
+      _channel?.sink.add(payload);
+    } catch (e, st) {
+      debugPrint('❌ [WS] 發送失敗: $e\n$st');
+      if (state.roomId != null && !_isIntentionalClose) {
+        debugPrint('⚠️ [WS] 發送失敗，觸發自動重連');
+        _scheduleReconnect();
+      } else {
+        state = state.copyWith(error: '發送訊息失敗: $e');
+      }
     }
   }
 
   void _listen(dynamic message) {
-    final json = jsonDecode(message);
-    final msg = RecordMessage.fromJson(json);
+    try {
+      final json = jsonDecode(message);
+      final msg = RecordMessage.fromJson(json);
 
-    switch (msg.type) {
-      case RecordMessageType.roomStatus:
-        final roomId = msg.data['roomId'];
-        final membersJson = msg.data['members'] as List;
-        final members = membersJson.map((e) => RecordMember.fromJson(e)).toList();
-        final newStatus =
-            (state.status == RecordStatus.idle || state.status == RecordStatus.connecting)
-            ? RecordStatus.ready
-            : state.status;
-        state = state.copyWith(
-          status: newStatus,
-          roomId: roomId,
-          members: members,
-          expectedCameraCount: msg.data['expectedCameraCount'] ?? state.expectedCameraCount,
-        );
-        break;
-      case RecordMessageType.startRecording:
-        state = state.copyWith(
-          status: RecordStatus.recording,
-          runnerId: msg.data['runnerId'],
-          runnerName: msg.data['runnerName'],
-          fps: msg.data['fps'] ?? 60,
-          trackWidth: (msg.data['trackWidth'] as num?)?.toDouble() ?? 1.22,
-          runningDirection: msg.data['runningDirection'] ?? 'left_to_right',
-          note: msg.data['note'] ?? '',
-          clearSharedRunSessionId: true,
-          isAllUploaded: false,
-        );
-        break;
-      case RecordMessageType.stopRecording:
-        state = state.copyWith(status: RecordStatus.uploading, isAllUploaded: false);
-        break;
-      case RecordMessageType.uploadComplete:
-        final isAllUploaded = msg.data['isAllUploaded'] == true;
-        state = state.copyWith(
-          sharedRunSessionId: msg.data['runSessionId'],
-          runnerId: msg.data['runnerId'] ?? state.runnerId,
-          isAllUploaded: isAllUploaded,
-          status: isAllUploaded ? RecordStatus.ready : state.status,
-        );
-        break;
-      case RecordMessageType.controlRequest:
-        state = state.copyWith(pendingControlRequestFrom: msg.data['requesterId']);
-        break;
-      case RecordMessageType.controlGranted:
-        state = state.copyWith(role: RecordRole.master, isWaitingForControlApproval: false);
-        break;
-      case RecordMessageType.controlRevoked:
-        state = state.copyWith(role: RecordRole.slave, isRecordingEnabled: false);
-        break;
-      case RecordMessageType.controlRejected:
-        state = state.copyWith(
-          isWaitingForControlApproval: false,
-          error: msg.data['message'] ?? '要求控制權被拒絕',
-        );
-        break;
-      case RecordMessageType.error:
-        state = state.copyWith(status: RecordStatus.idle, error: msg.data['message']);
-        break;
-      default:
-        break;
+      if (msg.type != RecordMessageType.sync) {
+        debugPrint('📥 [WS] 收到: $message');
+      }
+
+      switch (msg.type) {
+        case RecordMessageType.sync:
+          // 心跳回應，連線健康
+          break;
+        case RecordMessageType.roomStatus:
+          final roomId = msg.data['roomId'];
+          final myMemberId = msg.data['myMemberId'] as String?;
+          final membersJson = msg.data['members'] as List;
+          final members = membersJson.map((e) => RecordMember.fromJson(e)).toList();
+          final newStatus =
+              (state.status == RecordStatus.idle || state.status == RecordStatus.connecting)
+              ? RecordStatus.ready
+              : state.status;
+          state = state.copyWith(
+            status: newStatus,
+            roomId: roomId,
+            members: members,
+            myMemberId: myMemberId ?? state.myMemberId,
+            expectedCameraCount: msg.data['expectedCameraCount'] ?? state.expectedCameraCount,
+          );
+          break;
+        case RecordMessageType.startRecording:
+          debugPrint('🎬 [WS] 啟動錄影! 跑者: ${msg.data['runnerName'] ?? msg.data['runnerId']}');
+          state = state.copyWith(
+            status: RecordStatus.recording,
+            runnerId: msg.data['runnerId'],
+            runnerName: msg.data['runnerName'],
+            fps: msg.data['fps'] ?? 60,
+            trackWidth: (msg.data['trackWidth'] as num?)?.toDouble() ?? 1.22,
+            runningDirection: msg.data['runningDirection'] ?? 'left_to_right',
+            note: msg.data['note'] ?? '',
+            clearSharedRunSessionId: true,
+            isAllUploaded: false,
+          );
+          break;
+        case RecordMessageType.stopRecording:
+          debugPrint('⏹️ [WS] 停止錄影，開始上傳');
+          state = state.copyWith(status: RecordStatus.uploading, isAllUploaded: false);
+          break;
+        case RecordMessageType.uploadComplete:
+          final isAllUploaded = msg.data['isAllUploaded'] == true;
+          state = state.copyWith(
+            sharedRunSessionId: msg.data['runSessionId'],
+            runnerId: msg.data['runnerId'] ?? state.runnerId,
+            isAllUploaded: isAllUploaded,
+            status: isAllUploaded ? RecordStatus.ready : state.status,
+          );
+          break;
+        case RecordMessageType.controlRequest:
+          state = state.copyWith(pendingControlRequestFrom: msg.data['requesterId']);
+          break;
+        case RecordMessageType.controlGranted:
+          state = state.copyWith(role: RecordRole.master, isWaitingForControlApproval: false);
+          break;
+        case RecordMessageType.controlRevoked:
+          state = state.copyWith(role: RecordRole.slave, isRecordingEnabled: false);
+          break;
+        case RecordMessageType.controlRejected:
+          state = state.copyWith(
+            isWaitingForControlApproval: false,
+            error: msg.data['message'] ?? '要求控制權被拒絕',
+          );
+          break;
+        case RecordMessageType.error:
+          state = state.copyWith(status: RecordStatus.idle, error: msg.data['message']);
+          break;
+        case RecordMessageType.notifyNotReady:
+          final isParticipatingCamera = (state.role == RecordRole.slave && state.myCameraIndex != null) ||
+              (state.role == RecordRole.master && state.isRecordingEnabled && state.myCameraIndex != null);
+          final isReady = state.isPhysicallyReady && state.anchorIsSet;
+          if (isParticipatingCamera && !isReady) {
+            state = state.copyWith(notReadyAlertTick: state.notReadyAlertTick + 1);
+          }
+          break;
+        default:
+          break;
+      }
+    } catch (e, st) {
+      debugPrint('❌ [WS] 解析處理訊息異常: $e\n$st');
     }
   }
 
-  void _onError(error) {
-    state = state.copyWith(status: RecordStatus.idle, error: '連線錯誤: $error');
+  void _onError(dynamic error) {
+    debugPrint('❌ [WS] 連線異常: $error, intentional: $_isIntentionalClose');
+    if (_isIntentionalClose) return;
+
+    if (state.roomId != null && state.status != RecordStatus.idle) {
+      _scheduleReconnect();
+    } else {
+      state = state.copyWith(error: '連線錯誤: $error');
+    }
   }
 
   void _onDone() {
-    if (state.status != RecordStatus.idle) {
-      state = state.copyWith(status: RecordStatus.idle, error: '連線已斷開');
+    debugPrint('🔌 [WS] 連線已關閉 (onDone), intentional: $_isIntentionalClose');
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+
+    if (_isIntentionalClose) return;
+
+    if (state.roomId != null && state.status != RecordStatus.idle) {
+      debugPrint('⚠️ [WS] 房間中非預期斷線，啟動自動重連...');
+      _scheduleReconnect();
+    } else {
+      if (state.status == RecordStatus.connecting) {
+        state = state.copyWith(status: RecordStatus.idle, error: '連線已斷開');
+      } else if (state.status != RecordStatus.idle) {
+        state = state.copyWith(error: '連線中斷');
+      }
     }
+  }
+
+  void _scheduleReconnect() {
+    if (_isIntentionalClose || _isReconnecting) return;
+    _isReconnecting = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(milliseconds: 1500), () async {
+      _isReconnecting = false;
+      if (_isIntentionalClose || state.roomId == null || state.status == RecordStatus.idle) return;
+      debugPrint('🔄 [WS] 執行自動重連，房間號: ${state.roomId}, 角色: ${state.role}');
+      _connect();
+      try {
+        await _channel?.ready;
+        if (state.role == RecordRole.master) {
+          final msg = RecordMessage(
+            type: RecordMessageType.joinRoom,
+            data: {
+              'roomId': state.roomId,
+              'cameraIndex': state.myCameraIndex,
+              'isMaster': true,
+            },
+          );
+          await _send(msg);
+          debugPrint('✅ [WS] Master 自動重新加入房間: ${state.roomId}');
+        } else {
+          final msg = RecordMessage(
+            type: RecordMessageType.joinRoom,
+            data: {
+              'roomId': state.roomId,
+              'cameraIndex': state.myCameraIndex,
+              'isMaster': false,
+            },
+          );
+          await _send(msg);
+          debugPrint('✅ [WS] Slave 自動重新加入房間: ${state.roomId}');
+          if (state.isPhysicallyReady && state.anchorIsSet) {
+            updateReadyStatus(true);
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ [WS] 自動重連過程失敗: $e');
+        if (state.roomId != null && !_isIntentionalClose) {
+          _scheduleReconnect();
+        }
+      }
+    });
   }
 
   void createRoom(int expectedCameraCount) {
@@ -141,6 +306,7 @@ class RecordController extends StateNotifier<RecordState> {
       expectedCameraCount: expectedCameraCount,
       myCameraIndex: state.isRecordingEnabled ? state.myCameraIndex : null,
       clearSharedRunSessionId: true,
+      error: null,
     );
     _connect();
     final msg = RecordMessage(
@@ -191,17 +357,25 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void joinRoom(String roomId, int cameraIndex) {
+    final cleanRoomId = roomId.trim().toUpperCase();
+    final alreadyInThisRoom = state.roomId == cleanRoomId && _channel != null;
+
     state = state.copyWith(
-      status: RecordStatus.connecting,
+      status: alreadyInThisRoom ? state.status : RecordStatus.connecting,
       role: RecordRole.slave,
-      roomId: roomId,
+      roomId: cleanRoomId,
       myCameraIndex: cameraIndex,
       clearSharedRunSessionId: true,
+      error: null,
     );
-    _connect();
+
+    if (!alreadyInThisRoom) {
+      _connect();
+    }
+
     final msg = RecordMessage(
       type: RecordMessageType.joinRoom,
-      data: {'roomId': roomId, 'cameraIndex': cameraIndex},
+      data: {'roomId': cleanRoomId, 'cameraIndex': cameraIndex},
     );
     _send(msg);
   }
@@ -241,7 +415,11 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void startRecording() {
-    if (state.role != RecordRole.master) return;
+    debugPrint('🎬 [RecordController] startRecording, role: ${state.role}, roomId: ${state.roomId}, runnerId: ${state.runnerId}');
+    if (state.role != RecordRole.master) {
+      debugPrint('⚠️ [RecordController] 非 Master 身分無法啟動錄影');
+      return;
+    }
     final msg = RecordMessage(
       type: RecordMessageType.startRecording,
       data: {
@@ -252,6 +430,14 @@ class RecordController extends StateNotifier<RecordState> {
         'runningDirection': state.runningDirection,
         'note': state.note,
       },
+    );
+    _send(msg);
+  }
+
+  void notifyNotReady() {
+    final msg = RecordMessage(
+      type: RecordMessageType.notifyNotReady,
+      data: {},
     );
     _send(msg);
   }
@@ -302,21 +488,24 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void leaveRoom() {
-    _channel?.sink.close();
+    try {
+      final msg = RecordMessage(type: RecordMessageType.leaveRoom, data: {});
+      _channel?.sink.add(jsonEncode(msg.toJson()));
+    } catch (_) {}
+    _disconnect(intentional: true);
     state = RecordState();
   }
 
   @override
   void dispose() {
-    _channel?.sink.close();
+    _disconnect(intentional: true);
     super.dispose();
   }
 }
 
-final recordControllerProvider = StateNotifierProvider.autoDispose<RecordController, RecordState>((
+final recordControllerProvider = StateNotifierProvider<RecordController, RecordState>((
   ref,
 ) {
-  ref.watch(authProvider);
   return RecordController(ref);
 });
 

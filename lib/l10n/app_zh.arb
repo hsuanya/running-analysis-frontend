@@ -201,6 +201,7 @@
   "connectedDevices": "已連線設備清單:",
   "waitingForConnection": "等待連線中...",
   "roomHost": "房主",
+  "thisDevice": "此裝置",
   "recordingInProgress": "正在錄影中...",
   "stopRecordingAndUpload": "停止錄影並上傳",
   "startSyncRecording": "開始同步錄影",
@@ -247,6 +248,17 @@
     }
   },
   "camerasNotAllReady": "部分相機尚未橫放裝置 (未就緒)",
+  "slavesNotReadyWarning": "{cameras} 尚未準備就緒 (請確認橫放與錨點設定)",
+  "@slavesNotReadyWarning": {
+    "placeholders": {
+      "cameras": {
+        "type": "String"
+      }
+    }
+  },
+  "hostPromptRotateAndAnchor": "房主已嘗試啟動錄影，請將手機橫放並設定錨點以準備就緒！",
+  "hostPromptRotateOnly": "房主已嘗試啟動錄影，請將手機橫放以準備就緒！",
+  "hostPromptAnchorOnly": "房主已嘗試啟動錄影，請設定錨點以準備就緒！",
   "autoUploading": "自動上傳中...",
   "pleaseHoldDeviceHorizontally": "請橫放裝置錄製",
   "pleaseSetAnchorFullscreen": "請進入全螢幕設定錨點",

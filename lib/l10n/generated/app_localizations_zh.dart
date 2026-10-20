@@ -533,6 +533,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get roomHost => '房主';
 
   @override
+  String get thisDevice => '此裝置';
+
+  @override
   String get recordingInProgress => '正在錄影中...';
 
   @override
@@ -622,6 +625,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get camerasNotAllReady => '部分相機尚未橫放裝置 (未就緒)';
+
+  @override
+  String slavesNotReadyWarning(String cameras) {
+    return '$cameras 尚未準備就緒 (請確認橫放與錨點設定)';
+  }
+
+  @override
+  String get hostPromptRotateAndAnchor => '房主已嘗試啟動錄影，請將手機橫放並設定錨點以準備就緒！';
+
+  @override
+  String get hostPromptRotateOnly => '房主已嘗試啟動錄影，請將手機橫放以準備就緒！';
+
+  @override
+  String get hostPromptAnchorOnly => '房主已嘗試啟動錄影，請設定錨點以準備就緒！';
 
   @override
   String get autoUploading => '自動上傳中...';

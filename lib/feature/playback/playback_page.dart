@@ -96,7 +96,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
               ref.read(playbackSelectedRunSessionIdProvider.notifier).state = history.isNotEmpty
-                  ? history.last.runSessionId
+                  ? history.first.runSessionId
                   : null;
               context.go('/playback');
             });

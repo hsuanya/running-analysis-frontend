@@ -21,8 +21,10 @@ class RecordMember {
 }
 
 enum RecordMessageType {
+  sync,
   createRoom,
   joinRoom,
+  leaveRoom,
   roomStatus,
   startRecording,
   stopRecording,
@@ -36,6 +38,7 @@ enum RecordMessageType {
   controlGranted,
   controlRevoked,
   controlRejected,
+  notifyNotReady,
 }
 
 class RecordMessage {
@@ -45,8 +48,13 @@ class RecordMessage {
   RecordMessage({required this.type, required this.data});
 
   factory RecordMessage.fromJson(Map<String, dynamic> json) {
+    final typeName = json['type'] as String?;
+    final type = RecordMessageType.values.firstWhere(
+      (e) => e.name == typeName,
+      orElse: () => RecordMessageType.sync,
+    );
     return RecordMessage(
-      type: RecordMessageType.values.byName(json['type']),
+      type: type,
       data: json['data'] ?? {},
     );
   }

@@ -609,10 +609,31 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
                   }
 
                   if (!areAllParticipatingReady) {
+                    final notReadyMembers = participatingMembers.where((m) => !m.isReady).toList();
+                    final isMasterCamera = state.isRecordingEnabled && state.myCameraIndex != null;
+                    final isMasterNotReady = isMasterCamera && (!state.isPhysicallyReady || !state.anchorIsSet);
+                    final notReadySlaves = notReadyMembers.where((m) => !(m.isMaster && state.isRecordingEnabled)).toList();
+
+                    String warningMsg;
+                    if (notReadySlaves.isNotEmpty) {
+                      final cameraNames = notReadySlaves
+                          .map((m) => '${context.l10n.camera} ${(m.cameraIndex ?? 0) + 1}')
+                          .join('、');
+                      if (isMasterNotReady) {
+                        warningMsg = '${context.l10n.orientationLandscapeRequired}\n${context.l10n.slavesNotReadyWarning(cameraNames)}';
+                      } else {
+                        warningMsg = context.l10n.slavesNotReadyWarning(cameraNames);
+                      }
+                    } else {
+                      warningMsg = context.l10n.orientationLandscapeRequired;
+                    }
+
+                    controller.notifyNotReady();
+
                     toastification.show(
                       context: context,
                       title: const Text('Warning', style: TextStyle(fontWeight: FontWeight.bold)),
-                      description: Text(context.l10n.camerasNotAllReady),
+                      description: Text(warningMsg),
                       type: ToastificationType.warning,
                       style: ToastificationStyle.minimal,
                       alignment: Alignment.bottomCenter,

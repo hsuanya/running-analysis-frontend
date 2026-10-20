@@ -7,6 +7,7 @@ import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/widget/async_value_widget.dart';
 import 'package:frontend/feature/playback/shimmer/runner_history_shimmer.dart';
 import 'package:frontend/feature/playback/placeholder/runner_history_placeholder.dart';
+import 'package:frontend/feature/playback/widget/delete_session_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:toastification/toastification.dart';
 
@@ -252,6 +253,25 @@ class RunnerHistoryView extends ConsumerWidget {
                               ),
                             ),
                           ),
+                          if (session.status == 'failed') ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: isSelected ? Colors.white : Colors.redAccent,
+                              ),
+                              tooltip: l10n.deleteSessionConfirmTitle,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              onPressed: () => showDeleteRunSessionDialog(
+                                context: context,
+                                ref: ref,
+                                runSessionId: session.runSessionId,
+                                runnerId: session.runnerId,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
