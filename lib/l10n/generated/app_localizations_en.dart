@@ -656,6 +656,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Host attempted to start recording. Please set anchor calibration to get ready!';
 
   @override
+  String get kickDeviceTooltip => 'Remove device from room';
+
+  @override
+  String get kickDeviceConfirmTitle => 'Remove Device';
+
+  @override
+  String kickDeviceConfirmMessage(String deviceId) {
+    return 'Are you sure you want to remove device \"$deviceId\" from the room?';
+  }
+
+  @override
+  String get kickedByHost => 'You have been removed from the room by the host';
+
+  @override
   String get autoUploading => 'Auto uploading...';
 
   @override

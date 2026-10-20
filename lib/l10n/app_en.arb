@@ -221,6 +221,17 @@
   "hostPromptRotateAndAnchor": "Host attempted to start recording. Please rotate your device to landscape mode and set anchor!",
   "hostPromptRotateOnly": "Host attempted to start recording. Please rotate your device to landscape mode to get ready!",
   "hostPromptAnchorOnly": "Host attempted to start recording. Please set anchor calibration to get ready!",
+  "kickDeviceTooltip": "Remove device from room",
+  "kickDeviceConfirmTitle": "Remove Device",
+  "kickDeviceConfirmMessage": "Are you sure you want to remove device \"{deviceId}\" from the room?",
+  "@kickDeviceConfirmMessage": {
+    "placeholders": {
+      "deviceId": {
+        "type": "String"
+      }
+    }
+  },
+  "kickedByHost": "You have been removed from the room by the host",
   "autoUploading": "Auto uploading...",
   "pleaseHoldDeviceHorizontally": "Please hold device horizontally to record",
   "pleaseSetAnchorFullscreen": "Tap to set anchors in fullscreen",

@@ -39,6 +39,8 @@ enum RecordMessageType {
   controlRevoked,
   controlRejected,
   notifyNotReady,
+  kickMember,
+  kicked,
 }
 
 class RecordMessage {

@@ -215,6 +215,12 @@ class RecordController extends StateNotifier<RecordState> {
             state = state.copyWith(notReadyAlertTick: state.notReadyAlertTick + 1);
           }
           break;
+        case RecordMessageType.kicked:
+          _disconnect(intentional: true);
+          state = RecordState(
+            error: msg.data['message'] ?? 'kickedByHost',
+          );
+          break;
         default:
           break;
       }
@@ -438,6 +444,15 @@ class RecordController extends StateNotifier<RecordState> {
     final msg = RecordMessage(
       type: RecordMessageType.notifyNotReady,
       data: {},
+    );
+    _send(msg);
+  }
+
+  void kickMember(String targetMemberId) {
+    if (state.role != RecordRole.master) return;
+    final msg = RecordMessage(
+      type: RecordMessageType.kickMember,
+      data: {'targetMemberId': targetMemberId},
     );
     _send(msg);
   }

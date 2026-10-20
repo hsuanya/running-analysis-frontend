@@ -259,6 +259,17 @@
   "hostPromptRotateAndAnchor": "房主已嘗試啟動錄影，請將手機橫放並設定錨點以準備就緒！",
   "hostPromptRotateOnly": "房主已嘗試啟動錄影，請將手機橫放以準備就緒！",
   "hostPromptAnchorOnly": "房主已嘗試啟動錄影，請設定錨點以準備就緒！",
+  "kickDeviceTooltip": "將此裝置移出房間",
+  "kickDeviceConfirmTitle": "移出裝置",
+  "kickDeviceConfirmMessage": "確定要將裝置「{deviceId}」移出房間嗎？",
+  "@kickDeviceConfirmMessage": {
+    "placeholders": {
+      "deviceId": {
+        "type": "String"
+      }
+    }
+  },
+  "kickedByHost": "您已被房主移出房間",
   "autoUploading": "自動上傳中...",
   "pleaseHoldDeviceHorizontally": "請橫放裝置錄製",
   "pleaseSetAnchorFullscreen": "請進入全螢幕設定錨點",

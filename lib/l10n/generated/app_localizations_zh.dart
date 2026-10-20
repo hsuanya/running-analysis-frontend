@@ -641,6 +641,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hostPromptAnchorOnly => '房主已嘗試啟動錄影，請設定錨點以準備就緒！';
 
   @override
+  String get kickDeviceTooltip => '將此裝置移出房間';
+
+  @override
+  String get kickDeviceConfirmTitle => '移出裝置';
+
+  @override
+  String kickDeviceConfirmMessage(String deviceId) {
+    return '確定要將裝置「$deviceId」移出房間嗎？';
+  }
+
+  @override
+  String get kickedByHost => '您已被房主移出房間';
+
+  @override
   String get autoUploading => '自動上傳中...';
 
   @override

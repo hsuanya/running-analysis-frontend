@@ -170,11 +170,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
 
     ref.listen(recordControllerProvider.select((s) => s.error), (prev, next) {
       if (next != null && next != prev) {
+        final isKicked = next == 'kickedByHost';
+        final errorMsg = isKicked ? l10n.kickedByHost : next;
         toastification.show(
           context: context,
-          title: const Text('Error', style: TextStyle(fontWeight: FontWeight.bold)),
-          description: Text(next),
-          type: ToastificationType.error,
+          title: Text(isKicked ? 'Warning' : 'Error', style: const TextStyle(fontWeight: FontWeight.bold)),
+          description: Text(errorMsg),
+          type: isKicked ? ToastificationType.warning : ToastificationType.error,
           style: ToastificationStyle.minimal,
           alignment: Alignment.bottomCenter,
           autoCloseDuration: const Duration(seconds: 4),
@@ -728,6 +730,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                   final isThisDevice = state.myMemberId != null
                                       ? member.id == state.myMemberId
                                       : (state.role == RecordRole.master && member.isMaster);
+                                  final canKick = state.role == RecordRole.master &&
+                                      !member.isMaster &&
+                                      (state.myMemberId == null || member.id != state.myMemberId) &&
+                                      state.status != RecordStatus.recording &&
+                                      state.status != RecordStatus.uploading;
                                   return ListTile(
                                     titleAlignment: ListTileTitleAlignment.center,
                                     contentPadding: const EdgeInsets.symmetric(
@@ -825,9 +832,28 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                           ? '${l10n.camera} ${member.cameraIndex! + 1}'
                                           : l10n.cameraNotAssigned,
                                     ),
-                                    trailing: Icon(
-                                      member.isReady ? Icons.check_circle : Icons.error,
-                                      color: member.isReady ? Colors.green : Colors.red,
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (canKick) ...[
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.person_remove_outlined,
+                                              size: 20,
+                                              color: Colors.redAccent,
+                                            ),
+                                            tooltip: l10n.kickDeviceTooltip,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                            onPressed: () => _confirmKickMember(context, member, controller),
+                                          ),
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Icon(
+                                          member.isReady ? Icons.check_circle : Icons.error,
+                                          color: member.isReady ? Colors.green : Colors.red,
+                                        ),
+                                      ],
                                     ),
                                   );
                                 },
@@ -1472,6 +1498,38 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmKickMember(
+    BuildContext context,
+    RecordMember member,
+    RecordController controller,
+  ) {
+    final l10n = context.l10n;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.kickDeviceConfirmTitle),
+        content: Text(l10n.kickDeviceConfirmMessage(member.id)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              controller.kickMember(member.id);
+            },
+            child: Text(l10n.kickDeviceConfirmTitle),
           ),
         ],
       ),

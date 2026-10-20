@@ -1334,6 +1334,30 @@ abstract class AppLocalizations {
   /// **'房主已嘗試啟動錄影，請設定錨點以準備就緒！'**
   String get hostPromptAnchorOnly;
 
+  /// No description provided for @kickDeviceTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'將此裝置移出房間'**
+  String get kickDeviceTooltip;
+
+  /// No description provided for @kickDeviceConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'移出裝置'**
+  String get kickDeviceConfirmTitle;
+
+  /// No description provided for @kickDeviceConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'確定要將裝置「{deviceId}」移出房間嗎？'**
+  String kickDeviceConfirmMessage(String deviceId);
+
+  /// No description provided for @kickedByHost.
+  ///
+  /// In zh, this message translates to:
+  /// **'您已被房主移出房間'**
+  String get kickedByHost;
+
   /// No description provided for @autoUploading.
   ///
   /// In zh, this message translates to:
