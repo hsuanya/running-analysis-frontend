@@ -232,6 +232,10 @@
     }
   },
   "kickedByHost": "You have been removed from the room by the host",
+  "levelIndicator": "Spirit Level",
+  "levelCalibrated": "Level",
+  "levelPitch": "Pitch",
+  "levelSensorUnavailable": "Gyroscope sensor unavailable",
   "autoUploading": "Auto uploading...",
   "pleaseHoldDeviceHorizontally": "Please hold device horizontally to record",
   "pleaseSetAnchorFullscreen": "Tap to set anchors in fullscreen",

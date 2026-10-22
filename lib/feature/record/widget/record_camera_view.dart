@@ -15,6 +15,9 @@ import 'package:frontend/utils/locale_provider.dart';
 import 'package:mime/mime.dart';
 import 'package:toastification/toastification.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:frontend/feature/record/level/camera_level_helper.dart';
+import 'package:frontend/feature/record/level/camera_level_overlay.dart';
+import 'package:frontend/feature/record/level/camera_level_provider.dart';
 
 class RecordCameraView extends ConsumerStatefulWidget {
   const RecordCameraView({super.key});
@@ -372,6 +375,7 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
 
   void _enterFullscreen() async {
     if (_controller == null) return;
+    CameraLevelHelper.instance.requestPermission();
 
     // Flutter Web: CameraPreview is an HtmlElementView (<video> element).
     // Detaching it from the widget tree breaks the stream connection.
@@ -458,6 +462,8 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
                 ),
               // 如果有錨點層，直接放在這裡，確保座標與影像 1:1 對應
               if (anchorOverlay != null) anchorOverlay,
+              // 電子水平儀層（在相機畫面上即時繪製水平線與俯仰角）
+              if (!isAnchorMode) const Positioned.fill(child: CameraLevelOverlay()),
             ],
           ),
         ),
@@ -541,24 +547,55 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
               ),
             ),
           ),
-        // 右上角縮放按鈕（錨點模式時隱藏）
+        // 右上角功能按鈕組（電子水平儀開關、全螢幕切換）（錨點模式時隱藏）
         if (!isAnchorMode)
           Positioned(
             top: 16,
             right: 16,
-            child: GestureDetector(
-              onTap: isFullscreen
-                  ? () => Navigator.of(context, rootNavigator: true).pop()
-                  : _enterFullscreen,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                child: Icon(
-                  isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                  color: Colors.white,
-                  size: 28,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 電子水平儀開關
+                Tooltip(
+                  message: context.l10n.levelIndicator,
+                  child: GestureDetector(
+                    onTap: () {
+                      final isEnabled = ref.read(showCameraLevelProvider);
+                      ref.read(showCameraLevelProvider.notifier).state = !isEnabled;
+                      CameraLevelHelper.instance.requestPermission();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ref.watch(showCameraLevelProvider)
+                            ? const Color(0xFF00E676).withValues(alpha: 0.9)
+                            : Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.screen_rotation_alt,
+                        color: ref.watch(showCameraLevelProvider) ? Colors.black87 : Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: isFullscreen
+                      ? () => Navigator.of(context, rootNavigator: true).pop()
+                      : _enterFullscreen,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                    child: Icon(
+                      isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         // 全螢幕模式下的主控端開始/結束錄影按鈕（錨點模式時隱藏）

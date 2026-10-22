@@ -670,6 +670,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kickedByHost => 'You have been removed from the room by the host';
 
   @override
+  String get levelIndicator => 'Spirit Level';
+
+  @override
+  String get levelCalibrated => 'Level';
+
+  @override
+  String get levelPitch => 'Pitch';
+
+  @override
+  String get levelSensorUnavailable => 'Gyroscope sensor unavailable';
+
+  @override
   String get autoUploading => 'Auto uploading...';
 
   @override

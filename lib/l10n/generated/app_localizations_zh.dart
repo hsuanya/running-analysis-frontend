@@ -655,6 +655,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get kickedByHost => '您已被房主移出房間';
 
   @override
+  String get levelIndicator => '電子水平儀';
+
+  @override
+  String get levelCalibrated => '水平';
+
+  @override
+  String get levelPitch => '仰俯';
+
+  @override
+  String get levelSensorUnavailable => '未偵測到陀螺儀感測器';
+
+  @override
   String get autoUploading => '自動上傳中...';
 
   @override

@@ -1358,6 +1358,30 @@ abstract class AppLocalizations {
   /// **'您已被房主移出房間'**
   String get kickedByHost;
 
+  /// No description provided for @levelIndicator.
+  ///
+  /// In zh, this message translates to:
+  /// **'電子水平儀'**
+  String get levelIndicator;
+
+  /// No description provided for @levelCalibrated.
+  ///
+  /// In zh, this message translates to:
+  /// **'水平'**
+  String get levelCalibrated;
+
+  /// No description provided for @levelPitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'仰俯'**
+  String get levelPitch;
+
+  /// No description provided for @levelSensorUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'未偵測到陀螺儀感測器'**
+  String get levelSensorUnavailable;
+
   /// No description provided for @autoUploading.
   ///
   /// In zh, this message translates to:

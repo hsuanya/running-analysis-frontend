@@ -270,6 +270,10 @@
     }
   },
   "kickedByHost": "您已被房主移出房間",
+  "levelIndicator": "電子水平儀",
+  "levelCalibrated": "水平",
+  "levelPitch": "仰俯",
+  "levelSensorUnavailable": "未偵測到陀螺儀感測器",
   "autoUploading": "自動上傳中...",
   "pleaseHoldDeviceHorizontally": "請橫放裝置錄製",
   "pleaseSetAnchorFullscreen": "請進入全螢幕設定錨點",
