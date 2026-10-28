@@ -178,6 +178,7 @@
   "localRecording": "Local Device Records",
   "changeCameraPosition": "Change Camera Position:",
   "connectedDevices": "Connected Devices:",
+  "masterNotRecording": "Host (Not Recording)",
   "waitingForConnection": "Waiting for connection...",
   "roomHost": "Host",
   "thisDevice": "This Device",
@@ -207,6 +208,7 @@
   "pleaseUploadAllVideos": "Please upload all videos",
   "noUnanalyzedRecords": "No unanalyzed records found",
   "switchLens": "Switch Lens",
+  "selectCamera": "Select Camera",
   "pleaseSelectRunnerToRecord": "Please select a runner before recording",
   "camerasNotAllConnected": "Cameras not all connected (Current: {current}/{total})",
   "camerasNotAllReady": "Some cameras are not oriented horizontally (Not ready)",
@@ -428,6 +430,70 @@
       }
     }
   },
-  "selectRunnerOrEnterCodePrompt": "Please select a runner first, or enter session code/link above"
+  "selectRunnerOrEnterCodePrompt": "Please select a runner first, or enter session code/link above",
+  "cameraRearTriple": "Rear Triple Camera (Full Range • Recommended)",
+  "cameraRearUltraWide": "Rear Ultra-Wide Camera (0.5x)",
+  "cameraRearTelephoto": "Rear Telephoto Camera (Telephoto)",
+  "cameraRearDualWide": "Rear Dual-Wide Camera (Ultra-Wide + Wide)",
+  "cameraRearDual": "Rear Dual Camera (Multi-Focal)",
+  "cameraRearMain": "Rear Main Camera (1x Wide)",
+  "cameraFront": "Front Camera",
+  "cameraRearWithId": "Rear Camera (Camera {id})",
+  "@cameraRearWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraRearMainWithId": "Rear Main Camera (Camera {id})",
+  "@cameraRearMainWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraFrontWithId": "Front Camera (Camera {id})",
+  "@cameraFrontWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraRearWithIndex": "Rear Camera {number}",
+  "@cameraRearWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraFrontWithIndex": "Front Camera {number}",
+  "@cameraFrontWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraExternalWithIndex": "External Camera {number}",
+  "@cameraExternalWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cannotAccessCamera": "Cannot access camera: {error}",
+  "@cannotAccessCamera": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }
+
 

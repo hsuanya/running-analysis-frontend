@@ -199,6 +199,7 @@
   "localRecording": "本機參與錄影",
   "changeCameraPosition": "更改相機位置:",
   "connectedDevices": "已連線設備清單:",
+  "masterNotRecording": "主控端（不參與錄影）",
   "waitingForConnection": "等待連線中...",
   "roomHost": "房主",
   "thisDevice": "此裝置",
@@ -235,6 +236,7 @@
   "pleaseUploadAllVideos": "請上傳所有視頻",
   "noUnanalyzedRecords": "目前沒有未分析的紀錄",
   "switchLens": "更換鏡頭",
+  "selectCamera": "選擇相機",
   "pleaseSelectRunnerToRecord": "請先選擇選手才能開始錄影",
   "camerasNotAllConnected": "尚有相機未連線 (目前: {current}/{total})",
   "@camerasNotAllConnected": {
@@ -466,6 +468,70 @@
       }
     }
   },
-  "selectRunnerOrEnterCodePrompt": "請先選擇跑者，或於上方輸入補傳代碼/連結"
+  "selectRunnerOrEnterCodePrompt": "請先選擇跑者，或於上方輸入補傳代碼/連結",
+  "cameraRearTriple": "後置三鏡頭 (全焦段 • 推薦)",
+  "cameraRearUltraWide": "後置超廣角鏡頭 (0.5x)",
+  "cameraRearTelephoto": "後置望遠鏡頭 (長焦)",
+  "cameraRearDualWide": "後置雙廣角鏡頭 (超廣角+廣角)",
+  "cameraRearDual": "後置雙鏡頭 (多焦段)",
+  "cameraRearMain": "後置主鏡頭 (1x 廣角)",
+  "cameraFront": "前置相機",
+  "cameraRearWithId": "後置鏡頭 (鏡頭 {id})",
+  "@cameraRearWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraRearMainWithId": "後置主鏡頭 (鏡頭 {id})",
+  "@cameraRearMainWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraFrontWithId": "前置鏡頭 (鏡頭 {id})",
+  "@cameraFrontWithId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraRearWithIndex": "後置相機 {number}",
+  "@cameraRearWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraFrontWithIndex": "前置相機 {number}",
+  "@cameraFrontWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraExternalWithIndex": "外接鏡頭 {number}",
+  "@cameraExternalWithIndex": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "cannotAccessCamera": "無法存取相機: {error}",
+  "@cannotAccessCamera": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }
+
 

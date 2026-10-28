@@ -537,6 +537,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectedDevices => 'Connected Devices:';
 
   @override
+  String get masterNotRecording => 'Host (Not Recording)';
+
+  @override
   String get waitingForConnection => 'Waiting for connection...';
 
   @override
@@ -624,6 +627,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get switchLens => 'Switch Lens';
+
+  @override
+  String get selectCamera => 'Select Camera';
 
   @override
   String get pleaseSelectRunnerToRecord =>
@@ -1231,4 +1237,61 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get selectRunnerOrEnterCodePrompt =>
       'Please select a runner first, or enter session code/link above';
+
+  @override
+  String get cameraRearTriple =>
+      'Rear Triple Camera (Full Range • Recommended)';
+
+  @override
+  String get cameraRearUltraWide => 'Rear Ultra-Wide Camera (0.5x)';
+
+  @override
+  String get cameraRearTelephoto => 'Rear Telephoto Camera (Telephoto)';
+
+  @override
+  String get cameraRearDualWide => 'Rear Dual-Wide Camera (Ultra-Wide + Wide)';
+
+  @override
+  String get cameraRearDual => 'Rear Dual Camera (Multi-Focal)';
+
+  @override
+  String get cameraRearMain => 'Rear Main Camera (1x Wide)';
+
+  @override
+  String get cameraFront => 'Front Camera';
+
+  @override
+  String cameraRearWithId(String id) {
+    return 'Rear Camera (Camera $id)';
+  }
+
+  @override
+  String cameraRearMainWithId(String id) {
+    return 'Rear Main Camera (Camera $id)';
+  }
+
+  @override
+  String cameraFrontWithId(String id) {
+    return 'Front Camera (Camera $id)';
+  }
+
+  @override
+  String cameraRearWithIndex(int number) {
+    return 'Rear Camera $number';
+  }
+
+  @override
+  String cameraFrontWithIndex(int number) {
+    return 'Front Camera $number';
+  }
+
+  @override
+  String cameraExternalWithIndex(int number) {
+    return 'External Camera $number';
+  }
+
+  @override
+  String cannotAccessCamera(String error) {
+    return 'Cannot access camera: $error';
+  }
 }

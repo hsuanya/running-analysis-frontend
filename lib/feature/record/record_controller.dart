@@ -22,6 +22,8 @@ class RecordController extends StateNotifier<RecordState> {
 
   RecordController(this._ref) : super(RecordState());
 
+  RecordState get currentState => state;
+
   String get _wsUrl {
     if (kIsWeb) {
       final base = Uri.base;
@@ -68,7 +70,6 @@ class RecordController extends StateNotifier<RecordState> {
 
     try {
       final uri = Uri.parse(_wsUrl);
-      debugPrint('🔌 [WS] 連線中: $uri');
       final channel = WebSocketChannel.connect(uri);
       _channel = channel;
 
@@ -80,14 +81,11 @@ class RecordController extends StateNotifier<RecordState> {
       );
 
       channel.ready.then((_) {
-        debugPrint('✅ [WS] 連線成功 (ready)');
         _startHeartbeat();
       }).catchError((e) {
-        debugPrint('❌ [WS] ready error: $e');
         _onError(e);
       });
     } catch (e) {
-      debugPrint('❌ [WS] connect error: $e');
       _onError(e);
     }
   }
@@ -104,27 +102,21 @@ class RecordController extends StateNotifier<RecordState> {
         try {
           final payload = jsonEncode(msg.toJson());
           _channel?.sink.add(payload);
-        } catch (e) {
-          debugPrint('⚠️ [WS] 心跳發送失敗: $e');
-        }
+        } catch (_) {}
       }
     });
   }
 
   Future<void> _send(RecordMessage msg) async {
     final payload = jsonEncode(msg.toJson());
-    debugPrint('🚀 [WS] 發送: ${msg.type.name}, payload: $payload');
     try {
       if (_channel == null) {
-        debugPrint('⚠️ [WS] _channel 為空，進行連線');
         _connect();
       }
       await _channel?.ready;
       _channel?.sink.add(payload);
-    } catch (e, st) {
-      debugPrint('❌ [WS] 發送失敗: $e\n$st');
+    } catch (e) {
       if (state.roomId != null && !_isIntentionalClose) {
-        debugPrint('⚠️ [WS] 發送失敗，觸發自動重連');
         _scheduleReconnect();
       } else {
         state = state.copyWith(error: '發送訊息失敗: $e');
@@ -136,10 +128,6 @@ class RecordController extends StateNotifier<RecordState> {
     try {
       final json = jsonDecode(message);
       final msg = RecordMessage.fromJson(json);
-
-      if (msg.type != RecordMessageType.sync) {
-        debugPrint('📥 [WS] 收到: $message');
-      }
 
       switch (msg.type) {
         case RecordMessageType.sync:
@@ -163,7 +151,6 @@ class RecordController extends StateNotifier<RecordState> {
           );
           break;
         case RecordMessageType.startRecording:
-          debugPrint('🎬 [WS] 啟動錄影! 跑者: ${msg.data['runnerName'] ?? msg.data['runnerId']}');
           state = state.copyWith(
             status: RecordStatus.recording,
             runnerId: msg.data['runnerId'],
@@ -177,7 +164,6 @@ class RecordController extends StateNotifier<RecordState> {
           );
           break;
         case RecordMessageType.stopRecording:
-          debugPrint('⏹️ [WS] 停止錄影，開始上傳');
           state = state.copyWith(status: RecordStatus.uploading, isAllUploaded: false);
           break;
         case RecordMessageType.uploadComplete:
@@ -224,13 +210,10 @@ class RecordController extends StateNotifier<RecordState> {
         default:
           break;
       }
-    } catch (e, st) {
-      debugPrint('❌ [WS] 解析處理訊息異常: $e\n$st');
-    }
+    } catch (_) {}
   }
 
   void _onError(dynamic error) {
-    debugPrint('❌ [WS] 連線異常: $error, intentional: $_isIntentionalClose');
     if (_isIntentionalClose) return;
 
     if (state.roomId != null && state.status != RecordStatus.idle) {
@@ -241,14 +224,12 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void _onDone() {
-    debugPrint('🔌 [WS] 連線已關閉 (onDone), intentional: $_isIntentionalClose');
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
 
     if (_isIntentionalClose) return;
 
     if (state.roomId != null && state.status != RecordStatus.idle) {
-      debugPrint('⚠️ [WS] 房間中非預期斷線，啟動自動重連...');
       _scheduleReconnect();
     } else {
       if (state.status == RecordStatus.connecting) {
@@ -266,7 +247,6 @@ class RecordController extends StateNotifier<RecordState> {
     _reconnectTimer = Timer(const Duration(milliseconds: 1500), () async {
       _isReconnecting = false;
       if (_isIntentionalClose || state.roomId == null || state.status == RecordStatus.idle) return;
-      debugPrint('🔄 [WS] 執行自動重連，房間號: ${state.roomId}, 角色: ${state.role}');
       _connect();
       try {
         await _channel?.ready;
@@ -280,7 +260,6 @@ class RecordController extends StateNotifier<RecordState> {
             },
           );
           await _send(msg);
-          debugPrint('✅ [WS] Master 自動重新加入房間: ${state.roomId}');
         } else {
           final msg = RecordMessage(
             type: RecordMessageType.joinRoom,
@@ -291,13 +270,11 @@ class RecordController extends StateNotifier<RecordState> {
             },
           );
           await _send(msg);
-          debugPrint('✅ [WS] Slave 自動重新加入房間: ${state.roomId}');
           if (state.isPhysicallyReady && state.anchorIsSet) {
             updateReadyStatus(true);
           }
         }
-      } catch (e) {
-        debugPrint('❌ [WS] 自動重連過程失敗: $e');
+      } catch (_) {
         if (state.roomId != null && !_isIntentionalClose) {
           _scheduleReconnect();
         }
@@ -323,13 +300,24 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void toggleMasterRecording(bool enabled, [int? index]) {
-    state = state.copyWith(isRecordingEnabled: enabled, myCameraIndex: enabled ? index : null);
+    state = state.copyWith(
+      isRecordingEnabled: enabled,
+      myCameraIndex: enabled ? index : null,
+      activeCameraName: enabled ? state.activeCameraName : null,
+      activeCameraSpecs: enabled ? state.activeCameraSpecs : null,
+    );
 
     if (state.status == RecordStatus.ready) {
       // 1. 回報加入/離開為相機身分
       final msg = RecordMessage(
         type: RecordMessageType.joinRoom,
-        data: {'roomId': state.roomId, 'cameraIndex': enabled ? index : null, 'isMaster': true},
+        data: {
+          'roomId': state.roomId,
+          'cameraIndex': enabled ? index : null,
+          'isMaster': true,
+          'cameraName': enabled ? state.activeCameraName : null,
+          'cameraSpecs': enabled ? state.activeCameraSpecs : null,
+        },
       );
       _send(msg);
 
@@ -381,7 +369,13 @@ class RecordController extends StateNotifier<RecordState> {
 
     final msg = RecordMessage(
       type: RecordMessageType.joinRoom,
-      data: {'roomId': cleanRoomId, 'cameraIndex': cameraIndex},
+      data: {
+        'roomId': cleanRoomId,
+        'cameraIndex': cameraIndex,
+        'isMaster': false,
+        'cameraName': state.activeCameraName,
+        'cameraSpecs': state.activeCameraSpecs,
+      },
     );
     _send(msg);
   }
@@ -420,10 +414,27 @@ class RecordController extends StateNotifier<RecordState> {
     state = state.copyWith(note: note);
   }
 
+  void updateCameraInfo({String? name, String? specs}) {
+    state = state.copyWith(
+      activeCameraName: name,
+      activeCameraSpecs: specs,
+    );
+    if (state.roomId != null && state.status != RecordStatus.idle) {
+      final isParticipating = (state.role == RecordRole.slave && state.myCameraIndex != null) ||
+          (state.role == RecordRole.master && state.isRecordingEnabled && state.myCameraIndex != null);
+      final msg = RecordMessage(
+        type: RecordMessageType.updateCameraInfo,
+        data: {
+          'cameraName': isParticipating ? name : null,
+          'cameraSpecs': isParticipating ? specs : null,
+        },
+      );
+      _send(msg);
+    }
+  }
+
   void startRecording() {
-    debugPrint('🎬 [RecordController] startRecording, role: ${state.role}, roomId: ${state.roomId}, runnerId: ${state.runnerId}');
     if (state.role != RecordRole.master) {
-      debugPrint('⚠️ [RecordController] 非 Master 身分無法啟動錄影');
       return;
     }
     final msg = RecordMessage(

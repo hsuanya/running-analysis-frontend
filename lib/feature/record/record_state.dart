@@ -38,6 +38,10 @@ class RecordState {
   // Not Ready Alert Tick
   final int notReadyAlertTick;
 
+  // Active Camera Specs & Name
+  final String? activeCameraSpecs;
+  final String? activeCameraName;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -63,6 +67,8 @@ class RecordState {
     this.pendingControlRequestFrom,
     this.isWaitingForControlApproval = false,
     this.notReadyAlertTick = 0,
+    this.activeCameraSpecs,
+    this.activeCameraName,
   });
 
   bool get anchorIsSet => anchorResult != null;
@@ -95,6 +101,8 @@ class RecordState {
     bool? isWaitingForControlApproval,
     bool clearPendingControlRequest = false,
     int? notReadyAlertTick,
+    String? activeCameraSpecs,
+    String? activeCameraName,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -125,6 +133,8 @@ class RecordState {
           : (pendingControlRequestFrom ?? this.pendingControlRequestFrom),
       isWaitingForControlApproval: isWaitingForControlApproval ?? this.isWaitingForControlApproval,
       notReadyAlertTick: notReadyAlertTick ?? this.notReadyAlertTick,
+      activeCameraSpecs: activeCameraSpecs ?? this.activeCameraSpecs,
+      activeCameraName: activeCameraName ?? this.activeCameraName,
     );
   }
 }

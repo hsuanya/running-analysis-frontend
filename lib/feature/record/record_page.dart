@@ -10,6 +10,7 @@ import 'package:frontend/feature/record/record_controller.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/record/widget/record_camera_view.dart';
+import 'package:frontend/feature/record/camera/camera_name_helper.dart';
 import 'package:frontend/feature/record/widget/record_tour_placeholder_view.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
@@ -40,32 +41,34 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   int _createExpectedCount = 1;
   String _newRunnerName = '';
   final ExpansibleController _expansionController = ExpansibleController();
+  late final RecordController _recordController;
 
   void _tryAutoJoin() {
-    final auth = ref.read(authProvider);
-    if (auth.status != AuthStatus.authenticated) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = ref.read(authProvider);
+      if (auth.status != AuthStatus.authenticated) return;
 
-    if (widget.initialRoomId != null && widget.initialRoomId!.isNotEmpty) {
-      final currentState = ref.read(recordControllerProvider);
-      if (currentState.status == RecordStatus.idle || currentState.roomId != widget.initialRoomId) {
-        final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
-        ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
+      if (widget.initialRoomId != null && widget.initialRoomId!.isNotEmpty) {
+        final currentState = ref.read(recordControllerProvider);
+        if (currentState.status == RecordStatus.idle || currentState.roomId != widget.initialRoomId) {
+          final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
+          ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
+        }
       }
-    }
+    });
   }
 
   @override
   void initState() {
     super.initState();
+    _recordController = ref.read(recordControllerProvider.notifier);
     if (widget.initialCameraIndex != null) {
       _selectedCameraIndex = widget.initialCameraIndex!;
     }
     if (widget.initialRoomId != null && widget.initialRoomId!.isNotEmpty) {
       _roomController.text = widget.initialRoomId!;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _tryAutoJoin();
-      });
+      _tryAutoJoin();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -97,10 +100,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   @override
   void dispose() {
     _roomController.dispose();
-    final recordState = ref.read(recordControllerProvider);
-    if (recordState.status != RecordStatus.recording &&
-        recordState.status != RecordStatus.uploading) {
-      ref.read(recordControllerProvider.notifier).leaveRoom();
+    if (_recordController.currentState.status != RecordStatus.recording &&
+        _recordController.currentState.status != RecordStatus.uploading) {
+      _recordController.leaveRoom();
     }
     super.dispose();
   }
@@ -116,7 +118,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
     });
 
     if (auth.status != AuthStatus.authenticated) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Center(child: CircularProgressIndicator());
     }
 
     final l10n = context.l10n;
@@ -827,10 +829,51 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                           ),
                                       ],
                                     ),
-                                    subtitle: Text(
-                                      member.cameraIndex != null
-                                          ? '${l10n.camera} ${member.cameraIndex! + 1}'
-                                          : l10n.cameraNotAssigned,
+                                    subtitle: Builder(
+                                      builder: (context) {
+                                        final hasCamera = member.cameraIndex != null;
+                                        final String? specs = isThisDevice
+                                            ? (state.role == RecordRole.slave || state.isRecordingEnabled
+                                                ? state.activeCameraSpecs
+                                                : null)
+                                            : member.cameraSpecs;
+                                        final String? camName = isThisDevice
+                                            ? (state.role == RecordRole.slave || state.isRecordingEnabled
+                                                ? state.activeCameraName
+                                                : null)
+                                            : member.cameraName;
+                                        final String? localizedName = camName != null && camName.isNotEmpty
+                                            ? localizeCameraName(camName, l10n)
+                                            : null;
+
+                                        return Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              hasCamera
+                                                  ? '${l10n.camera} ${member.cameraIndex! + 1}'
+                                                  : (member.isMaster
+                                                      ? l10n.masterNotRecording
+                                                      : l10n.cameraNotAssigned),
+                                            ),
+                                            if (hasCamera && specs != null && specs.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 2),
+                                                child: Text(
+                                                  '${localizedName != null && localizedName.isNotEmpty ? '$localizedName • ' : ''}$specs',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        );
+                                      },
                                     ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,

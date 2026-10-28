@@ -1118,6 +1118,12 @@ abstract class AppLocalizations {
   /// **'已連線設備清單:'**
   String get connectedDevices;
 
+  /// No description provided for @masterNotRecording.
+  ///
+  /// In zh, this message translates to:
+  /// **'主控端（不參與錄影）'**
+  String get masterNotRecording;
+
   /// No description provided for @waitingForConnection.
   ///
   /// In zh, this message translates to:
@@ -1291,6 +1297,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'更換鏡頭'**
   String get switchLens;
+
+  /// No description provided for @selectCamera.
+  ///
+  /// In zh, this message translates to:
+  /// **'選擇相機'**
+  String get selectCamera;
 
   /// No description provided for @pleaseSelectRunnerToRecord.
   ///
@@ -2353,6 +2365,90 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'請先選擇跑者，或於上方輸入補傳代碼/連結'**
   String get selectRunnerOrEnterCodePrompt;
+
+  /// No description provided for @cameraRearTriple.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置三鏡頭 (全焦段 • 推薦)'**
+  String get cameraRearTriple;
+
+  /// No description provided for @cameraRearUltraWide.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置超廣角鏡頭 (0.5x)'**
+  String get cameraRearUltraWide;
+
+  /// No description provided for @cameraRearTelephoto.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置望遠鏡頭 (長焦)'**
+  String get cameraRearTelephoto;
+
+  /// No description provided for @cameraRearDualWide.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置雙廣角鏡頭 (超廣角+廣角)'**
+  String get cameraRearDualWide;
+
+  /// No description provided for @cameraRearDual.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置雙鏡頭 (多焦段)'**
+  String get cameraRearDual;
+
+  /// No description provided for @cameraRearMain.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置主鏡頭 (1x 廣角)'**
+  String get cameraRearMain;
+
+  /// No description provided for @cameraFront.
+  ///
+  /// In zh, this message translates to:
+  /// **'前置相機'**
+  String get cameraFront;
+
+  /// No description provided for @cameraRearWithId.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置鏡頭 (鏡頭 {id})'**
+  String cameraRearWithId(String id);
+
+  /// No description provided for @cameraRearMainWithId.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置主鏡頭 (鏡頭 {id})'**
+  String cameraRearMainWithId(String id);
+
+  /// No description provided for @cameraFrontWithId.
+  ///
+  /// In zh, this message translates to:
+  /// **'前置鏡頭 (鏡頭 {id})'**
+  String cameraFrontWithId(String id);
+
+  /// No description provided for @cameraRearWithIndex.
+  ///
+  /// In zh, this message translates to:
+  /// **'後置相機 {number}'**
+  String cameraRearWithIndex(int number);
+
+  /// No description provided for @cameraFrontWithIndex.
+  ///
+  /// In zh, this message translates to:
+  /// **'前置相機 {number}'**
+  String cameraFrontWithIndex(int number);
+
+  /// No description provided for @cameraExternalWithIndex.
+  ///
+  /// In zh, this message translates to:
+  /// **'外接鏡頭 {number}'**
+  String cameraExternalWithIndex(int number);
+
+  /// No description provided for @cannotAccessCamera.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法存取相機: {error}'**
+  String cannotAccessCamera(String error);
 }
 
 class _AppLocalizationsDelegate

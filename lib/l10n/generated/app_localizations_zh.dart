@@ -527,6 +527,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectedDevices => '已連線設備清單:';
 
   @override
+  String get masterNotRecording => '主控端（不參與錄影）';
+
+  @override
   String get waitingForConnection => '等待連線中...';
 
   @override
@@ -614,6 +617,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get switchLens => '更換鏡頭';
+
+  @override
+  String get selectCamera => '選擇相機';
 
   @override
   String get pleaseSelectRunnerToRecord => '請先選擇選手才能開始錄影';
@@ -1197,4 +1203,60 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get selectRunnerOrEnterCodePrompt => '請先選擇跑者，或於上方輸入補傳代碼/連結';
+
+  @override
+  String get cameraRearTriple => '後置三鏡頭 (全焦段 • 推薦)';
+
+  @override
+  String get cameraRearUltraWide => '後置超廣角鏡頭 (0.5x)';
+
+  @override
+  String get cameraRearTelephoto => '後置望遠鏡頭 (長焦)';
+
+  @override
+  String get cameraRearDualWide => '後置雙廣角鏡頭 (超廣角+廣角)';
+
+  @override
+  String get cameraRearDual => '後置雙鏡頭 (多焦段)';
+
+  @override
+  String get cameraRearMain => '後置主鏡頭 (1x 廣角)';
+
+  @override
+  String get cameraFront => '前置相機';
+
+  @override
+  String cameraRearWithId(String id) {
+    return '後置鏡頭 (鏡頭 $id)';
+  }
+
+  @override
+  String cameraRearMainWithId(String id) {
+    return '後置主鏡頭 (鏡頭 $id)';
+  }
+
+  @override
+  String cameraFrontWithId(String id) {
+    return '前置鏡頭 (鏡頭 $id)';
+  }
+
+  @override
+  String cameraRearWithIndex(int number) {
+    return '後置相機 $number';
+  }
+
+  @override
+  String cameraFrontWithIndex(int number) {
+    return '前置相機 $number';
+  }
+
+  @override
+  String cameraExternalWithIndex(int number) {
+    return '外接鏡頭 $number';
+  }
+
+  @override
+  String cannotAccessCamera(String error) {
+    return '無法存取相機: $error';
+  }
 }
