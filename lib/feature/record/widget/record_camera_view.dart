@@ -950,41 +950,50 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
               ),
             ),
           ),
-        // 錨點狀態 badge（僅非全螢幕）
+        // 錨點狀態 badge（僅非全螢幕），位置與右上角控制圖示（top: 16）保持一致對齊
         if (!isFullscreen)
           Positioned(
-            top: 8,
-            left: 8,
+            top: 16,
+            left: 16,
             child: GestureDetector(
               onTap: _enterFullscreen, // 引導進入全螢幕設定
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: state.anchorIsSet
-                      ? const Color(0xFF00BFA5).withValues(alpha: 0.88)
-                      : Colors.deepOrange.withValues(alpha: 0.88),
+                      ? const Color(0xFF00BFA5).withValues(alpha: 0.9)
+                      : Colors.deepOrange.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: state.anchorIsSet ? const Color(0xFF00BFA5) : Colors.deepOrangeAccent,
                     width: 1,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       state.anchorIsSet ? Icons.my_location : Icons.warning_amber_rounded,
-                      size: 12,
+                      size: 15,
                       color: Colors.white,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       state.anchorIsSet
                           ? context.l10n.anchorSet
                           : context.l10n.pleaseSetAnchorFullscreen,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'NotoSansTC',
                       ),

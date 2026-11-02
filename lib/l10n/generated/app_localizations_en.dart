@@ -555,7 +555,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stopRecordingAndUpload => 'Stop Recording & Upload';
 
   @override
-  String get startSyncRecording => 'Start Synchronized Recording';
+  String get startSyncRecording => 'Start Sync Recording';
 
   @override
   String get requestControl => 'Request Master Control';

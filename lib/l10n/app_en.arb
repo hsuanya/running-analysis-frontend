@@ -184,7 +184,7 @@
   "thisDevice": "This Device",
   "recordingInProgress": "Recording in progress...",
   "stopRecordingAndUpload": "Stop Recording & Upload",
-  "startSyncRecording": "Start Synchronized Recording",
+  "startSyncRecording": "Start Sync Recording",
   "requestControl": "Request Master Control",
   "takeControl": "Take Master Control",
   "waitingForControlApproval": "Waiting for Host Approval...",

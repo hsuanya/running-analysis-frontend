@@ -924,15 +924,20 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                              minimumSize: const Size(180, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
                             onPressed: () => controller.stopRecording(),
-                            child: Text(
-                              l10n.stopRecordingAndUpload,
-                              style: const TextStyle(fontSize: 20),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                l10n.stopRecordingAndUpload,
+                                maxLines: 1,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ] else if (state.status == RecordStatus.uploading) ...[
@@ -956,7 +961,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[400],
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                              minimumSize: const Size(180, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -966,15 +972,22 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const SizedBox(
-                                  width: 20,
-                                  height: 20,
+                                  width: 18,
+                                  height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: Colors.white,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Text(l10n.autoUploading, style: const TextStyle(fontSize: 20)),
+                                const SizedBox(width: 10),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    l10n.autoUploading,
+                                    maxLines: 1,
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -984,7 +997,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                              minimumSize: const Size(200, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -1069,9 +1083,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               }
                               controller.startRecording();
                             },
-                            child: Text(
-                              l10n.startSyncRecording,
-                              style: const TextStyle(fontSize: 20),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                l10n.startSyncRecording,
+                                maxLines: 1,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ],
@@ -1344,64 +1362,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Text(
-                      l10n.fps,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton2<int>(
-                      hint: Text(
-                        l10n.fps,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      value: state.fps,
-                      items: [30, 60]
-                          .map(
-                            (e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(
-                                e.toString(),
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) => v != null ? controller.setFps(v) : null,
-                      buttonStyleData: ButtonStyleData(
-                        width: 80,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        overlayColor: WidgetStateProperty.all(Colors.transparent),
-                        decoration: BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
-                        ),
-                      ),
-                      iconStyleData: const IconStyleData(
-                        icon: Icon(Icons.arrow_forward_ios_outlined),
-                        iconSize: 12,
-                      ),
-                      dropdownStyleData: DropdownStyleData(
-                        maxHeight: 200,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      menuItemStyleData: const MenuItemStyleData(
-                        height: 40,
-                        padding: EdgeInsets.only(left: 12, right: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
