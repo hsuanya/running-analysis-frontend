@@ -9,7 +9,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
     required this.onDateSelected,
     required this.onTimeSelected,
     required this.onCameraCountSelected,
-    required this.onFpsSelected,
     this.selectedTrackWidth = 1.22,
     required this.onTrackWidthSelected,
     this.selectedRunningDirection = 'left_to_right',
@@ -17,7 +16,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
     required this.selectedDate,
     required this.selectedTime,
     required this.selectedCameraCount,
-    required this.selectedFps,
     required this.note,
     required this.onNoteSelected,
   });
@@ -25,7 +23,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
   final Function(DateTime) onDateSelected;
   final Function(TimeOfDay) onTimeSelected;
   final Function(int) onCameraCountSelected;
-  final Function(int) onFpsSelected;
   final double selectedTrackWidth;
   final Function(double) onTrackWidthSelected;
   final String selectedRunningDirection;
@@ -33,7 +30,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
   final DateTime selectedDate;
   final TimeOfDay selectedTime;
   final int selectedCameraCount;
-  final int selectedFps;
   final String note;
   final Function(String) onNoteSelected;
 
@@ -234,75 +230,6 @@ class DateTimeSelectionWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    l10n.fps,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton2<int>(
-                    hint: Row(
-                      children: [
-                        Text(
-                          l10n.fps,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                    items: [30, 60]
-                        .map(
-                          (item) => DropdownMenuItem<int>(
-                            value: item,
-                            child: Text(
-                              item.toString(),
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    value: selectedFps,
-                    onChanged: (value) {
-                      if (value != null) {
-                        onFpsSelected(value);
-                      }
-                    },
-                    buttonStyleData: ButtonStyleData(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      width: 100,
-                      overlayColor: WidgetStateProperty.all(Colors.transparent),
-                      decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
-                      ),
-                    ),
-                    iconStyleData: const IconStyleData(
-                      icon: Icon(Icons.arrow_forward_ios_outlined),
-                      iconSize: 12,
-                    ),
-                    dropdownStyleData: DropdownStyleData(
-                      maxHeight: 200,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                      scrollbarTheme: const ScrollbarThemeData(radius: Radius.circular(40)),
-                    ),
-                    menuItemStyleData: const MenuItemStyleData(
-                      height: 40,
-                      padding: EdgeInsets.only(left: 12, right: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              spacing: 16,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Text(
                     l10n.trackWidth,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
@@ -337,71 +264,74 @@ class DateTimeSelectionWidget extends StatelessWidget {
                 ),
               ],
             ),
-            Row(
-              spacing: 16,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    borderRadius: BorderRadius.circular(25),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                spacing: 16,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      l10n.runningDirection,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  child: Text(
-                    l10n.runningDirection,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton2<String>(
-                    value: selectedRunningDirection,
-                    items: [
-                      DropdownMenuItem<String>(
-                        value: 'left_to_right',
-                        child: Text(
-                          l10n.leftToRight,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton2<String>(
+                      value: selectedRunningDirection,
+                      items: [
+                        DropdownMenuItem<String>(
+                          value: 'left_to_right',
+                          child: Text(
+                            l10n.leftToRight,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'right_to_left',
+                          child: Text(
+                            l10n.rightToLeft,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          onRunningDirectionSelected(value);
+                        }
+                      },
+                      buttonStyleData: ButtonStyleData(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        width: 120,
+                        overlayColor: WidgetStateProperty.all(Colors.transparent),
+                        decoration: BoxDecoration(
+                          border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
                         ),
                       ),
-                      DropdownMenuItem<String>(
-                        value: 'right_to_left',
-                        child: Text(
-                          l10n.rightToLeft,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      iconStyleData: const IconStyleData(
+                        icon: Icon(Icons.arrow_forward_ios_outlined),
+                        iconSize: 12,
                       ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        onRunningDirectionSelected(value);
-                      }
-                    },
-                    buttonStyleData: ButtonStyleData(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      width: 140,
-                      overlayColor: WidgetStateProperty.all(Colors.transparent),
-                      decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
+                      dropdownStyleData: DropdownStyleData(
+                        maxHeight: 200,
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                        scrollbarTheme: const ScrollbarThemeData(radius: Radius.circular(40)),
                       ),
-                    ),
-                    iconStyleData: const IconStyleData(
-                      icon: Icon(Icons.arrow_forward_ios_outlined),
-                      iconSize: 12,
-                    ),
-                    dropdownStyleData: DropdownStyleData(
-                      maxHeight: 200,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                      scrollbarTheme: const ScrollbarThemeData(radius: Radius.circular(40)),
-                    ),
-                    menuItemStyleData: const MenuItemStyleData(
-                      height: 40,
-                      padding: EdgeInsets.only(left: 12, right: 12),
+                      menuItemStyleData: const MenuItemStyleData(
+                        height: 40,
+                        padding: EdgeInsets.only(left: 8, right: 8),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

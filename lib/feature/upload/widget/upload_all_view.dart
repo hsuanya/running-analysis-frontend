@@ -49,9 +49,6 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
               onCameraCountSelected: (cameraCount) {
                 ref.read(uploadAllControllerProvider.notifier).setCameraCount(cameraCount);
               },
-              onFpsSelected: (fps) {
-                formNotifier.state = formData.copyWith(fps: fps);
-              },
               selectedTrackWidth: formData.trackWidth,
               onTrackWidthSelected: (trackWidth) {
                 formNotifier.state = formData.copyWith(trackWidth: trackWidth);
@@ -66,7 +63,6 @@ class _UploadAllViewState extends ConsumerState<UploadAllView> {
               selectedDate: formData.selectedDate,
               selectedTime: formData.selectedTime,
               selectedCameraCount: state.cameraCount,
-              selectedFps: formData.fps,
               note: formData.note,
             ),
 

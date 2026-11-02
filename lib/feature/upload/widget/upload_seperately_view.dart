@@ -136,7 +136,6 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
             selectedDate: formData.selectedDate,
             selectedTime: formData.selectedTime,
             selectedCameraCount: _selectedCameraCount,
-            selectedFps: formData.fps,
             selectedTrackWidth: formData.trackWidth,
             onTrackWidthSelected: (trackWidth) {
               formNotifier.state = formData.copyWith(trackWidth: trackWidth);
@@ -162,9 +161,6 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                   }
                 }
               });
-            },
-            onFpsSelected: (fps) {
-              formNotifier.state = formData.copyWith(fps: fps);
             },
             onNoteSelected: (note) {
               formNotifier.state = formData.copyWith(note: note);

@@ -1159,7 +1159,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
     final runners = ref.watch(uploadRunnerListProvider);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1362,110 +1362,116 @@ class _RecordPageState extends ConsumerState<RecordPage> {
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Text(
-                      l10n.trackWidth,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 80,
-                    child: TextFormField(
-                      initialValue: state.trackWidth.toString(),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        suffixText: 'm',
-                        suffixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: BorderRadius.circular(25),
                       ),
-                      onChanged: (v) {
-                        final parsed = double.tryParse(v);
-                        if (parsed != null && parsed > 0) {
-                          controller.setTrackWidth(parsed);
-                        }
-                      },
+                      child: Text(
+                        l10n.trackWidth,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 80,
+                      child: TextFormField(
+                        initialValue: state.trackWidth.toString(),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          suffixText: 'm',
+                          suffixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onChanged: (v) {
+                          final parsed = double.tryParse(v);
+                          if (parsed != null && parsed > 0) {
+                            controller.setTrackWidth(parsed);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(25),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Text(
+                        l10n.runningDirection,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    child: Text(
-                      l10n.runningDirection,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton2<String>(
-                      value: state.runningDirection,
-                      items: [
-                        DropdownMenuItem<String>(
-                          value: 'left_to_right',
-                          child: Text(
-                            l10n.leftToRight,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: 8),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton2<String>(
+                        value: state.runningDirection,
+                        items: [
+                          DropdownMenuItem<String>(
+                            value: 'left_to_right',
+                            child: Text(
+                              l10n.leftToRight,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'right_to_left',
+                            child: Text(
+                              l10n.rightToLeft,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => v != null ? controller.setRunningDirection(v) : null,
+                        buttonStyleData: ButtonStyleData(
+                          width: 120,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          overlayColor: WidgetStateProperty.all(Colors.transparent),
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
                           ),
                         ),
-                        DropdownMenuItem<String>(
-                          value: 'right_to_left',
-                          child: Text(
-                            l10n.rightToLeft,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.arrow_forward_ios_outlined),
+                          iconSize: 12,
                         ),
-                      ],
-                      onChanged: (v) => v != null ? controller.setRunningDirection(v) : null,
-                      buttonStyleData: ButtonStyleData(
-                        width: 140,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        overlayColor: WidgetStateProperty.all(Colors.transparent),
-                        decoration: BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor)),
+                        dropdownStyleData: DropdownStyleData(
+                          maxHeight: 200,
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
                         ),
-                      ),
-                      iconStyleData: const IconStyleData(
-                        icon: Icon(Icons.arrow_forward_ios_outlined),
-                        iconSize: 12,
-                      ),
-                      dropdownStyleData: DropdownStyleData(
-                        maxHeight: 200,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      menuItemStyleData: const MenuItemStyleData(
-                        height: 40,
-                        padding: EdgeInsets.only(left: 12, right: 12),
+                        menuItemStyleData: const MenuItemStyleData(
+                          height: 40,
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
