@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:frontend/utils/certificate_helper/certificate_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum DioMethod { get, post, patch, put, delete }
@@ -17,6 +18,7 @@ class NetUtils {
     );
 
     _dio = Dio(options);
+    allowSelfSignedCertificates(_dio);
 
     _dio.options.headers["Access-Control-Allow-Origin"] = "*";
     _dio.options.headers["Access-Control-Allow-Credentials"] = true;
