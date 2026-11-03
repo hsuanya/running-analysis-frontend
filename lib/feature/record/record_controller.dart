@@ -513,13 +513,19 @@ class RecordController extends StateNotifier<RecordState> {
     _send(msg);
   }
 
-  void leaveRoom() {
+  void leaveRoom({bool resetState = true}) {
     try {
       final msg = RecordMessage(type: RecordMessageType.leaveRoom, data: {});
       _channel?.sink.add(jsonEncode(msg.toJson()));
     } catch (_) {}
     _disconnect(intentional: true);
-    state = RecordState();
+    if (resetState) {
+      scheduleMicrotask(() {
+        if (mounted) {
+          state = RecordState();
+        }
+      });
+    }
   }
 
   @override

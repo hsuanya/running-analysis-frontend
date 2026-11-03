@@ -303,7 +303,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               context.pop();
                             },
                             child: Text(
-                              l10n.login,
+                              l10n.loginNow,
                               style: const TextStyle(
                                 color: Color(0xFF508FE8),
                                 fontSize: 14,

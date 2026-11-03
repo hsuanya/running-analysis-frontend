@@ -160,14 +160,10 @@ class DateTimeSelectionWidget extends StatelessWidget {
                 ),
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<int>(
-                    hint: Row(
-                      children: [
-                        Text(
-                          l10n.cameraCount,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    hint: Text(
+                      l10n.cameraCount,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     items: [1, 2, 3, 4, 5]
                         .map(
@@ -188,7 +184,7 @@ class DateTimeSelectionWidget extends StatelessWidget {
                       }
                     },
                     buttonStyleData: ButtonStyleData(
-                      width: 100,
+                      width: 140,
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       overlayColor: WidgetStateProperty.all(Colors.transparent),
                       decoration: BoxDecoration(

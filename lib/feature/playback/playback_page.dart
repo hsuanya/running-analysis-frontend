@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,11 +32,14 @@ class PlaybackPage extends ConsumerStatefulWidget {
 }
 
 class _PlaybackPageState extends ConsumerState<PlaybackPage> {
+  Timer? _tourTimer;
+
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       if (widget.runnerId != null && widget.videoId != null) {
         ref.read(playbackSelectedRunSessionIdProvider.notifier).state = widget.videoId;
         ref.read(playbackSelectedRunnerIdProvider.notifier).state = widget.runnerId;
@@ -44,7 +48,8 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Future.delayed(const Duration(milliseconds: 600), () {
+        _tourTimer?.cancel();
+        _tourTimer = Timer(const Duration(milliseconds: 600), () {
           if (!mounted) return;
           GuideTourService.startTour(
             context: context,
@@ -55,6 +60,12 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _tourTimer?.cancel();
+    super.dispose();
   }
 
   @override

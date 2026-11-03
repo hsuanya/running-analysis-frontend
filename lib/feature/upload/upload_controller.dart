@@ -6,6 +6,7 @@ import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:frontend/utils/combine_date_and_time.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 
@@ -111,19 +112,22 @@ final uploadControllerProvider = StateNotifierProvider<UploadController, AsyncVa
 class UploadRunnerListNotifier extends StateNotifier<AsyncValue<List<RunnerInfo>>> {
   final BackendInterface backend;
 
-  UploadRunnerListNotifier(this.backend) : super(const AsyncValue.loading()) {
-    loadRunners();
-  }
+  UploadRunnerListNotifier(this.backend) : super(const AsyncValue.data([]));
 
   Future<void> loadRunners() async {
-    final runners = await backend.getRunners();
-    state = AsyncValue.data(runners);
+    state = const AsyncValue.loading();
+    try {
+      final runners = await backend.getRunners();
+      state = AsyncValue.data(runners);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<RunnerInfo> addRunner(String name) async {
     final newRunner = await backend.addRunner(name);
     state = AsyncValue.data([
-      ...state.value!,
+      ...state.value ?? [],
       RunnerInfo(name: name, id: newRunner, lastVideoId: ''),
     ]);
     return RunnerInfo(name: name, id: newRunner, lastVideoId: '');
@@ -132,6 +136,10 @@ class UploadRunnerListNotifier extends StateNotifier<AsyncValue<List<RunnerInfo>
 
 final uploadRunnerListProvider =
     StateNotifierProvider<UploadRunnerListNotifier, AsyncValue<List<RunnerInfo>>>((ref) {
-      ref.watch(authProvider);
-      return UploadRunnerListNotifier(ref.watch(backendProvider));
+      final auth = ref.watch(authProvider);
+      final notifier = UploadRunnerListNotifier(ref.watch(backendProvider));
+      if (auth.status == AuthStatus.authenticated) {
+        notifier.loadRunners();
+      }
+      return notifier;
     });

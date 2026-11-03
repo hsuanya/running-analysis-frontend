@@ -102,10 +102,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rememberMe => '記住我';
 
   @override
-  String get dontHaveAccount => '還沒有帳號？立即註冊';
+  String get dontHaveAccount => '還沒有帳號？';
 
   @override
-  String get alreadyHaveAccount => '已有帳號？立即登入';
+  String get registerNow => '立即註冊';
+
+  @override
+  String get alreadyHaveAccount => '已有帳號？';
+
+  @override
+  String get loginNow => '立即登入';
 
   @override
   String get passwordsDoNotMatch => '兩次輸入的密碼不一致';

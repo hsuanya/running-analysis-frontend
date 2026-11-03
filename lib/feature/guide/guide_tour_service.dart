@@ -133,9 +133,14 @@ class GuideTourService {
 
     if (!context.mounted) return;
 
-    final inRealRoom =
-        ref.read(recordControllerProvider).status != RecordStatus.idle &&
-        ref.read(recordControllerProvider).status != RecordStatus.connecting;
+    bool inRealRoom = false;
+    try {
+      inRealRoom =
+          ref.read(recordControllerProvider).status != RecordStatus.idle &&
+          ref.read(recordControllerProvider).status != RecordStatus.connecting;
+    } catch (_) {
+      return;
+    }
 
     if (inRealRoom) {
       final steps = GuideStepsFactory.getRecordSteps(context, ref);
@@ -144,16 +149,20 @@ class GuideTourService {
         tourKey: tourRecord,
         steps: steps,
         onFinish: () {
-          ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
-          ref.read(recordTourAnchorStageProvider.notifier).state =
-              RecordTourAnchorStage.normalFullscreen;
-          ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+          try {
+            ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
+            ref.read(recordTourAnchorStageProvider.notifier).state =
+                RecordTourAnchorStage.normalFullscreen;
+            ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+          } catch (_) {}
         },
         onSkip: () {
-          ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
-          ref.read(recordTourAnchorStageProvider.notifier).state =
-              RecordTourAnchorStage.normalFullscreen;
-          ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+          try {
+            ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
+            ref.read(recordTourAnchorStageProvider.notifier).state =
+                RecordTourAnchorStage.normalFullscreen;
+            ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+          } catch (_) {}
         },
         force: true,
       );
@@ -176,16 +185,20 @@ class GuideTourService {
       tourKey: tourRecord,
       steps: steps,
       onFinish: () {
-        ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
-        ref.read(recordTourAnchorStageProvider.notifier).state =
-            RecordTourAnchorStage.normalFullscreen;
-        ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+        try {
+          ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
+          ref.read(recordTourAnchorStageProvider.notifier).state =
+              RecordTourAnchorStage.normalFullscreen;
+          ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+        } catch (_) {}
       },
       onSkip: () {
-        ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
-        ref.read(recordTourAnchorStageProvider.notifier).state =
-            RecordTourAnchorStage.normalFullscreen;
-        ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+        try {
+          ref.read(recordTourAnchorFullscreenOpenProvider.notifier).state = false;
+          ref.read(recordTourAnchorStageProvider.notifier).state =
+              RecordTourAnchorStage.normalFullscreen;
+          ref.read(recordTourDemoInRoomProvider.notifier).state = false;
+        } catch (_) {}
       },
       force: true,
     );

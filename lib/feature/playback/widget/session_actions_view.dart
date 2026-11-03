@@ -76,6 +76,66 @@ class SessionActionsView extends ConsumerWidget {
     VoidCallback? onCsv,
     VoidCallback? onDelete,
   }) {
+    final pdfButton = ElevatedButton.icon(
+      onPressed: isDownloadEnabled ? onPdf : null,
+      icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 18),
+      label: Text(
+        l10n.downloadPdfReport,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 121, 169, 234),
+        disabledBackgroundColor: Colors.white24,
+        disabledForegroundColor: Colors.white54,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+
+    final csvButton = ElevatedButton.icon(
+      onPressed: isDownloadEnabled ? onCsv : null,
+      icon: const Icon(Icons.table_chart, color: Colors.white, size: 18),
+      label: Text(
+        l10n.downloadCsvData,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.teal[400],
+        disabledBackgroundColor: Colors.white24,
+        disabledForegroundColor: Colors.white54,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+
+    final deleteButton = ElevatedButton.icon(
+      onPressed: isDeleteEnabled ? onDelete : null,
+      icon: const Icon(Icons.delete, color: Colors.white, size: 18),
+      label: Text(
+        l10n.deleteSessionConfirmTitle,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.redAccent,
+        disabledBackgroundColor: Colors.white24,
+        disabledForegroundColor: Colors.white54,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -92,79 +152,33 @@ class SessionActionsView extends ConsumerWidget {
         const Divider(color: Colors.white, thickness: 3.0, height: 3.0),
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 400;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: isDownloadEnabled ? onPdf : null,
-                      icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 18),
-                      label: Text(
-                        l10n.downloadPdfReport,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 121, 169, 234),
-                        disabledBackgroundColor: Colors.white24,
-                        disabledForegroundColor: Colors.white54,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                  if (isCompact) ...[
+                    pdfButton,
+                    const SizedBox(height: 12),
+                    csvButton,
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(child: pdfButton),
+                        const SizedBox(width: 12),
+                        Expanded(child: csvButton),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: isDownloadEnabled ? onCsv : null,
-                      icon: const Icon(Icons.table_chart, color: Colors.white, size: 18),
-                      label: Text(
-                        l10n.downloadCsvData,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal[400],
-                        disabledBackgroundColor: Colors.white24,
-                        disabledForegroundColor: Colors.white54,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
+                  ],
+                  const SizedBox(height: 12),
+                  deleteButton,
                 ],
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: isDeleteEnabled ? onDelete : null,
-                icon: const Icon(Icons.delete, color: Colors.white, size: 18),
-                label: Text(
-                  l10n.deleteSessionConfirmTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  disabledBackgroundColor: Colors.white24,
-                  disabledForegroundColor: Colors.white54,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ],

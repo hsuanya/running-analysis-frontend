@@ -103,10 +103,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rememberMe => 'Remember Me';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account? Sign up';
+  String get dontHaveAccount => 'Don\'t have an account?';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account? Log in';
+  String get registerNow => 'Sign up now';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get loginNow => 'Log in now';
 
   @override
   String get passwordsDoNotMatch => 'Passwords do not match';

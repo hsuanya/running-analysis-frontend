@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,6 +31,8 @@ class UploadPage extends ConsumerStatefulWidget {
 }
 
 class _UploadPageState extends ConsumerState<UploadPage> {
+  Timer? _tourTimer;
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +54,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                 runners = [];
               }
             }
+            if (!mounted) return;
             final isOwnRunner = runners.any((r) => r.id == session.runnerId);
             if (isOwnRunner) {
               ref.read(uploadExternalSessionInfoProvider.notifier).state = null;
@@ -68,23 +72,34 @@ class _UploadPageState extends ConsumerState<UploadPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Future.delayed(const Duration(milliseconds: 600), () {
+        _tourTimer?.cancel();
+        _tourTimer = Timer(const Duration(milliseconds: 600), () {
           if (!mounted) return;
           GuideTourService.startTour(
             context: context,
             tourKey: GuideTourService.tourUpload,
             steps: GuideStepsFactory.getUploadSteps(context, ref),
             onFinish: () {
-              ref.read(uploadTourAnchorPlaceholderOpenProvider.notifier).state = false;
+              try {
+                ref.read(uploadTourAnchorPlaceholderOpenProvider.notifier).state = false;
+              } catch (_) {}
             },
             onSkip: () {
-              ref.read(uploadTourAnchorPlaceholderOpenProvider.notifier).state = false;
+              try {
+                ref.read(uploadTourAnchorPlaceholderOpenProvider.notifier).state = false;
+              } catch (_) {}
             },
             force: false,
           );
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _tourTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -182,17 +197,20 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                             baseColor: Theme.of(context).primaryColorDark,
                             highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                             child: Container(
-                              width: 100,
+                              width: 140,
                               height: 40,
                               decoration: const BoxDecoration(border: Border(bottom: BorderSide())),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    l10n.selectRunner,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      l10n.selectRunner,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const Icon(Icons.arrow_forward_ios_outlined, size: 12),
@@ -208,7 +226,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (mounted &&
                                     ref.read(uploadExternalSessionInfoProvider) == null) {
-                                  ref.read(uploadSelectedRunnerIdProvider.notifier).state = null;
+                                   ref.read(uploadSelectedRunnerIdProvider.notifier).state = null;
                                 }
                               });
                             }
@@ -218,17 +236,13 @@ class _UploadPageState extends ConsumerState<UploadPage> {
 
                             return DropdownButtonHideUnderline(
                               child: DropdownButton2<String>(
-                                hint: Row(
-                                  children: [
-                                    Text(
-                                      l10n.selectRunner,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                                hint: Text(
+                                  l10n.selectRunner,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 items: items
                                     .map(
@@ -257,7 +271,7 @@ class _UploadPageState extends ConsumerState<UploadPage> {
                                   }
                                 },
                                 buttonStyleData: ButtonStyleData(
-                                  width: 100,
+                                  width: 140,
                                   overlayColor: WidgetStateProperty.all(Colors.transparent),
                                   decoration: BoxDecoration(
                                     border: Border(

@@ -52,21 +52,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: Stack(
           children: [
             Positioned(
-              top: 16,
-              right: 16,
-              child: PopupMenuButton<String>(
-                position: PopupMenuPosition.under,
-                offset: const Offset(0, 4),
-                icon: const Icon(Icons.language, color: Color(0xFF2A3E5C), size: 28),
-                tooltip: l10n.switchLanguage,
-                color: const Color(0xFF1E2638),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Colors.white24),
-                ),
-                onSelected: (code) {
-                  ref.read(localeProvider.notifier).setLocale(Locale(code));
-                },
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0, right: 16.0),
+                  child: PopupMenuButton<String>(
+                    position: PopupMenuPosition.under,
+                    offset: const Offset(0, 4),
+                    icon: const Icon(Icons.language, color: Color(0xFF2A3E5C), size: 28),
+                    tooltip: l10n.switchLanguage,
+                    color: const Color(0xFF1E2638),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Colors.white24),
+                    ),
+                    onSelected: (code) {
+                      ref.read(localeProvider.notifier).setLocale(Locale(code));
+                    },
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'zh',
@@ -115,6 +118,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ],
               ),
             ),
+          ),
+        ),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -314,7 +319,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   context.push('/register');
                                 },
                                 child: Text(
-                                  l10n.register,
+                                  l10n.registerNow,
                                   style: const TextStyle(
                                     color: Color(0xFF508FE8),
                                     fontSize: 14,

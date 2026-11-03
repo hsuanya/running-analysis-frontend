@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
@@ -42,6 +43,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   String _newRunnerName = '';
   final ExpansibleController _expansionController = ExpansibleController();
   late final RecordController _recordController;
+  Timer? _tourTimer;
 
   void _tryAutoJoin() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,7 +74,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Future.delayed(const Duration(milliseconds: 600), () {
+        _tourTimer?.cancel();
+        _tourTimer = Timer(const Duration(milliseconds: 600), () {
           if (!mounted) return;
           if (widget.initialRoomId == null || widget.initialRoomId!.isEmpty) {
             GuideTourService.startRecordTour(context: context, ref: ref, force: false);
@@ -99,10 +102,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
 
   @override
   void dispose() {
+    _tourTimer?.cancel();
     _roomController.dispose();
     if (_recordController.currentState.status != RecordStatus.recording &&
         _recordController.currentState.status != RecordStatus.uploading) {
-      _recordController.leaveRoom();
+      _recordController.leaveRoom(resetState: false);
     }
     super.dispose();
   }
@@ -1235,9 +1239,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              l10n.selectRunner,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            Expanded(
+                              child: Text(
+                                l10n.selectRunner,
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             const Icon(Icons.arrow_forward_ios_outlined, size: 12),
                           ],
@@ -1256,14 +1263,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
 
                       return DropdownButtonHideUnderline(
                         child: DropdownButton2<String>(
-                          hint: Row(
-                            children: [
-                              Text(
-                                l10n.selectRunner,
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                          hint: Text(
+                            l10n.selectRunner,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
                           ),
                           items: items
                               .map(

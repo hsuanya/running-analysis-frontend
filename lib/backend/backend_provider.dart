@@ -8,6 +8,7 @@ import 'package:frontend/entities/runner_info.dart';
 import 'package:frontend/entities/unanalyzed_run_session_info.dart';
 import 'package:frontend/entities/run_session_info.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/auth/auth_state.dart';
 import 'package:frontend/utils/config.dart';
 
 final backendProvider = Provider<BackendInterface>((ref) {
@@ -16,7 +17,10 @@ final backendProvider = Provider<BackendInterface>((ref) {
 });
 
 final runnerProvider = FutureProvider.autoDispose<List<RunnerInfo>>((ref) {
-  ref.watch(authProvider);
+  final auth = ref.watch(authProvider);
+  if (auth.status != AuthStatus.authenticated) {
+    return [];
+  }
   final backend = ref.watch(backendProvider);
   return backend.getRunners();
 });
@@ -25,6 +29,10 @@ final graphDataProvider = FutureProvider.autoDispose.family<List<GraphData>, Str
   ref,
   runSessionId,
 ) {
+  final auth = ref.watch(authProvider);
+  if (auth.status != AuthStatus.authenticated || runSessionId.isEmpty) {
+    return [];
+  }
   final backend = ref.watch(backendProvider);
   return backend.getGraphData(runSessionId);
 });
@@ -51,6 +59,10 @@ final runnerHistoryProvider = FutureProvider.autoDispose.family<List<RunSessionI
   ref,
   runnerId,
 ) async {
+  final auth = ref.watch(authProvider);
+  if (auth.status != AuthStatus.authenticated || runnerId.isEmpty) {
+    return [];
+  }
   final backend = ref.watch(backendProvider);
   final history = await backend.getRunnerHistory(runnerId);
 
@@ -67,6 +79,10 @@ final runnerHistoryProvider = FutureProvider.autoDispose.family<List<RunSessionI
 
 final runnerUnanalyzedHistoryProvider = FutureProvider.autoDispose
     .family<List<UnanalyzedRunSessionInfo>, String>((ref, runnerId) {
+      final auth = ref.watch(authProvider);
+      if (auth.status != AuthStatus.authenticated || runnerId.isEmpty) {
+        return [];
+      }
       final backend = ref.watch(backendProvider);
       return backend.getRunnerUnanalyzedHistory(runnerId);
     });

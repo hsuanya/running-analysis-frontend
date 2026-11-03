@@ -205,14 +205,10 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                 ),
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<int>(
-                    hint: Row(
-                      children: [
-                        Text(
-                          l10n.cameraCount,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    hint: Text(
+                      l10n.cameraCount,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     items: effectiveCameraIndexes
                         .map(
@@ -238,7 +234,7 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                         : null,
                     buttonStyleData: ButtonStyleData(
                       height: 36,
-                      width: 120,
+                      width: 140,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       overlayColor: WidgetStateProperty.all(Colors.transparent),
                       decoration: BoxDecoration(

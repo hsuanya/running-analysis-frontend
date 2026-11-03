@@ -287,14 +287,26 @@ abstract class AppLocalizations {
   /// No description provided for @dontHaveAccount.
   ///
   /// In zh, this message translates to:
-  /// **'還沒有帳號？立即註冊'**
+  /// **'還沒有帳號？'**
   String get dontHaveAccount;
+
+  /// No description provided for @registerNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即註冊'**
+  String get registerNow;
 
   /// No description provided for @alreadyHaveAccount.
   ///
   /// In zh, this message translates to:
-  /// **'已有帳號？立即登入'**
+  /// **'已有帳號？'**
   String get alreadyHaveAccount;
+
+  /// No description provided for @loginNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即登入'**
+  String get loginNow;
 
   /// No description provided for @passwordsDoNotMatch.
   ///
