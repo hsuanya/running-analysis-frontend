@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:frontend/feature/record/record_enums.dart';
@@ -9,6 +8,7 @@ import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/utils/api.dart';
+import 'package:frontend/utils/ws_helper/ws_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RecordController extends StateNotifier<RecordState> {
@@ -25,19 +25,6 @@ class RecordController extends StateNotifier<RecordState> {
   RecordState get currentState => state;
 
   String get _wsUrl {
-    if (kIsWeb) {
-      final base = Uri.base;
-      final isSecure = base.scheme == 'https';
-      final wsScheme = isSecure ? 'wss' : 'ws';
-      if (base.host == 'localhost' || base.host == '127.0.0.1') {
-        return '$wsScheme://${base.host}:19130/running_analysis/api/ws';
-      } else {
-        final portStr = (base.hasPort && base.port != 80 && base.port != 443)
-            ? ':${base.port}'
-            : '';
-        return '$wsScheme://${base.host}$portStr/running_analysis/api/ws';
-      }
-    }
     final baseUrl = API.baseUrl;
     return '${baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://')}/ws';
   }
@@ -70,7 +57,7 @@ class RecordController extends StateNotifier<RecordState> {
 
     try {
       final uri = Uri.parse(_wsUrl);
-      final channel = WebSocketChannel.connect(uri);
+      final channel = createWebSocketChannel(uri);
       _channel = channel;
 
       _subscription = channel.stream.listen(

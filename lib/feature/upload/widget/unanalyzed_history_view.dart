@@ -29,7 +29,7 @@ String getSessionShareUrl(String runSessionId) {
     }
     return '$origin$path/upload?runSessionId=$runSessionId';
   } else {
-    return 'https://catslab.ee.ncku.edu.tw/running_analysis/upload?runSessionId=$runSessionId';
+    return 'https://172.16.51.56/upload?runSessionId=$runSessionId';
   }
 }
 

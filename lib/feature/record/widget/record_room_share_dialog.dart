@@ -22,7 +22,7 @@ String getRoomJoinUrl(String roomId) {
     }
     return '$origin$path/record?roomId=$roomId';
   } else {
-    return 'https://catslab.ee.ncku.edu.tw/running_analysis/record?roomId=$roomId';
+    return 'https://172.16.51.56/record?roomId=$roomId';
   }
 }
 
