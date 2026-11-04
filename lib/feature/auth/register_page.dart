@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
@@ -13,28 +14,65 @@ class RegisterPage extends ConsumerStatefulWidget {
   ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends ConsumerState<RegisterPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _shakeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
+    );
+  }
 
   @override
   void dispose() {
+    _shakeController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  String _getFriendlyErrorMessage(String rawError, bool isZh) {
+    final lower = rawError.toLowerCase();
+    if (lower.contains('already exists') ||
+        lower.contains('already registered') ||
+        lower.contains('taken')) {
+      return isZh ? '此使用者名稱已被註冊，請換一個' : 'Username already registered, please choose another';
+    } else if (lower.contains('timeout')) {
+      return isZh ? '伺服器連線逾時，請檢查網路連線' : 'Connection timeout, please try again';
+    } else if (lower.contains('connection refused') ||
+        lower.contains('network error') ||
+        lower.contains('failed host lookup')) {
+      return isZh ? '無法連線至伺服器，請檢查網路連線' : 'Unable to connect to server, please check network';
+    } else if (rawError.isNotEmpty) {
+      return isZh ? '註冊失敗：$rawError' : 'Registration failed: $rawError';
+    }
+    return isZh ? '註冊失敗，請稍後再試' : 'Registration failed, please try again';
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await ref
+    final success = await ref
         .read(authProvider.notifier)
         .register(_usernameController.text.trim(), _passwordController.text);
+
+    if (!success && mounted) {
+      _shakeController.forward(from: 0.0);
+    }
   }
 
   @override
@@ -56,7 +94,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Form(
               key: _formKey,
-              child: Card(
+              child: AnimatedBuilder(
+                animation: _shakeAnimation,
+                builder: (context, child) {
+                  final double offset =
+                      math.sin(_shakeAnimation.value * math.pi * 6) *
+                      (1 - _shakeAnimation.value) *
+                      10;
+                  return Transform.translate(
+                    offset: Offset(offset, 0),
+                    child: child,
+                  );
+                },
+                child: Card(
                 elevation: 12,
                 shadowColor: Colors.black.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
@@ -249,20 +299,44 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Error display
-                      if (authState.status == AuthStatus.error && authState.errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Text(
-                            authState.errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
+                      // Error Banner display
+                      if (authState.status == AuthStatus.error &&
+                          authState.errorMessage != null) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 18.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                color: Color(0xFFDC2626),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _getFriendlyErrorMessage(
+                                    authState.errorMessage!,
+                                    Localizations.localeOf(context).languageCode == 'zh',
+                                  ),
+                                  style: const TextStyle(
+                                    color: Color(0xFF991B1B),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ],
 
                       // Register Button
                       SizedBox(
@@ -317,6 +391,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ),

@@ -71,6 +71,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
     if (widget.initialRoomId != null && widget.initialRoomId!.isNotEmpty) {
       _roomController.text = widget.initialRoomId!;
       _tryAutoJoin();
+    } else {
+      _roomController.clear();
+      // 確保進入乾淨的錄影初始畫面，不殘留舊房間狀態
+      if (_recordController.currentState.status != RecordStatus.idle) {
+        _recordController.leaveRoom(resetState: true);
+      }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -97,6 +103,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
         widget.initialRoomId != oldWidget.initialRoomId) {
       _roomController.text = widget.initialRoomId!;
       _tryAutoJoin();
+    } else if ((widget.initialRoomId == null || widget.initialRoomId!.isEmpty) &&
+        oldWidget.initialRoomId != null &&
+        oldWidget.initialRoomId!.isNotEmpty) {
+      _roomController.clear();
+      _recordController.leaveRoom(resetState: true);
     }
   }
 
@@ -104,10 +115,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
   void dispose() {
     _tourTimer?.cancel();
     _roomController.dispose();
-    if (_recordController.currentState.status != RecordStatus.recording &&
-        _recordController.currentState.status != RecordStatus.uploading) {
-      _recordController.leaveRoom(resetState: false);
-    }
+    _recordController.leaveRoom(resetState: true);
     super.dispose();
   }
 
@@ -272,7 +280,14 @@ class _RecordPageState extends ConsumerState<RecordPage> {
           children: [
             SpinKitCubeGrid(color: Theme.of(context).primaryColor, size: 50.0),
             const SizedBox(height: 20),
-            Text(loadingText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                loadingText,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ],
         ),
       );
@@ -343,7 +358,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 foregroundColor: Colors.black,
                                 minimumSize: const Size(double.infinity, 48),
                               ),
-                              onPressed: () => controller.createRoom(_createExpectedCount),
+                              onPressed: () {
+                                _roomController.clear();
+                                controller.createRoom(_createExpectedCount);
+                              },
                               child: Text(
                                 l10n.createRecordingRoom,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -485,10 +503,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       Column(
                         key: GuideKeys.recordRoomInfoKey,
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '${l10n.roomNumber}: ${state.roomId}',
+                            '${l10n.roomNumber}: ${state.roomId ?? ""}',
                             style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
                           Wrap(
@@ -1144,7 +1164,10 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                       TextButton.icon(
                         key: GuideKeys.recordLeaveRoomKey,
                         icon: const Icon(Icons.exit_to_app),
-                        onPressed: () => controller.leaveRoom(),
+                        onPressed: () {
+                          _roomController.clear();
+                          controller.leaveRoom(resetState: true);
+                        },
                         label: Text(l10n.leaveRoom),
                       ),
                     ],

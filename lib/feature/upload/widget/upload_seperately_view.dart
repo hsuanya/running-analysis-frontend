@@ -1,12 +1,10 @@
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/backend/backend_provider.dart';
 import 'package:frontend/entities/upload_seperately_status.dart';
-import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/guide/guide_steps_factory.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/upload_provider.dart';
@@ -16,9 +14,9 @@ import 'package:frontend/feature/upload/widget/unanalyzed_history_view.dart';
 import 'package:frontend/feature/upload/widget/upload_seperately_controller.dart';
 import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/utils/router.dart';
+import 'package:frontend/utils/video_picker_helper.dart';
 import 'package:frontend/widget/loading_icon.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mime/mime.dart';
 import 'package:frontend/feature/upload/widget/upload_form_provider.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 
@@ -284,32 +282,8 @@ class _UploadSeperatelyViewState extends ConsumerState<UploadSeperatelyView> {
                       onTap: (!isRecordSelected || state.isUploading)
                           ? null // 未選取紀錄或上傳中不能再點
                           : () async {
-                              final result = await FilePicker.platform.pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: [
-                                  'mp4',
-                                  'mov',
-                                  'avi',
-                                  'mkv',
-                                  'webm',
-                                  'm4v',
-                                  '3gp',
-                                  'flv',
-                                  'wmv',
-                                  'ts',
-                                ],
-                                withData: true,
-                              );
-
-                              if (result == null) return;
-
-                              final file = result.files.first;
-
-                              final uploadFile = UploadVideoFile(
-                                bytes: file.bytes!,
-                                filename: file.name,
-                                mimeType: lookupMimeType(file.name) ?? 'video/mp4',
-                              );
+                              final uploadFile = await VideoPickerHelper.pickVideo(context);
+                              if (uploadFile == null) return;
 
                               await controller.uploadVideo(effectiveIndex, uploadFile);
 

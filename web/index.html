@@ -2,8 +2,7 @@
 <html>
 
 <head>
-  <base href="/running_analysis/">
-  <!-- <base href="$FLUTTER_BASE_HREF"> -->
+  <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -13,6 +12,10 @@
 
   <!-- ===== Global styles ===== -->
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html,
     body {
       width: 100%;
@@ -21,11 +24,26 @@
       padding: 0;
       overflow: hidden;
       background-color: #A5C3ED;
+      -webkit-tap-highlight-color: transparent;
     }
 
     flt-glass-pane {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    /* 避免 iOS Safari 檔案輸入框造成畫面滾動或殘留反白 */
+    flt-file-picker-inputs,
+    #__file_picker_web-file-input {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+      z-index: -1 !important;
+      -webkit-tap-highlight-color: transparent !important;
     }
 
     /* ===== Splash Screen ===== */
@@ -78,6 +96,7 @@
 
   <!-- ===== Lottie Web ===== -->
   <script src="https://unpkg.com/lottie-web/build/player/lottie.min.js"></script>
+
 </head>
 
 <body>

@@ -68,7 +68,9 @@ class NetUtils {
 
       return response.data as T;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
+      if (e.response?.statusCode == 401 &&
+          !path.contains('/auth/login') &&
+          !path.contains('/auth/register')) {
         onUnauthorized?.call();
       }
       // DioError only return error 500

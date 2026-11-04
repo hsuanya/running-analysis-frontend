@@ -191,7 +191,12 @@ class RecordController extends StateNotifier<RecordState> {
           );
           break;
         case RecordMessageType.error:
-          state = state.copyWith(status: RecordStatus.idle, error: msg.data['message']);
+          state = state.copyWith(
+            status: RecordStatus.idle,
+            error: msg.data['message'],
+            clearRoomId: true,
+            clearMembers: true,
+          );
           break;
         case RecordMessageType.notifyNotReady:
           final isParticipatingCamera = (state.role == RecordRole.slave && state.myCameraIndex != null) ||
@@ -205,6 +210,9 @@ class RecordController extends StateNotifier<RecordState> {
           _disconnect(intentional: true);
           state = RecordState(
             error: msg.data['message'] ?? 'kickedByHost',
+            activeCameraName: state.activeCameraName,
+            activeCameraSpecs: state.activeCameraSpecs,
+            isPhysicallyReady: state.isPhysicallyReady,
           );
           break;
         default:
@@ -233,7 +241,12 @@ class RecordController extends StateNotifier<RecordState> {
       _scheduleReconnect();
     } else {
       if (state.status == RecordStatus.connecting) {
-        state = state.copyWith(status: RecordStatus.idle, error: '連線已斷開');
+        state = state.copyWith(
+          status: RecordStatus.idle,
+          error: '連線已斷開',
+          clearRoomId: true,
+          clearMembers: true,
+        );
       } else if (state.status != RecordStatus.idle) {
         state = state.copyWith(error: '連線中斷');
       }
@@ -283,13 +296,16 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void createRoom(int expectedCameraCount) {
-    state = state.copyWith(
+    _disconnect(intentional: true);
+    state = RecordState(
       status: RecordStatus.connecting,
       role: RecordRole.master,
       expectedCameraCount: expectedCameraCount,
       myCameraIndex: state.isRecordingEnabled ? state.myCameraIndex : null,
-      clearSharedRunSessionId: true,
-      error: null,
+      isRecordingEnabled: state.isRecordingEnabled,
+      isPhysicallyReady: state.isPhysicallyReady,
+      activeCameraName: state.activeCameraName,
+      activeCameraSpecs: state.activeCameraSpecs,
     );
     _connect();
     final msg = RecordMessage(
@@ -354,17 +370,26 @@ class RecordController extends StateNotifier<RecordState> {
     final cleanRoomId = roomId.trim().toUpperCase();
     final alreadyInThisRoom = state.roomId == cleanRoomId && _channel != null;
 
-    state = state.copyWith(
-      status: alreadyInThisRoom ? state.status : RecordStatus.connecting,
-      role: RecordRole.slave,
-      roomId: cleanRoomId,
-      myCameraIndex: cameraIndex,
-      clearSharedRunSessionId: true,
-      error: null,
-    );
-
     if (!alreadyInThisRoom) {
+      _disconnect(intentional: true);
+      state = RecordState(
+        status: RecordStatus.connecting,
+        role: RecordRole.slave,
+        roomId: cleanRoomId,
+        myCameraIndex: cameraIndex,
+        isPhysicallyReady: state.isPhysicallyReady,
+        activeCameraName: state.activeCameraName,
+        activeCameraSpecs: state.activeCameraSpecs,
+      );
       _connect();
+    } else {
+      state = state.copyWith(
+        role: RecordRole.slave,
+        roomId: cleanRoomId,
+        myCameraIndex: cameraIndex,
+        clearSharedRunSessionId: true,
+        clearError: true,
+      );
     }
 
     final msg = RecordMessage(
@@ -522,10 +547,23 @@ class RecordController extends StateNotifier<RecordState> {
     if (resetState) {
       scheduleMicrotask(() {
         if (mounted) {
-          state = RecordState();
+          state = RecordState(
+            activeCameraName: state.activeCameraName,
+            activeCameraSpecs: state.activeCameraSpecs,
+            isPhysicallyReady: state.isPhysicallyReady,
+          );
         }
       });
     }
+  }
+
+  void resetRoomState() {
+    _disconnect(intentional: true);
+    state = RecordState(
+      activeCameraName: state.activeCameraName,
+      activeCameraSpecs: state.activeCameraSpecs,
+      isPhysicallyReady: state.isPhysicallyReady,
+    );
   }
 
   @override
