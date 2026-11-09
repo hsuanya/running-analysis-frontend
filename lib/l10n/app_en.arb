@@ -110,6 +110,21 @@
   "point5": "Point 5 (Top-Middle)",
   "point6": "Point 6 (Bottom-Middle)",
   "cameraNotAssigned": "Camera not assigned",
+  "myActiveRooms": "My Active Rooms",
+  "searchMyRooms": "Search My Rooms",
+  "noActiveRoomsFound": "No active rooms found under your account",
+  "roomCamerasProgress": "Cameras assigned: {assigned}/{total}",
+  "@roomCamerasProgress": {
+    "placeholders": {
+      "assigned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraOccupied": "In use",
   "duplicateCameraPosition": "Duplicate camera position",
   "duplicateCameraPositionWarning": "This camera position is duplicated with another device. Please change it.",
   "duplicateCameraPositionError": "Duplicate camera position ({cameras}). Please adjust camera positions before recording.",

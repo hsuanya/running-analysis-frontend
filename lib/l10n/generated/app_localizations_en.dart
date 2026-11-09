@@ -334,6 +334,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraNotAssigned => 'Camera not assigned';
 
   @override
+  String get myActiveRooms => 'My Active Rooms';
+
+  @override
+  String get searchMyRooms => 'Search My Rooms';
+
+  @override
+  String get noActiveRoomsFound => 'No active rooms found under your account';
+
+  @override
+  String roomCamerasProgress(int assigned, int total) {
+    return 'Cameras assigned: $assigned/$total';
+  }
+
+  @override
+  String get cameraOccupied => 'In use';
+
+  @override
   String get duplicateCameraPosition => 'Duplicate camera position';
 
   @override

@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:frontend/feature/auth/auth_provider.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/utils/api.dart';
+import 'package:frontend/utils/net_utils.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RecordController extends StateNotifier<RecordState> {
@@ -307,8 +309,33 @@ class RecordController extends StateNotifier<RecordState> {
     });
   }
 
+  Future<void> fetchMyRooms() async {
+    state = state.copyWith(isLoadingMyRooms: true);
+    try {
+      final resp = await NetUtils().reqeustData<Map<String, dynamic>>(
+        '${API.baseUrl}/auth/my-rooms',
+        method: DioMethod.get,
+      );
+      final rawList = resp['rooms'];
+      final rooms = rawList is List
+          ? rawList
+                .whereType<Map>()
+                .map((e) => MyRoomInfo.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
+          : <MyRoomInfo>[];
+      if (mounted) {
+        state = state.copyWith(myRooms: rooms, isLoadingMyRooms: false);
+      }
+    } catch (_) {
+      if (mounted) {
+        state = state.copyWith(isLoadingMyRooms: false);
+      }
+    }
+  }
+
   void createRoom(int expectedCameraCount) {
     _disconnect(intentional: true);
+    final auth = _ref.read(authProvider);
     state = RecordState(
       status: RecordStatus.connecting,
       role: RecordRole.master,
@@ -318,11 +345,16 @@ class RecordController extends StateNotifier<RecordState> {
       isPhysicallyReady: state.isPhysicallyReady,
       activeCameraName: state.activeCameraName,
       activeCameraSpecs: state.activeCameraSpecs,
+      myRooms: state.myRooms,
     );
     _connect();
     final msg = RecordMessage(
       type: RecordMessageType.createRoom,
-      data: {'expectedCameraCount': expectedCameraCount},
+      data: {
+        'expectedCameraCount': expectedCameraCount,
+        if (auth.username != null) 'username': auth.username,
+        if (auth.token != null) 'token': auth.token,
+      },
     );
     _send(msg);
   }
@@ -565,6 +597,7 @@ class RecordController extends StateNotifier<RecordState> {
             activeCameraSpecs: state.activeCameraSpecs,
             isPhysicallyReady: state.isPhysicallyReady,
           );
+          fetchMyRooms();
         }
       });
     }

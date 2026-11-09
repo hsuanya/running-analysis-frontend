@@ -2,6 +2,36 @@ import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 
+class MyRoomInfo {
+  final String roomId;
+  final int expectedCameraCount;
+  final int connectedDeviceCount;
+  final List<int> occupiedCameraIndexes;
+  final String recordingStatus;
+
+  const MyRoomInfo({
+    required this.roomId,
+    required this.expectedCameraCount,
+    required this.connectedDeviceCount,
+    required this.occupiedCameraIndexes,
+    this.recordingStatus = 'idle',
+  });
+
+  factory MyRoomInfo.fromJson(Map<String, dynamic> json) {
+    final occupiedRaw = json['occupiedCameraIndexes'];
+    final occupied = occupiedRaw is List
+        ? occupiedRaw.map((e) => (e as num).toInt()).toList()
+        : <int>[];
+    return MyRoomInfo(
+      roomId: (json['roomId'] ?? '').toString(),
+      expectedCameraCount: (json['expectedCameraCount'] as num?)?.toInt() ?? 1,
+      connectedDeviceCount: (json['connectedDeviceCount'] as num?)?.toInt() ?? 1,
+      occupiedCameraIndexes: occupied,
+      recordingStatus: (json['recordingStatus'] ?? 'idle').toString(),
+    );
+  }
+}
+
 class RecordState {
   final RecordRole role;
   final RecordStatus status;
@@ -42,6 +72,10 @@ class RecordState {
   final String? activeCameraSpecs;
   final String? activeCameraName;
 
+  // Active Rooms Owned by Current User
+  final List<MyRoomInfo> myRooms;
+  final bool isLoadingMyRooms;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -69,6 +103,8 @@ class RecordState {
     this.notReadyAlertTick = 0,
     this.activeCameraSpecs,
     this.activeCameraName,
+    this.myRooms = const [],
+    this.isLoadingMyRooms = false,
   });
 
   bool get anchorIsSet => anchorResult != null;
@@ -108,6 +144,8 @@ class RecordState {
     int? notReadyAlertTick,
     String? activeCameraSpecs,
     String? activeCameraName,
+    List<MyRoomInfo>? myRooms,
+    bool? isLoadingMyRooms,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -140,6 +178,8 @@ class RecordState {
       notReadyAlertTick: notReadyAlertTick ?? this.notReadyAlertTick,
       activeCameraSpecs: activeCameraSpecs ?? this.activeCameraSpecs,
       activeCameraName: activeCameraName ?? this.activeCameraName,
+      myRooms: myRooms ?? this.myRooms,
+      isLoadingMyRooms: isLoadingMyRooms ?? this.isLoadingMyRooms,
     );
   }
 }

@@ -734,6 +734,36 @@ abstract class AppLocalizations {
   /// **'尚未分配相機編號'**
   String get cameraNotAssigned;
 
+  /// No description provided for @myActiveRooms.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的活動中房間'**
+  String get myActiveRooms;
+
+  /// No description provided for @searchMyRooms.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜尋我的房間'**
+  String get searchMyRooms;
+
+  /// No description provided for @noActiveRoomsFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'目前沒有您建立的活動中房間'**
+  String get noActiveRoomsFound;
+
+  /// No description provided for @roomCamerasProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'已分配相機: {assigned}/{total}'**
+  String roomCamerasProgress(int assigned, int total);
+
+  /// No description provided for @cameraOccupied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已使用'**
+  String get cameraOccupied;
+
   /// No description provided for @duplicateCameraPosition.
   ///
   /// In zh, this message translates to:

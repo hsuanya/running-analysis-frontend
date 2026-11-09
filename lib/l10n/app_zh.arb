@@ -117,6 +117,21 @@
   "point5": "點 5 (中上)",
   "point6": "點 6 (中下)",
   "cameraNotAssigned": "尚未分配相機編號",
+  "myActiveRooms": "我的活動中房間",
+  "searchMyRooms": "搜尋我的房間",
+  "noActiveRoomsFound": "目前沒有您建立的活動中房間",
+  "roomCamerasProgress": "已分配相機: {assigned}/{total}",
+  "@roomCamerasProgress": {
+    "placeholders": {
+      "assigned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraOccupied": "已使用",
   "duplicateCameraPosition": "相機位置重複",
   "duplicateCameraPositionWarning": "此相機位置與其他裝置重複，請更換相機位置",
   "duplicateCameraPositionError": "相機位置重複（{cameras}），請先調整各裝置的相機位置",

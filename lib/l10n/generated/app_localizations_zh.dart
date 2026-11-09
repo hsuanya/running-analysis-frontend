@@ -329,6 +329,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraNotAssigned => '尚未分配相機編號';
 
   @override
+  String get myActiveRooms => '我的活動中房間';
+
+  @override
+  String get searchMyRooms => '搜尋我的房間';
+
+  @override
+  String get noActiveRoomsFound => '目前沒有您建立的活動中房間';
+
+  @override
+  String roomCamerasProgress(int assigned, int total) {
+    return '已分配相機: $assigned/$total';
+  }
+
+  @override
+  String get cameraOccupied => '已使用';
+
+  @override
   String get duplicateCameraPosition => '相機位置重複';
 
   @override

@@ -57,6 +57,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
           final cameraIdx = widget.initialCameraIndex ?? _selectedCameraIndex;
           ref.read(recordControllerProvider.notifier).joinRoom(widget.initialRoomId!, cameraIdx);
         }
+      } else {
+        ref.read(recordControllerProvider.notifier).fetchMyRooms();
       }
     });
   }
@@ -76,6 +78,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       // 確保進入乾淨的錄影初始畫面，不殘留舊房間狀態
       if (_recordController.currentState.status != RecordStatus.idle) {
         _recordController.leaveRoom(resetState: true);
+      } else {
+        Future.microtask(() {
+          if (mounted && ref.read(authProvider).status == AuthStatus.authenticated) {
+            _recordController.fetchMyRooms();
+          }
+        });
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -390,59 +398,270 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(width: 3, color: Theme.of(context).primaryColor),
                         ),
-                        child: Column(
-                          spacing: 12,
-                          children: [
-                            Icon(
-                              Icons.phonelink,
-                              size: 48,
-                              color: Theme.of(context).primaryColorDark,
-                            ),
-                            Text(
-                              l10n.slaveDevice,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            TextField(
-                              controller: _roomController,
-                              decoration: InputDecoration(
-                                hintText: l10n.enterRoomNumber,
-                                border: const OutlineInputBorder(),
-                                prefixIcon: const Icon(Icons.meeting_room),
-                              ),
-                            ),
-                            DropdownButtonFormField<int>(
-                              value: _selectedCameraIndex,
-                              decoration: InputDecoration(
-                                labelText: l10n.selectCameraPosition,
-                                border: const OutlineInputBorder(),
-                                prefixIcon: const Icon(Icons.camera_alt),
-                              ),
-                              items: List.generate(
-                                5,
-                                (i) => DropdownMenuItem(
-                                  value: i,
-                                  child: Text('${l10n.camera} ${i + 1}'),
+                        child: Builder(
+                          builder: (context) {
+                            final currentInputRoomId = _roomController.text.trim().toUpperCase();
+                            final matchedMyRoom = state.myRooms
+                                .where((r) => r.roomId.toUpperCase() == currentInputRoomId)
+                                .firstOrNull;
+                            final maxCameraOptions = matchedMyRoom != null
+                                ? matchedMyRoom.expectedCameraCount
+                                : 5;
+                            final effectiveCameraIndex = _selectedCameraIndex < maxCameraOptions
+                                ? _selectedCameraIndex
+                                : 0;
+
+                            return Column(
+                              spacing: 12,
+                              children: [
+                                Icon(
+                                  Icons.phonelink,
+                                  size: 48,
+                                  color: Theme.of(context).primaryColorDark,
                                 ),
-                              ),
-                              onChanged: (v) => setState(() => _selectedCameraIndex = v!),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.black,
-                                backgroundColor: Theme.of(context).primaryColor,
-                                minimumSize: const Size(double.infinity, 48),
-                              ),
-                              onPressed: () {
-                                if (_roomController.text.isNotEmpty) {
-                                  controller.joinRoom(_roomController.text, _selectedCameraIndex);
-                                }
-                              },
-                              child: Text(
-                                l10n.joinRecordingRoom,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+                                Text(
+                                  l10n.slaveDevice,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.manage_search_rounded,
+                                                size: 18,
+                                                color: Theme.of(context).primaryColorDark,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                l10n.myActiveRooms,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).primaryColorDark,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          InkWell(
+                                            borderRadius: BorderRadius.circular(6),
+                                            onTap: state.isLoadingMyRooms
+                                                ? null
+                                                : () => controller.fetchMyRooms(),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (state.isLoadingMyRooms)
+                                                    const SizedBox(
+                                                      width: 12,
+                                                      height: 12,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  else
+                                                    Icon(
+                                                      Icons.refresh_rounded,
+                                                      size: 15,
+                                                      color: Theme.of(context).primaryColorDark,
+                                                    ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    l10n.searchMyRooms,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Theme.of(context).primaryColorDark,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (state.myRooms.isEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 4),
+                                          child: Text(
+                                            l10n.noActiveRoomsFound,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        Column(
+                                          spacing: 6,
+                                          children: state.myRooms.map((room) {
+                                            final isSelectedRoom =
+                                                currentInputRoomId == room.roomId.toUpperCase();
+                                            return Material(
+                                              color: isSelectedRoom
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).primaryColor.withValues(alpha: 0.25)
+                                                  : Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: InkWell(
+                                                borderRadius: BorderRadius.circular(8),
+                                                onTap: () {
+                                                  int nextCamIdx = 0;
+                                                  for (
+                                                    int i = 0;
+                                                    i < room.expectedCameraCount;
+                                                    i++
+                                                  ) {
+                                                    if (!room.occupiedCameraIndexes.contains(i)) {
+                                                      nextCamIdx = i;
+                                                      break;
+                                                    }
+                                                  }
+                                                  setState(() {
+                                                    _roomController.text = room.roomId;
+                                                    _selectedCameraIndex = nextCamIdx;
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 8,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    border: Border.all(
+                                                      color: isSelectedRoom
+                                                          ? Theme.of(context).primaryColorDark
+                                                          : Colors.grey.shade300,
+                                                      width: isSelectedRoom ? 1.5 : 1,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.meeting_room_rounded,
+                                                        size: 18,
+                                                        color: Theme.of(context).primaryColorDark,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              '${l10n.roomNumber}: ${room.roomId}',
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              l10n.roomCamerasProgress(
+                                                                room.occupiedCameraIndexes.length,
+                                                                room.expectedCameraCount,
+                                                              ),
+                                                              style: TextStyle(
+                                                                fontSize: 11,
+                                                                color: Colors.grey.shade700,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Icon(
+                                                        isSelectedRoom
+                                                            ? Icons.check_circle_rounded
+                                                            : Icons.touch_app_rounded,
+                                                        size: 18,
+                                                        color: isSelectedRoom
+                                                            ? Colors.green.shade700
+                                                            : Theme.of(context).primaryColorDark,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                TextField(
+                                  controller: _roomController,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.enterRoomNumber,
+                                    border: const OutlineInputBorder(),
+                                    prefixIcon: const Icon(Icons.meeting_room),
+                                  ),
+                                ),
+                                DropdownButtonFormField<int>(
+                                  value: effectiveCameraIndex,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.selectCameraPosition,
+                                    border: const OutlineInputBorder(),
+                                    prefixIcon: const Icon(Icons.camera_alt),
+                                  ),
+                                  items: List.generate(maxCameraOptions, (i) {
+                                    final isOccupied =
+                                        matchedMyRoom?.occupiedCameraIndexes.contains(i) ?? false;
+                                    return DropdownMenuItem(
+                                      value: i,
+                                      child: Text(
+                                        isOccupied
+                                            ? '${l10n.camera} ${i + 1} (${l10n.cameraOccupied})'
+                                            : '${l10n.camera} ${i + 1}',
+                                      ),
+                                    );
+                                  }),
+                                  onChanged: (v) => setState(() => _selectedCameraIndex = v!),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    foregroundColor: Colors.black,
+                                    backgroundColor: Theme.of(context).primaryColor,
+                                    minimumSize: const Size(double.infinity, 48),
+                                  ),
+                                  onPressed: () {
+                                    if (_roomController.text.isNotEmpty) {
+                                      controller.joinRoom(
+                                        _roomController.text,
+                                        effectiveCameraIndex,
+                                      );
+                                    }
+                                  },
+                                  child: Text(
+                                    l10n.joinRecordingRoom,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
