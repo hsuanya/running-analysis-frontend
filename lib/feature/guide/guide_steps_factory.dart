@@ -79,6 +79,7 @@ class GuideStepsFactory {
           targetKey: GuideKeys.playbackRunnerKey,
           onBeforeStep: () async {
             if (ref != null) {
+              ref.read(playbackTourActiveProvider.notifier).state = true;
               ref.read(playbackSidebarExpandedProvider.notifier).state = false;
               await Future.delayed(const Duration(milliseconds: 150));
             }
@@ -120,6 +121,12 @@ class GuideStepsFactory {
         ),
         TourStep(
           targetKey: GuideKeys.playbackPlayerKey,
+          onBeforeStep: () async {
+            if (ref != null) {
+              ref.read(playbackTourActiveProvider.notifier).state = true;
+              await Future.delayed(const Duration(milliseconds: 100));
+            }
+          },
           title: l10n.tourPlaybackPlayerTitle,
           description: l10n.tourPlaybackPlayerDesc,
           icon: Icons.smart_display,
@@ -158,6 +165,7 @@ class GuideStepsFactory {
           targetKey: GuideKeys.playbackRunnerKey,
           onBeforeStep: () async {
             if (ref != null) {
+              ref.read(playbackTourActiveProvider.notifier).state = true;
               ref.read(playbackSidebarExpandedProvider.notifier).state = false;
               await Future.delayed(const Duration(milliseconds: 150));
             }

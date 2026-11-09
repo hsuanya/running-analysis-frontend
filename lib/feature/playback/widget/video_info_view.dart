@@ -18,7 +18,7 @@ class VideoInfoView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final runnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
-    if (runnerId == null || videoId == null) {
+    if (runnerId == null || videoId == null || videoId.isEmpty) {
       return const VideoInfoPlaceholder();
     }
 

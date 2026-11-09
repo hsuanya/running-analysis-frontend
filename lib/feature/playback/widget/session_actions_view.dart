@@ -17,7 +17,7 @@ class SessionActionsView extends ConsumerWidget {
     final runnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
 
-    if (runnerId == null || videoId == null) {
+    if (runnerId == null || videoId == null || videoId.isEmpty) {
       return _buildActionsContent(
         context,
         l10n: l10n,

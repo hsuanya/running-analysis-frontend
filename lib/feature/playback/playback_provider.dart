@@ -5,3 +5,5 @@ final playbackSelectedRunnerIdProvider = StateProvider<String?>((ref) => null);
 final playbackSelectedRunSessionIdProvider = StateProvider<String?>((ref) => null);
 
 final playbackSidebarExpandedProvider = StateProvider<bool>((ref) => false);
+
+final playbackTourActiveProvider = StateProvider<bool>((ref) => false);

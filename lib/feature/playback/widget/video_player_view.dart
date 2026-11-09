@@ -24,7 +24,7 @@ class _VideoPlayerViewState extends ConsumerState<VideoPlayerView> {
   Widget build(BuildContext context) {
     final selectedVideoId = ref.watch(playbackSelectedRunSessionIdProvider);
 
-    if (selectedVideoId == null) {
+    if (selectedVideoId == null || selectedVideoId.isEmpty) {
       return Container(
         height: 250,
         decoration: BoxDecoration(

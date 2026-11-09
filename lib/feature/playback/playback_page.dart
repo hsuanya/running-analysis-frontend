@@ -49,13 +49,26 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _tourTimer?.cancel();
-        _tourTimer = Timer(const Duration(milliseconds: 600), () {
+        _tourTimer = Timer(const Duration(milliseconds: 600), () async {
           if (!mounted) return;
+          final seen = await GuideTourService.hasSeenTour(GuideTourService.tourPlayback);
+          if (seen || !mounted) return;
+          ref.read(playbackTourActiveProvider.notifier).state = true;
           GuideTourService.startTour(
             context: context,
             tourKey: GuideTourService.tourPlayback,
             steps: GuideStepsFactory.getPlaybackSteps(context, ref),
-            force: false,
+            onFinish: () {
+              if (mounted) {
+                ref.read(playbackTourActiveProvider.notifier).state = false;
+              }
+            },
+            onSkip: () {
+              if (mounted) {
+                ref.read(playbackTourActiveProvider.notifier).state = false;
+              }
+            },
+            force: true,
           );
         });
       }
@@ -75,6 +88,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
     final selectedRunnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final selectedVideoId = ref.watch(playbackSelectedRunSessionIdProvider);
     final isSidebarExpanded = ref.watch(playbackSidebarExpandedProvider);
+    final isTourActive = ref.watch(playbackTourActiveProvider);
 
     // Validate runner ID against the runner list when loaded
     final activeRunnerId = runners.when(
@@ -234,7 +248,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
 
                     // Right Details Content
                     Expanded(
-                      child: selectedVideoId != null && selectedVideoId.isEmpty
+                      child: (selectedVideoId != null && selectedVideoId.isEmpty && !isTourActive)
                           ? _buildEmptyPlaceholder()
                           : CustomScrollView(
                               cacheExtent: 50000,
@@ -320,7 +334,7 @@ class _PlaybackPageState extends ConsumerState<PlaybackPage> {
                   ),
                 ),
 
-                if (selectedVideoId != null && selectedVideoId.isEmpty)
+                if (selectedVideoId != null && selectedVideoId.isEmpty && !isTourActive)
                   SliverToBoxAdapter(child: _buildEmptyPlaceholder())
                 else
                   SliverPadding(

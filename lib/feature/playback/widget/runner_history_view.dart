@@ -20,6 +20,7 @@ class RunnerHistoryView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final runnerId = ref.watch(playbackSelectedRunnerIdProvider);
     final videoId = ref.watch(playbackSelectedRunSessionIdProvider);
+    final isTourActive = ref.watch(playbackTourActiveProvider);
     final l10n = context.l10n;
 
     if (runnerId == null) {
@@ -32,6 +33,9 @@ class RunnerHistoryView extends ConsumerWidget {
       loading: const RunnerHistoryShimmer(),
       data: (List<RunSessionInfo> sessions) {
         if (sessions.isEmpty) {
+          if (isTourActive) {
+            return const RunnerHistoryPlaceholder();
+          }
           return Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),

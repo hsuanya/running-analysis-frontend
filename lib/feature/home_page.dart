@@ -268,11 +268,18 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     final index = _controller.selectedIndex;
     if (index == 0) {
       ref.read(playbackSidebarExpandedProvider.notifier).state = false;
+      ref.read(playbackTourActiveProvider.notifier).state = true;
       final steps = GuideStepsFactory.getPlaybackSteps(context, ref);
       GuideTourService.startTour(
         context: context,
         tourKey: GuideTourService.tourPlayback,
         steps: steps,
+        onFinish: () {
+          ref.read(playbackTourActiveProvider.notifier).state = false;
+        },
+        onSkip: () {
+          ref.read(playbackTourActiveProvider.notifier).state = false;
+        },
         force: force,
       );
     } else if (index == 1) {
