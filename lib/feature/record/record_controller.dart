@@ -138,6 +138,12 @@ class RecordController extends StateNotifier<RecordState> {
           final myMemberId = msg.data['myMemberId'] as String?;
           final membersJson = msg.data['members'] as List;
           final members = membersJson.map((e) => RecordMember.fromJson(e)).toList();
+          final expectedCount =
+              (msg.data['expectedCameraCount'] as int?) ?? state.expectedCameraCount;
+          final isInvalidCameraIndex =
+              state.myCameraIndex != null &&
+              expectedCount > 0 &&
+              (state.myCameraIndex! < 0 || state.myCameraIndex! >= expectedCount);
           final newStatus =
               (state.status == RecordStatus.idle || state.status == RecordStatus.connecting)
               ? RecordStatus.ready
@@ -147,7 +153,9 @@ class RecordController extends StateNotifier<RecordState> {
             roomId: roomId,
             members: members,
             myMemberId: myMemberId ?? state.myMemberId,
-            expectedCameraCount: msg.data['expectedCameraCount'] ?? state.expectedCameraCount,
+            expectedCameraCount: expectedCount,
+            clearMyCameraIndex: isInvalidCameraIndex,
+            error: isInvalidCameraIndex ? 'invalidCameraPosition:$expectedCount' : null,
           );
           break;
         case RecordMessageType.startRecording:
@@ -179,7 +187,11 @@ class RecordController extends StateNotifier<RecordState> {
           state = state.copyWith(pendingControlRequestFrom: msg.data['requesterId']);
           break;
         case RecordMessageType.controlGranted:
-          state = state.copyWith(role: RecordRole.master, isWaitingForControlApproval: false);
+          state = state.copyWith(
+            role: RecordRole.master,
+            isWaitingForControlApproval: false,
+            clearError: true,
+          );
           break;
         case RecordMessageType.controlRevoked:
           state = state.copyWith(role: RecordRole.slave, isRecordingEnabled: false);
@@ -187,7 +199,7 @@ class RecordController extends StateNotifier<RecordState> {
         case RecordMessageType.controlRejected:
           state = state.copyWith(
             isWaitingForControlApproval: false,
-            error: msg.data['message'] ?? '要求控制權被拒絕',
+            error: msg.data['message'] ?? 'controlDenied',
           );
           break;
         case RecordMessageType.error:
@@ -199,10 +211,10 @@ class RecordController extends StateNotifier<RecordState> {
           );
           break;
         case RecordMessageType.notifyNotReady:
-          final isParticipatingCamera = (state.role == RecordRole.slave && state.myCameraIndex != null) ||
-              (state.role == RecordRole.master && state.isRecordingEnabled && state.myCameraIndex != null);
+          final isParticipatingSlave =
+              state.role == RecordRole.slave && state.myCameraIndex != null;
           final isReady = state.isPhysicallyReady && state.anchorIsSet;
-          if (isParticipatingCamera && !isReady) {
+          if (isParticipatingSlave && !isReady) {
             state = state.copyWith(notReadyAlertTick: state.notReadyAlertTick + 1);
           }
           break;
@@ -319,11 +331,13 @@ class RecordController extends StateNotifier<RecordState> {
     state = state.copyWith(
       isRecordingEnabled: enabled,
       myCameraIndex: enabled ? index : null,
+      clearMyCameraIndex: !enabled,
       activeCameraName: enabled ? state.activeCameraName : null,
       activeCameraSpecs: enabled ? state.activeCameraSpecs : null,
     );
 
     if (state.status == RecordStatus.ready) {
+      final isReady = enabled ? (state.isPhysicallyReady && state.anchorIsSet) : true;
       // 1. 回報加入/離開為相機身分
       final msg = RecordMessage(
         type: RecordMessageType.joinRoom,
@@ -331,16 +345,15 @@ class RecordController extends StateNotifier<RecordState> {
           'roomId': state.roomId,
           'cameraIndex': enabled ? index : null,
           'isMaster': true,
+          'isReady': isReady,
           'cameraName': enabled ? state.activeCameraName : null,
           'cameraSpecs': enabled ? state.activeCameraSpecs : null,
         },
       );
       _send(msg);
 
-      // 2. 如果是正在加入且目前設備已橫放，則立即主動補送 Ready 狀態
-      if (enabled && state.isPhysicallyReady) {
-        updateReadyStatus(true);
-      }
+      // 2. 同步 Ready 狀態（必須同時橫放且已標註錨點才算 Ready）
+      updateReadyStatus(isReady);
     }
   }
 
@@ -524,7 +537,7 @@ class RecordController extends StateNotifier<RecordState> {
   }
 
   void requestControl() {
-    state = state.copyWith(isWaitingForControlApproval: true);
+    state = state.copyWith(isWaitingForControlApproval: true, clearError: true);
     final msg = RecordMessage(type: RecordMessageType.requestControl, data: {});
     _send(msg);
   }

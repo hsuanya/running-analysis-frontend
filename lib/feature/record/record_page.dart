@@ -185,7 +185,18 @@ class _RecordPageState extends ConsumerState<RecordPage> {
     ref.listen(recordControllerProvider.select((s) => s.error), (prev, next) {
       if (next != null && next != prev) {
         final isKicked = next == 'kickedByHost';
-        final errorMsg = isKicked ? l10n.kickedByHost : next;
+        final isInvalidCamPos = next.startsWith('invalidCameraPosition:');
+        final String errorMsg;
+        if (isKicked) {
+          errorMsg = l10n.kickedByHost;
+        } else if (next == 'controlDenied') {
+          errorMsg = l10n.controlDenied;
+        } else if (isInvalidCamPos) {
+          final count = int.tryParse(next.split(':').last) ?? state.expectedCameraCount;
+          errorMsg = l10n.invalidCameraPosition(count);
+        } else {
+          errorMsg = next;
+        }
         toastification.show(
           context: context,
           title: Text(isKicked ? 'Warning' : 'Error', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -391,33 +402,6 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               l10n.slaveDevice,
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            if (_roomController.text.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.auto_awesome,
-                                      size: 14,
-                                      color: Theme.of(context).primaryColorDark,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${l10n.autoFilledRoomNumber}: ${_roomController.text}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).primaryColorDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             TextField(
                               controller: _roomController,
                               decoration: InputDecoration(
@@ -474,7 +458,11 @@ class _RecordPageState extends ConsumerState<RecordPage> {
 
   Widget _buildRoomView(RecordState state, RecordController controller, {bool isTourDemo = false}) {
     final l10n = context.l10n;
-    final connectedCameraIndexes = state.members.map((m) => m.cameraIndex).whereType<int>().toSet();
+    final connectedCameraIndexes = state.members
+        .map((m) => m.cameraIndex)
+        .whereType<int>()
+        .where((i) => i >= 0 && i < state.expectedCameraCount)
+        .toSet();
     final areAllCamerasConnected =
         state.expectedCameraCount > 0 &&
         List.generate(
@@ -482,8 +470,27 @@ class _RecordPageState extends ConsumerState<RecordPage> {
           (i) => i,
         ).every((i) => connectedCameraIndexes.contains(i));
 
-    final participatingMembers = state.members.where((m) => m.cameraIndex != null);
-    final areAllParticipatingReady = participatingMembers.every((m) => m.isReady);
+    final participatingMembers = state.members.where(
+      (m) =>
+          m.cameraIndex != null &&
+          m.cameraIndex! >= 0 &&
+          m.cameraIndex! < state.expectedCameraCount,
+    );
+    final isMasterCamera = state.isRecordingEnabled && state.myCameraIndex != null;
+    final isMasterReady = !isMasterCamera || (state.isPhysicallyReady && state.anchorIsSet);
+    final areAllParticipatingReady =
+        isMasterReady && participatingMembers.every((m) => m.isReady);
+
+    final Map<int, int> cameraIndexCounts = {};
+    for (final m in participatingMembers) {
+      final idx = m.cameraIndex!;
+      cameraIndexCounts[idx] = (cameraIndexCounts[idx] ?? 0) + 1;
+    }
+    final duplicateCameraIndexes =
+        cameraIndexCounts.entries.where((e) => e.value > 1).map((e) => e.key).toList()..sort();
+    final hasDuplicateCameras = duplicateCameraIndexes.isNotEmpty;
+    final isMyCameraDuplicated =
+        state.myCameraIndex != null && (cameraIndexCounts[state.myCameraIndex!] ?? 0) > 1;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -635,7 +642,17 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: state.isRecordingEnabled
-                                  ? Text('${l10n.camera} ${state.myCameraIndex! + 1}')
+                                  ? Text(
+                                      isMyCameraDuplicated
+                                          ? '${l10n.camera} ${state.myCameraIndex! + 1} (${l10n.duplicateCameraPosition})'
+                                          : '${l10n.camera} ${state.myCameraIndex! + 1}',
+                                      style: isMyCameraDuplicated
+                                          ? const TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.bold,
+                                            )
+                                          : null,
+                                    )
                                   : Text(l10n.roleMaster),
                               trailing: Switch(
                                 value: state.isRecordingEnabled,
@@ -680,6 +697,29 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                           }),
                                         ),
                                       ),
+                                      if (isMyCameraDuplicated) ...[
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                l10n.duplicateCameraPositionWarning,
+                                                style: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -727,6 +767,25 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 }
                               },
                             ),
+                            if (isMyCameraDuplicated) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.duplicateCameraPositionWarning,
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -855,7 +914,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                     ),
                                     subtitle: Builder(
                                       builder: (context) {
-                                        final hasCamera = member.cameraIndex != null;
+                                        final hasCamera =
+                                            member.cameraIndex != null &&
+                                            member.cameraIndex! >= 0 &&
+                                            member.cameraIndex! < state.expectedCameraCount;
+                                        final isDuplicateCamera =
+                                            hasCamera &&
+                                            (cameraIndexCounts[member.cameraIndex!] ?? 0) > 1;
                                         final String? specs = isThisDevice
                                             ? (state.role == RecordRole.slave || state.isRecordingEnabled
                                                 ? state.activeCameraSpecs
@@ -876,10 +941,18 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                           children: [
                                             Text(
                                               hasCamera
-                                                  ? '${l10n.camera} ${member.cameraIndex! + 1}'
+                                                  ? (isDuplicateCamera
+                                                        ? '${l10n.camera} ${member.cameraIndex! + 1} (${l10n.duplicateCameraPosition})'
+                                                        : '${l10n.camera} ${member.cameraIndex! + 1}')
                                                   : (member.isMaster
                                                       ? l10n.masterNotRecording
                                                       : l10n.cameraNotAssigned),
+                                              style: isDuplicateCamera
+                                                  ? const TextStyle(
+                                                      color: Colors.red,
+                                                      fontWeight: FontWeight.bold,
+                                                    )
+                                                  : null,
                                             ),
                                             if (hasCamera && specs != null && specs.isNotEmpty)
                                               Padding(
@@ -916,9 +989,30 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                           ),
                                           const SizedBox(width: 4),
                                         ],
-                                        Icon(
-                                          member.isReady ? Icons.check_circle : Icons.error,
-                                          color: member.isReady ? Colors.green : Colors.red,
+                                        Builder(
+                                          builder: (context) {
+                                            final hasValidCamera =
+                                                member.cameraIndex != null &&
+                                                member.cameraIndex! >= 0 &&
+                                                member.cameraIndex! < state.expectedCameraCount;
+                                            final isDuplicateCamera =
+                                                hasValidCamera &&
+                                                (cameraIndexCounts[member.cameraIndex!] ?? 0) > 1;
+                                            final isLocalReady =
+                                                !isThisDevice ||
+                                                (state.isPhysicallyReady && state.anchorIsSet);
+                                            final isMemberReady =
+                                                (member.isMaster && !hasValidCamera)
+                                                ? true
+                                                : (hasValidCamera &&
+                                                      !isDuplicateCamera &&
+                                                      member.isReady &&
+                                                      isLocalReady);
+                                            return Icon(
+                                              isMemberReady ? Icons.check_circle : Icons.error,
+                                              color: isMemberReady ? Colors.green : Colors.red,
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
@@ -1043,6 +1137,24 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 );
                                 return;
                               }
+                              if (hasDuplicateCameras) {
+                                final duplicateNames = duplicateCameraIndexes
+                                    .map((i) => '${l10n.camera} ${i + 1}')
+                                    .join('、');
+                                toastification.show(
+                                  context: context,
+                                  title: const Text(
+                                    'Error',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  description: Text(l10n.duplicateCameraPositionError(duplicateNames)),
+                                  type: ToastificationType.error,
+                                  style: ToastificationStyle.minimal,
+                                  alignment: Alignment.bottomCenter,
+                                  autoCloseDuration: const Duration(seconds: 4),
+                                );
+                                return;
+                              }
                               if (!areAllCamerasConnected) {
                                 toastification.show(
                                   context: context,
@@ -1073,6 +1185,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 final notReadySlaves = notReadyMembers
                                     .where((m) => !(m.isMaster && state.isRecordingEnabled))
                                     .toList();
+                                final masterNotReadyMsg =
+                                    !state.isPhysicallyReady && !state.anchorIsSet
+                                    ? '${l10n.orientationLandscapeRequired}\n${l10n.pleaseSetAnchorFullscreen}'
+                                    : (!state.isPhysicallyReady
+                                          ? l10n.orientationLandscapeRequired
+                                          : l10n.pleaseSetAnchorFullscreen);
 
                                 String warningMsg;
                                 if (notReadySlaves.isNotEmpty) {
@@ -1081,12 +1199,12 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                       .join('、');
                                   if (isMasterNotReady) {
                                     warningMsg =
-                                        '${l10n.orientationLandscapeRequired}\n${l10n.slavesNotReadyWarning(cameraNames)}';
+                                        '$masterNotReadyMsg\n${l10n.slavesNotReadyWarning(cameraNames)}';
                                   } else {
                                     warningMsg = l10n.slavesNotReadyWarning(cameraNames);
                                   }
                                 } else {
-                                  warningMsg = l10n.orientationLandscapeRequired;
+                                  warningMsg = masterNotReadyMsg;
                                 }
 
                                 controller.notifyNotReady();

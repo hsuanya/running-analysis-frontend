@@ -406,13 +406,17 @@ class _AnchorPointTourPlaceholderDialogState extends State<AnchorPointTourPlaceh
             ),
             const SizedBox(width: 6),
             Flexible(
-              child: Text(
-                labels[i],
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isActive ? Colors.white : Colors.white70,
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  labels[i],
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.white70,
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
@@ -424,34 +428,43 @@ class _AnchorPointTourPlaceholderDialogState extends State<AnchorPointTourPlaceh
 
   Widget _buildAnchorPointButtons() {
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.selectAnchorToMark,
-          style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final int columns = width < 260 ? 1 : (width < 520 ? 2 : 3);
+        final rows = <Widget>[];
+        for (int r = 0; r < 6; r += columns) {
+          if (r > 0) {
+            rows.add(const SizedBox(height: 8));
+          }
+          rows.add(
+            Row(
+              spacing: 8,
+              children: List.generate(columns, (c) {
+                final idx = r + c;
+                if (idx >= 6) return const Expanded(child: SizedBox.shrink());
+                return Expanded(child: _buildAnchorPointButton(idx));
+              }),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _buildAnchorPointButton(0)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildAnchorPointButton(1)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildAnchorPointButton(2)),
+            Text(
+              l10n.selectAnchorToMark,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...rows,
           ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _buildAnchorPointButton(3)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildAnchorPointButton(4)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildAnchorPointButton(5)),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -481,19 +494,44 @@ class _AnchorPointTourPlaceholderDialogState extends State<AnchorPointTourPlaceh
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(
-              4,
-              (i) => _GuideStep(
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              Widget buildStep(int i) => _GuideStep(
                 index: i + 1,
                 label: labels[i],
                 color: _colors[i],
                 done: true,
                 active: false,
-              ),
-            ),
+              );
+
+              if (constraints.maxWidth < 480) {
+                return Column(
+                  children: [
+                    Row(
+                      spacing: 8,
+                      children: [
+                        Expanded(child: buildStep(0)),
+                        Expanded(child: buildStep(1)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      spacing: 8,
+                      children: [
+                        Expanded(child: buildStep(2)),
+                        Expanded(child: buildStep(3)),
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                spacing: 8,
+                children: List.generate(4, (i) => Expanded(child: buildStep(i))),
+              );
+            },
           ),
         ],
       ),
@@ -502,45 +540,71 @@ class _AnchorPointTourPlaceholderDialogState extends State<AnchorPointTourPlaceh
 
   Widget _buildActions() {
     final l10n = context.l10n;
-    return Row(
-      children: [
-        OutlinedButton.icon(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white70,
-            side: const BorderSide(color: Colors.white24),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          icon: const Icon(Icons.undo, size: 16),
-          label: Text(l10n.undo, style: const TextStyle(fontSize: 13)),
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white54,
-            side: const BorderSide(color: Colors.white12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          icon: const Icon(Icons.refresh, size: 16),
-          label: Text(l10n.clear, style: const TextStyle(fontSize: 13)),
-        ),
-        const Spacer(),
-        ElevatedButton.icon(
-          onPressed: widget.onClose,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00BFA5),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          icon: const Icon(Icons.check_circle_outline, size: 18),
-          label: Text(
-            l10n.confirmAnchor,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-        ),
-      ],
+    final undoBtn = OutlinedButton.icon(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white70,
+        side: const BorderSide(color: Colors.white24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      icon: const Icon(Icons.undo, size: 16),
+      label: Text(l10n.undo, style: const TextStyle(fontSize: 13)),
+    );
+
+    final clearBtn = OutlinedButton.icon(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white54,
+        side: const BorderSide(color: Colors.white12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      icon: const Icon(Icons.refresh, size: 16),
+      label: Text(l10n.clear, style: const TextStyle(fontSize: 13)),
+    );
+
+    final confirmBtn = ElevatedButton.icon(
+      onPressed: widget.onClose,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF00BFA5),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      icon: const Icon(Icons.check_circle_outline, size: 18),
+      label: Text(
+        l10n.confirmAnchor,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(child: undoBtn),
+                  Expanded(child: clearBtn),
+                ],
+              ),
+              const SizedBox(height: 8),
+              confirmBtn,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            undoBtn,
+            const SizedBox(width: 8),
+            clearBtn,
+            const Spacer(),
+            confirmBtn,
+          ],
+        );
+      },
     );
   }
 }
@@ -677,13 +741,21 @@ class _GuideStep extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: done || active ? color : Colors.white38,
-            fontSize: 11,
-            fontFamily: 'NotoSansTC',
-            fontWeight: active ? FontWeight.bold : FontWeight.normal,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                color: done || active ? color : Colors.white38,
+                fontSize: 11,
+                fontFamily: 'NotoSansTC',
+                fontWeight: active ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ),
         ),
       ],

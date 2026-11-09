@@ -110,6 +110,24 @@
   "point5": "Point 5 (Top-Middle)",
   "point6": "Point 6 (Bottom-Middle)",
   "cameraNotAssigned": "Camera not assigned",
+  "duplicateCameraPosition": "Duplicate camera position",
+  "duplicateCameraPositionWarning": "This camera position is duplicated with another device. Please change it.",
+  "duplicateCameraPositionError": "Duplicate camera position ({cameras}). Please adjust camera positions before recording.",
+  "@duplicateCameraPositionError": {
+    "placeholders": {
+      "cameras": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidCameraPosition": "The selected camera position does not exist (this room only has {count} camera(s)). Please select a valid camera position.",
+  "@invalidCameraPosition": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "orientationLandscapeRequired": "Please rotate device to landscape to record",
   "connectedStatus": "Connection Status",
   "controlGranted": "Control Granted",
@@ -304,7 +322,7 @@
   "tourRecordSlaveTitle": "Slave: Join Room & Camera Slot",
   "tourRecordSlaveDesc": "Slave devices enter the room number and select their assigned camera slot (e.g., Camera 2) to join.",
   "tourRecordConfigTitle": "Master: Session Config & Runner",
-  "tourRecordConfigDesc": "The Master configures the runner, expected camera count, FPS, and session notes.",
+  "tourRecordConfigDesc": "The Master configures the runner, track width, running direction, and session notes (FPS is automatically detected).",
   "tourRecordLocalTitle": "Master: Local Camera Recording",
   "tourRecordLocalDesc": "The Master device can also act as one of the recording cameras. Enable this toggle to assign its camera index.",
   "tourRecordDevicesTitle": "Connected Devices & Readiness",
@@ -362,7 +380,7 @@
   "tourUploadRunnerTitle": "Runner Identity",
   "tourUploadRunnerDesc": "Switch to 'Select Runner' to choose from existing runners or 'Add Runner' to register a new runner name.",
   "tourUploadConfigTitle": "Session Parameters & Setup",
-  "tourUploadConfigDesc": "Configure recording date/time, expected camera count (1-5), video frame rate (FPS), and session notes.",
+  "tourUploadConfigDesc": "Configure recording date/time, expected camera count (1-5), track width, running direction, and session notes (FPS is automatically detected).",
   "tourUploadVideoTitle": "Video Selection & Preview",
   "tourUploadVideoDesc": "Select video files for each camera angle, supporting MP4, MOV, AVI, MKV, WebM, M4V and other major formats with instant thumbnail preview.",
   "tourUploadAnchorTitle": "Spatial Anchor Calibration",
@@ -374,7 +392,7 @@
   "tourUploadSepTabsTitle": "Batch Workflow Switch",
   "tourUploadSepTabsDesc": "Batch Upload offers 'New Record' and 'Select Record' paths. Select an option below and click 'Next' to start.",
   "tourUploadSepNewTitle": "New Record (Camera Setup)",
-  "tourUploadSepNewDesc": "Set recording date/time, expected cameras (1-5), FPS, and notes for a new session, uploading from camera 1 sequentially.",
+  "tourUploadSepNewDesc": "Set recording date/time, expected cameras (1-5), track width, running direction, and notes for a new session (FPS is automatically detected), uploading from camera 1 sequentially.",
   "tourUploadSepSelectTitle": "Select Record (Resume Session)",
   "tourUploadSepSelectDesc": "Lists incomplete past sessions (e.g. cam 1 uploaded, cam 2 & 3 pending) to resume uploading remaining camera angles.",
   "tourUploadSepCameraTitle": "Camera Angle Selection",

@@ -616,7 +616,11 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
     final controller = ref.read(recordControllerProvider.notifier);
 
     // 錄影前的驗證邏輯
-    final connectedCameraIndexes = state.members.map((m) => m.cameraIndex).whereType<int>().toSet();
+    final connectedCameraIndexes = state.members
+        .map((m) => m.cameraIndex)
+        .whereType<int>()
+        .where((i) => i >= 0 && i < state.expectedCameraCount)
+        .toSet();
     final areAllCamerasConnected =
         state.expectedCameraCount > 0 &&
         List.generate(
@@ -624,8 +628,25 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
           (i) => i,
         ).every((i) => connectedCameraIndexes.contains(i));
 
-    final participatingMembers = state.members.where((m) => m.cameraIndex != null);
-    final areAllParticipatingReady = participatingMembers.every((m) => m.isReady);
+    final participatingMembers = state.members.where(
+      (m) =>
+          m.cameraIndex != null &&
+          m.cameraIndex! >= 0 &&
+          m.cameraIndex! < state.expectedCameraCount,
+    );
+    final isMasterCamera = state.isRecordingEnabled && state.myCameraIndex != null;
+    final isMasterReady = !isMasterCamera || (state.isPhysicallyReady && state.anchorIsSet);
+    final areAllParticipatingReady =
+        isMasterReady && participatingMembers.every((m) => m.isReady);
+
+    final Map<int, int> cameraIndexCounts = {};
+    for (final m in participatingMembers) {
+      final idx = m.cameraIndex!;
+      cameraIndexCounts[idx] = (cameraIndexCounts[idx] ?? 0) + 1;
+    }
+    final duplicateCameraIndexes =
+        cameraIndexCounts.entries.where((e) => e.value > 1).map((e) => e.key).toList()..sort();
+    final hasDuplicateCameras = duplicateCameraIndexes.isNotEmpty;
 
     // 強制橫式顯示邏輯
     double rawRatio = _controller!.value.aspectRatio;
@@ -834,6 +855,21 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
                     );
                     return;
                   }
+                  if (hasDuplicateCameras) {
+                    final duplicateNames = duplicateCameraIndexes
+                        .map((i) => '${context.l10n.camera} ${i + 1}')
+                        .join('、');
+                    toastification.show(
+                      context: context,
+                      title: const Text('Error', style: TextStyle(fontWeight: FontWeight.bold)),
+                      description: Text(context.l10n.duplicateCameraPositionError(duplicateNames)),
+                      type: ToastificationType.error,
+                      style: ToastificationStyle.minimal,
+                      alignment: Alignment.bottomCenter,
+                      autoCloseDuration: const Duration(seconds: 4),
+                    );
+                    return;
+                  }
                   if (!areAllCamerasConnected) {
                     toastification.show(
                       context: context,
@@ -854,9 +890,14 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
 
                   if (!areAllParticipatingReady) {
                     final notReadyMembers = participatingMembers.where((m) => !m.isReady).toList();
-                    final isMasterCamera = state.isRecordingEnabled && state.myCameraIndex != null;
                     final isMasterNotReady = isMasterCamera && (!state.isPhysicallyReady || !state.anchorIsSet);
                     final notReadySlaves = notReadyMembers.where((m) => !(m.isMaster && state.isRecordingEnabled)).toList();
+                    final masterNotReadyMsg =
+                        !state.isPhysicallyReady && !state.anchorIsSet
+                        ? '${context.l10n.orientationLandscapeRequired}\n${context.l10n.pleaseSetAnchorFullscreen}'
+                        : (!state.isPhysicallyReady
+                              ? context.l10n.orientationLandscapeRequired
+                              : context.l10n.pleaseSetAnchorFullscreen);
 
                     String warningMsg;
                     if (notReadySlaves.isNotEmpty) {
@@ -864,12 +905,12 @@ class _RecordCameraViewState extends ConsumerState<RecordCameraView> with Change
                           .map((m) => '${context.l10n.camera} ${(m.cameraIndex ?? 0) + 1}')
                           .join('、');
                       if (isMasterNotReady) {
-                        warningMsg = '${context.l10n.orientationLandscapeRequired}\n${context.l10n.slavesNotReadyWarning(cameraNames)}';
+                        warningMsg = '$masterNotReadyMsg\n${context.l10n.slavesNotReadyWarning(cameraNames)}';
                       } else {
                         warningMsg = context.l10n.slavesNotReadyWarning(cameraNames);
                       }
                     } else {
-                      warningMsg = context.l10n.orientationLandscapeRequired;
+                      warningMsg = masterNotReadyMsg;
                     }
 
                     controller.notifyNotReady();
@@ -2116,8 +2157,13 @@ class _FullScreenCameraDialogState extends ConsumerState<_FullScreenCameraDialog
                   _selectedActivePointIdx = _pts.length;
                 }),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white60,
-            side: const BorderSide(color: Colors.white24),
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white38,
+            backgroundColor: _pts.isNotEmpty
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.03),
+            disabledBackgroundColor: Colors.white.withValues(alpha: 0.03),
+            side: BorderSide(color: _pts.isNotEmpty ? Colors.white38 : Colors.white12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -2134,8 +2180,13 @@ class _FullScreenCameraDialogState extends ConsumerState<_FullScreenCameraDialog
                   _selectedActivePointIdx = 0;
                 }),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white38,
-            side: const BorderSide(color: Colors.white12),
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white38,
+            backgroundColor: _pts.isNotEmpty
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.03),
+            disabledBackgroundColor: Colors.white.withValues(alpha: 0.03),
+            side: BorderSide(color: _pts.isNotEmpty ? Colors.white38 : Colors.white12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -2144,22 +2195,27 @@ class _FullScreenCameraDialogState extends ConsumerState<_FullScreenCameraDialog
         ),
         const Spacer(),
         // Confirm
-        AnimatedOpacity(
-          opacity: _canConfirm ? 1.0 : 0.4,
-          duration: const Duration(milliseconds: 200),
-          child: ElevatedButton.icon(
-            onPressed: _canConfirm ? _confirmAnchor : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00BFA5),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ElevatedButton.icon(
+          onPressed: _canConfirm ? _confirmAnchor : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00BFA5),
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF00BFA5).withValues(alpha: 0.22),
+            disabledForegroundColor: Colors.white.withValues(alpha: 0.45),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(
+                color: _canConfirm
+                    ? Colors.transparent
+                    : const Color(0xFF00BFA5).withValues(alpha: 0.35),
+              ),
             ),
-            icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: Text(
-              l10n.confirmAnchor,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            ),
+          ),
+          icon: const Icon(Icons.check_circle_outline, size: 16),
+          label: Text(
+            l10n.confirmAnchor,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
         ),
       ],

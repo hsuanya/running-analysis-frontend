@@ -734,6 +734,30 @@ abstract class AppLocalizations {
   /// **'尚未分配相機編號'**
   String get cameraNotAssigned;
 
+  /// No description provided for @duplicateCameraPosition.
+  ///
+  /// In zh, this message translates to:
+  /// **'相機位置重複'**
+  String get duplicateCameraPosition;
+
+  /// No description provided for @duplicateCameraPositionWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'此相機位置與其他裝置重複，請更換相機位置'**
+  String get duplicateCameraPositionWarning;
+
+  /// No description provided for @duplicateCameraPositionError.
+  ///
+  /// In zh, this message translates to:
+  /// **'相機位置重複（{cameras}），請先調整各裝置的相機位置'**
+  String duplicateCameraPositionError(String cameras);
+
+  /// No description provided for @invalidCameraPosition.
+  ///
+  /// In zh, this message translates to:
+  /// **'所選相機位置不存在（此房間僅有 {count} 台相機），請重新選擇相機位置'**
+  String invalidCameraPosition(int count);
+
   /// No description provided for @orientationLandscapeRequired.
   ///
   /// In zh, this message translates to:
@@ -1733,7 +1757,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourRecordConfigDesc.
   ///
   /// In zh, this message translates to:
-  /// **'主控端可指定跑者、預期相機總數 (1~5 台)、幀率 (FPS) 與備註資訊。'**
+  /// **'主控端可指定跑者、跑道寬度、跑步方向與備註資訊（幀率 FPS 將由系統自動抓取）。'**
   String get tourRecordConfigDesc;
 
   /// No description provided for @tourRecordLocalTitle.
@@ -2075,7 +2099,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourUploadConfigDesc.
   ///
   /// In zh, this message translates to:
-  /// **'設定影片拍攝日期與時間、預期機位總數 (1~5 台)、相機幀率 (FPS) 及相關備註資訊。'**
+  /// **'設定影片拍攝日期與時間、預期機位總數 (1~5 台)、跑道寬度、跑步方向及相關備註資訊（幀率 FPS 由系統自動抓取）。'**
   String get tourUploadConfigDesc;
 
   /// No description provided for @tourUploadVideoTitle.
@@ -2141,7 +2165,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourUploadSepNewDesc.
   ///
   /// In zh, this message translates to:
-  /// **'設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、FPS 與備註，從第 1 台相機開始依序上傳。'**
+  /// **'設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、跑道寬度、跑步方向與備註（FPS 由系統自動抓取），從第 1 台相機開始依序上傳。'**
   String get tourUploadSepNewDesc;
 
   /// No description provided for @tourUploadSepSelectTitle.

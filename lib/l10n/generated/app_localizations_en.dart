@@ -334,6 +334,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraNotAssigned => 'Camera not assigned';
 
   @override
+  String get duplicateCameraPosition => 'Duplicate camera position';
+
+  @override
+  String get duplicateCameraPositionWarning =>
+      'This camera position is duplicated with another device. Please change it.';
+
+  @override
+  String duplicateCameraPositionError(String cameras) {
+    return 'Duplicate camera position ($cameras). Please adjust camera positions before recording.';
+  }
+
+  @override
+  String invalidCameraPosition(int count) {
+    return 'The selected camera position does not exist (this room only has $count camera(s)). Please select a valid camera position.';
+  }
+
+  @override
   String get orientationLandscapeRequired =>
       'Please rotate device to landscape to record';
 
@@ -874,7 +891,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tourRecordConfigDesc =>
-      'The Master configures the runner, expected camera count, FPS, and session notes.';
+      'The Master configures the runner, track width, running direction, and session notes (FPS is automatically detected).';
 
   @override
   String get tourRecordLocalTitle => 'Master: Local Camera Recording';
@@ -1073,7 +1090,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tourUploadConfigDesc =>
-      'Configure recording date/time, expected camera count (1-5), video frame rate (FPS), and session notes.';
+      'Configure recording date/time, expected camera count (1-5), track width, running direction, and session notes (FPS is automatically detected).';
 
   @override
   String get tourUploadVideoTitle => 'Video Selection & Preview';
@@ -1112,7 +1129,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tourUploadSepNewDesc =>
-      'Set recording date/time, expected cameras (1-5), FPS, and notes for a new session, uploading from camera 1 sequentially.';
+      'Set recording date/time, expected cameras (1-5), track width, running direction, and notes for a new session (FPS is automatically detected), uploading from camera 1 sequentially.';
 
   @override
   String get tourUploadSepSelectTitle => 'Select Record (Resume Session)';

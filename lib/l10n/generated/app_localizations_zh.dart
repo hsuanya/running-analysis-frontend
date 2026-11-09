@@ -329,6 +329,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraNotAssigned => '尚未分配相機編號';
 
   @override
+  String get duplicateCameraPosition => '相機位置重複';
+
+  @override
+  String get duplicateCameraPositionWarning => '此相機位置與其他裝置重複，請更換相機位置';
+
+  @override
+  String duplicateCameraPositionError(String cameras) {
+    return '相機位置重複（$cameras），請先調整各裝置的相機位置';
+  }
+
+  @override
+  String invalidCameraPosition(int count) {
+    return '所選相機位置不存在（此房間僅有 $count 台相機），請重新選擇相機位置';
+  }
+
+  @override
   String get orientationLandscapeRequired => '請將手機橫放以開始錄影';
 
   @override
@@ -849,7 +865,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tourRecordConfigTitle => '主控端：參數配置與跑者設定';
 
   @override
-  String get tourRecordConfigDesc => '主控端可指定跑者、預期相機總數 (1~5 台)、幀率 (FPS) 與備註資訊。';
+  String get tourRecordConfigDesc =>
+      '主控端可指定跑者、跑道寬度、跑步方向與備註資訊（幀率 FPS 將由系統自動抓取）。';
 
   @override
   String get tourRecordLocalTitle => '主控端：本機鏡頭錄影';
@@ -1044,7 +1061,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tourUploadConfigDesc =>
-      '設定影片拍攝日期與時間、預期機位總數 (1~5 台)、相機幀率 (FPS) 及相關備註資訊。';
+      '設定影片拍攝日期與時間、預期機位總數 (1~5 台)、跑道寬度、跑步方向及相關備註資訊（幀率 FPS 由系統自動抓取）。';
 
   @override
   String get tourUploadVideoTitle => '影片檔案選取與預覽';
@@ -1082,7 +1099,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tourUploadSepNewDesc =>
-      '設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、FPS 與備註，從第 1 台相機開始依序上傳。';
+      '設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、跑道寬度、跑步方向與備註（FPS 由系統自動抓取），從第 1 台相機開始依序上傳。';
 
   @override
   String get tourUploadSepSelectTitle => '選擇紀錄（接續未完成場次）';

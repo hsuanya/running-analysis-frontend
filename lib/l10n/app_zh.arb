@@ -117,6 +117,24 @@
   "point5": "點 5 (中上)",
   "point6": "點 6 (中下)",
   "cameraNotAssigned": "尚未分配相機編號",
+  "duplicateCameraPosition": "相機位置重複",
+  "duplicateCameraPositionWarning": "此相機位置與其他裝置重複，請更換相機位置",
+  "duplicateCameraPositionError": "相機位置重複（{cameras}），請先調整各裝置的相機位置",
+  "@duplicateCameraPositionError": {
+    "placeholders": {
+      "cameras": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidCameraPosition": "所選相機位置不存在（此房間僅有 {count} 台相機），請重新選擇相機位置",
+  "@invalidCameraPosition": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "orientationLandscapeRequired": "請將手機橫放以開始錄影",
   "connectedStatus": "連線狀態",
   "controlGranted": "已取得控制權",
@@ -342,7 +360,7 @@
   "tourRecordSlaveTitle": "從機端：加入房間與機位",
   "tourRecordSlaveDesc": "作為各視角相機的從機裝置，在此輸入主控端生成的房號並選擇負責的相機機位（如相機 2）後加入房間。",
   "tourRecordConfigTitle": "主控端：參數配置與跑者設定",
-  "tourRecordConfigDesc": "主控端可指定跑者、預期相機總數 (1~5 台)、幀率 (FPS) 與備註資訊。",
+  "tourRecordConfigDesc": "主控端可指定跑者、跑道寬度、跑步方向與備註資訊（幀率 FPS 將由系統自動抓取）。",
   "tourRecordLocalTitle": "主控端：本機鏡頭錄影",
   "tourRecordLocalDesc": "主控端亦可作為其中一台相機機位參與錄影，開啟開關後可指派主控端鏡頭所負責的相機機位編號。",
   "tourRecordDevicesTitle": "連線設備清單與機位就緒",
@@ -400,7 +418,7 @@
   "tourUploadRunnerTitle": "跑者身分選取",
   "tourUploadRunnerDesc": "可切換「選擇現有跑者」從下拉清單快速選取，或切換「新增跑者」直接輸入跑者姓名建立新檔案。",
   "tourUploadConfigTitle": "拍攝參數與錄影配置",
-  "tourUploadConfigDesc": "設定影片拍攝日期與時間、預期機位總數 (1~5 台)、相機幀率 (FPS) 及相關備註資訊。",
+  "tourUploadConfigDesc": "設定影片拍攝日期與時間、預期機位總數 (1~5 台)、跑道寬度、跑步方向及相關備註資訊（幀率 FPS 由系統自動抓取）。",
   "tourUploadVideoTitle": "影片檔案選取與預覽",
   "tourUploadVideoDesc": "選取各機位所拍攝的影片檔案，支援 MP4、MOV、AVI、MKV、WebM、M4V 等多種主流格式並即時產生預覽縮圖。",
   "tourUploadAnchorTitle": "跑道空間錨點校正",
@@ -412,7 +430,7 @@
   "tourUploadSepTabsTitle": "分批工作模式切換",
   "tourUploadSepTabsDesc": "分批上傳提供「新增紀錄」（建立全新場次）與「選擇紀錄」（接續未完成場次）兩種途徑。可點選下方選項切換流程，點擊「下一步」開始導覽。",
   "tourUploadSepNewTitle": "新增紀錄（拍攝參數設定）",
-  "tourUploadSepNewDesc": "設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、FPS 與備註，從第 1 台相機開始依序上傳。",
+  "tourUploadSepNewDesc": "設定全新場次的錄製日期與時間、預期相機總數 (1~5 台)、跑道寬度、跑步方向與備註（FPS 由系統自動抓取），從第 1 台相機開始依序上傳。",
   "tourUploadSepSelectTitle": "選擇紀錄（接續未完成場次）",
   "tourUploadSepSelectDesc": "列出該跑者先前尚未上傳齊全的歷史場次（如已傳機位 1、尚缺機位 2 與 3），選取後即可接續補傳剩餘機位。",
   "tourUploadSepCameraTitle": "當前相機機位選取",
