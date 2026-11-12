@@ -1,6 +1,132 @@
+import 'dart:typed_data';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
+
+class RecordingMetadataSnapshot {
+  final String? runSessionId;
+  final String? runnerId;
+  final String? runnerName;
+  final DateTime recordedAt;
+  final int cameraIndex;
+  final int expectedCameraCount;
+  final int fps;
+  final double trackWidth;
+  final String runningDirection;
+  final String note;
+  final AnchorResult? anchorResult;
+
+  const RecordingMetadataSnapshot({
+    this.runSessionId,
+    this.runnerId,
+    this.runnerName,
+    required this.recordedAt,
+    required this.cameraIndex,
+    required this.expectedCameraCount,
+    required this.fps,
+    required this.trackWidth,
+    required this.runningDirection,
+    required this.note,
+    this.anchorResult,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'runSessionId': runSessionId,
+    'runnerId': runnerId,
+    'runnerName': runnerName,
+    'recordedAt': recordedAt.toIso8601String(),
+    'cameraIndex': cameraIndex,
+    'expectedCameraCount': expectedCameraCount,
+    'fps': fps,
+    'trackWidth': trackWidth,
+    'runningDirection': runningDirection,
+    'note': note,
+    'anchorResult': anchorResult?.toJson(),
+  };
+
+  factory RecordingMetadataSnapshot.fromJson(Map<String, dynamic> json) {
+    AnchorResult? anchor;
+    final rawAnchor = json['anchorResult'];
+    if (rawAnchor is Map) {
+      final ptsRaw = rawAnchor['points'];
+      final pts = ptsRaw is List
+          ? ptsRaw
+                .whereType<Map>()
+                .map(
+                  (p) => AnchorPoint(
+                    (p['x'] as num?)?.toDouble() ?? 0.0,
+                    (p['y'] as num?)?.toDouble() ?? 0.0,
+                  ),
+                )
+                .toList()
+          : <AnchorPoint>[];
+      if (pts.isNotEmpty) {
+        anchor = AnchorResult(
+          points: pts,
+          leftToMidDistanceM: (rawAnchor['leftToMidDistanceM'] as num?)?.toDouble() ?? 5.0,
+          midToRightDistanceM: (rawAnchor['midToRightDistanceM'] as num?)?.toDouble() ?? 5.0,
+        );
+      }
+    }
+    DateTime dt = DateTime.now();
+    if (json['recordedAt'] is String) {
+      try {
+        dt = DateTime.parse(json['recordedAt'] as String);
+      } catch (_) {}
+    }
+    return RecordingMetadataSnapshot(
+      runSessionId: json['runSessionId'] as String?,
+      runnerId: json['runnerId'] as String?,
+      runnerName: json['runnerName'] as String?,
+      recordedAt: dt,
+      cameraIndex: (json['cameraIndex'] as num?)?.toInt() ?? 0,
+      expectedCameraCount: (json['expectedCameraCount'] as num?)?.toInt() ?? 1,
+      fps: (json['fps'] as num?)?.toInt() ?? 60,
+      trackWidth: (json['trackWidth'] as num?)?.toDouble() ?? 1.22,
+      runningDirection: (json['runningDirection'] as String?) ?? 'left_to_right',
+      note: (json['note'] as String?) ?? '',
+      anchorResult: anchor,
+    );
+  }
+}
+
+class PendingVideoUploadItem {
+  final String id;
+  final RecordingMetadataSnapshot snapshot;
+  final Uint8List bytes;
+  final String filename;
+  final String mimeType;
+  final PendingUploadStatus status;
+  final String? errorMessage;
+
+  const PendingVideoUploadItem({
+    required this.id,
+    required this.snapshot,
+    required this.bytes,
+    required this.filename,
+    required this.mimeType,
+    this.status = PendingUploadStatus.queued,
+    this.errorMessage,
+  });
+
+  double get sizeInMb => bytes.lengthInBytes / (1024 * 1024);
+
+  PendingVideoUploadItem copyWith({
+    PendingUploadStatus? status,
+    String? errorMessage,
+    bool clearError = false,
+  }) {
+    return PendingVideoUploadItem(
+      id: id,
+      snapshot: snapshot,
+      bytes: bytes,
+      filename: filename,
+      mimeType: mimeType,
+      status: status ?? this.status,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+    );
+  }
+}
 
 class MyRoomInfo {
   final String roomId;
@@ -76,6 +202,16 @@ class RecordState {
   final List<MyRoomInfo> myRooms;
   final bool isLoadingMyRooms;
 
+  // Slow Network Mode & Background Upload Queue
+  final bool slowNetworkMode;
+  final bool pauseAutoUpload;
+  final String? currentRecordingSessionId;
+  final DateTime? currentRecordedAt;
+  final RecordingMetadataSnapshot? lastCompletedRecordingMeta;
+  final int stopRecordingQueueTick;
+  final List<PendingVideoUploadItem> uploadQueue;
+  final bool isProcessingQueue;
+
   RecordState({
     this.role = RecordRole.none,
     this.status = RecordStatus.idle,
@@ -105,9 +241,24 @@ class RecordState {
     this.activeCameraName,
     this.myRooms = const [],
     this.isLoadingMyRooms = false,
+    this.slowNetworkMode = false,
+    this.pauseAutoUpload = false,
+    this.currentRecordingSessionId,
+    this.currentRecordedAt,
+    this.lastCompletedRecordingMeta,
+    this.stopRecordingQueueTick = 0,
+    this.uploadQueue = const [],
+    this.isProcessingQueue = false,
   });
 
   bool get anchorIsSet => anchorResult != null;
+
+  int get pendingQueueCount => uploadQueue
+      .where((i) =>
+          i.status == PendingUploadStatus.queued ||
+          i.status == PendingUploadStatus.uploading ||
+          i.status == PendingUploadStatus.failed)
+      .length;
 
   RecordState copyWith({
     RecordRole? role,
@@ -146,6 +297,14 @@ class RecordState {
     String? activeCameraName,
     List<MyRoomInfo>? myRooms,
     bool? isLoadingMyRooms,
+    bool? slowNetworkMode,
+    bool? pauseAutoUpload,
+    String? currentRecordingSessionId,
+    DateTime? currentRecordedAt,
+    RecordingMetadataSnapshot? lastCompletedRecordingMeta,
+    int? stopRecordingQueueTick,
+    List<PendingVideoUploadItem>? uploadQueue,
+    bool? isProcessingQueue,
   }) {
     return RecordState(
       role: role ?? this.role,
@@ -180,6 +339,14 @@ class RecordState {
       activeCameraName: activeCameraName ?? this.activeCameraName,
       myRooms: myRooms ?? this.myRooms,
       isLoadingMyRooms: isLoadingMyRooms ?? this.isLoadingMyRooms,
+      slowNetworkMode: slowNetworkMode ?? this.slowNetworkMode,
+      pauseAutoUpload: pauseAutoUpload ?? this.pauseAutoUpload,
+      currentRecordingSessionId: currentRecordingSessionId ?? this.currentRecordingSessionId,
+      currentRecordedAt: currentRecordedAt ?? this.currentRecordedAt,
+      lastCompletedRecordingMeta: lastCompletedRecordingMeta ?? this.lastCompletedRecordingMeta,
+      stopRecordingQueueTick: stopRecordingQueueTick ?? this.stopRecordingQueueTick,
+      uploadQueue: uploadQueue ?? this.uploadQueue,
+      isProcessingQueue: isProcessingQueue ?? this.isProcessingQueue,
     );
   }
 }

@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:frontend/backend/backend_provider.dart';
+import 'package:frontend/entities/upload_video_file.dart';
 import 'package:frontend/feature/auth/auth_provider.dart';
+import 'package:frontend/feature/record/camera/queue_storage_helper.dart';
 import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/upload/widget/anchor_point_dialog.dart';
@@ -20,9 +23,25 @@ class RecordController extends StateNotifier<RecordState> {
   Timer? _reconnectTimer;
   bool _isIntentionalClose = false;
   bool _isReconnecting = false;
+  bool _isQueueWorkerRunning = false;
   final Ref _ref;
 
-  RecordController(this._ref) : super(RecordState());
+  RecordController(this._ref) : super(RecordState()) {
+    _restorePersistedQueue();
+  }
+
+  Future<void> _restorePersistedQueue() async {
+    final persisted = await QueueStorageHelper.loadAllItems();
+    if (!mounted || persisted.isEmpty) return;
+    final existingIds = state.uploadQueue.map((e) => e.id).toSet();
+    final merged = [
+      ...persisted.where((p) => !existingIds.contains(p.id)),
+      ...state.uploadQueue,
+    ];
+    state = state.copyWith(uploadQueue: merged);
+    QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+    _syncQueueStatusToRoom();
+  }
 
   RecordState get currentState => state;
 
@@ -142,25 +161,42 @@ class RecordController extends StateNotifier<RecordState> {
           final members = membersJson.map((e) => RecordMember.fromJson(e)).toList();
           final expectedCount =
               (msg.data['expectedCameraCount'] as int?) ?? state.expectedCameraCount;
+          final slowMode = (msg.data['slowNetworkMode'] as bool?) ?? state.slowNetworkMode;
+          final pauseAuto = (msg.data['pauseAutoUpload'] as bool?) ?? state.pauseAutoUpload;
+          final wasPaused = state.pauseAutoUpload;
           final isInvalidCameraIndex =
               state.myCameraIndex != null &&
               expectedCount > 0 &&
               (state.myCameraIndex! < 0 || state.myCameraIndex! >= expectedCount);
-          final newStatus =
-              (state.status == RecordStatus.idle || state.status == RecordStatus.connecting)
-              ? RecordStatus.ready
-              : state.status;
+          final justConnected =
+              state.status == RecordStatus.idle || state.status == RecordStatus.connecting;
+          final newStatus = justConnected ? RecordStatus.ready : state.status;
           state = state.copyWith(
             status: newStatus,
             roomId: roomId,
             members: members,
             myMemberId: myMemberId ?? state.myMemberId,
             expectedCameraCount: expectedCount,
+            slowNetworkMode: slowMode,
+            pauseAutoUpload: pauseAuto,
             clearMyCameraIndex: isInvalidCameraIndex,
             error: isInvalidCameraIndex ? 'invalidCameraPosition:$expectedCount' : null,
           );
+          if (justConnected && state.pendingQueueCount > 0) {
+            _syncQueueStatusToRoom();
+          }
+          if (wasPaused && !pauseAuto) {
+            _processQueueIfNeeded();
+          }
           break;
         case RecordMessageType.startRecording:
+          DateTime recordedAt = DateTime.now();
+          final rawRecordedAt = msg.data['recordedAt'] as String?;
+          if (rawRecordedAt != null && rawRecordedAt.isNotEmpty) {
+            try {
+              recordedAt = DateTime.parse(rawRecordedAt.replaceFirst(' ', 'T'));
+            } catch (_) {}
+          }
           state = state.copyWith(
             status: RecordStatus.recording,
             runnerId: msg.data['runnerId'],
@@ -169,12 +205,50 @@ class RecordController extends StateNotifier<RecordState> {
             trackWidth: (msg.data['trackWidth'] as num?)?.toDouble() ?? 1.22,
             runningDirection: msg.data['runningDirection'] ?? 'left_to_right',
             note: msg.data['note'] ?? '',
+            currentRecordingSessionId: msg.data['recordingSessionId'] as String?,
+            currentRecordedAt: recordedAt,
+            slowNetworkMode: (msg.data['slowNetworkMode'] as bool?) ?? state.slowNetworkMode,
+            pauseAutoUpload: (msg.data['pauseAutoUpload'] as bool?) ?? state.pauseAutoUpload,
             clearSharedRunSessionId: true,
             isAllUploaded: false,
           );
           break;
         case RecordMessageType.stopRecording:
-          state = state.copyWith(status: RecordStatus.uploading, isAllUploaded: false);
+          final useSlowMode = (msg.data['slowNetworkMode'] as bool?) ?? state.slowNetworkMode;
+          final pauseAuto = (msg.data['pauseAutoUpload'] as bool?) ?? state.pauseAutoUpload;
+          final metaSnapshot = RecordingMetadataSnapshot(
+            runSessionId: state.currentRecordingSessionId,
+            runnerId: state.runnerId,
+            runnerName: state.runnerName,
+            recordedAt: state.currentRecordedAt ?? DateTime.now(),
+            cameraIndex: state.myCameraIndex ?? 0,
+            expectedCameraCount: state.expectedCameraCount > 0 ? state.expectedCameraCount : 1,
+            fps: state.fps,
+            trackWidth: state.trackWidth,
+            runningDirection: state.runningDirection,
+            note: state.note,
+            anchorResult: state.anchorResult,
+          );
+          if (useSlowMode) {
+            state = state.copyWith(
+              status: RecordStatus.ready,
+              isAllUploaded: false,
+              slowNetworkMode: useSlowMode,
+              pauseAutoUpload: pauseAuto,
+              lastCompletedRecordingMeta: metaSnapshot,
+              stopRecordingQueueTick: state.stopRecordingQueueTick + 1,
+            );
+          } else {
+            state = state.copyWith(
+              status: RecordStatus.uploading,
+              isAllUploaded: false,
+              lastCompletedRecordingMeta: metaSnapshot,
+            );
+          }
+          break;
+        case RecordMessageType.triggerQueueUpload:
+          state = state.copyWith(pauseAutoUpload: false);
+          retryAllFailedAndProcessQueue();
           break;
         case RecordMessageType.uploadComplete:
           final isAllUploaded = msg.data['isAllUploaded'] == true;
@@ -227,6 +301,8 @@ class RecordController extends StateNotifier<RecordState> {
             activeCameraName: state.activeCameraName,
             activeCameraSpecs: state.activeCameraSpecs,
             isPhysicallyReady: state.isPhysicallyReady,
+            uploadQueue: state.uploadQueue,
+            isProcessingQueue: state.isProcessingQueue,
           );
           break;
         default:
@@ -346,6 +422,8 @@ class RecordController extends StateNotifier<RecordState> {
       activeCameraName: state.activeCameraName,
       activeCameraSpecs: state.activeCameraSpecs,
       myRooms: state.myRooms,
+      uploadQueue: state.uploadQueue,
+      isProcessingQueue: state.isProcessingQueue,
     );
     _connect();
     final msg = RecordMessage(
@@ -425,6 +503,9 @@ class RecordController extends StateNotifier<RecordState> {
         isPhysicallyReady: state.isPhysicallyReady,
         activeCameraName: state.activeCameraName,
         activeCameraSpecs: state.activeCameraSpecs,
+        myRooms: state.myRooms,
+        uploadQueue: state.uploadQueue,
+        isProcessingQueue: state.isProcessingQueue,
       );
       _connect();
     } else {
@@ -583,6 +664,267 @@ class RecordController extends StateNotifier<RecordState> {
     _send(msg);
   }
 
+  void setSlowNetworkMode({bool? slowNetworkMode, bool? pauseAutoUpload}) {
+    final newSlow = slowNetworkMode ?? state.slowNetworkMode;
+    final newPause = pauseAutoUpload ?? state.pauseAutoUpload;
+    final wasPaused = state.pauseAutoUpload;
+    state = state.copyWith(
+      slowNetworkMode: newSlow,
+      pauseAutoUpload: newPause,
+    );
+    if (state.role == RecordRole.master && state.roomId != null) {
+      final msg = RecordMessage(
+        type: RecordMessageType.setSlowNetworkMode,
+        data: {
+          'slowNetworkMode': newSlow,
+          'pauseAutoUpload': newPause,
+        },
+      );
+      _send(msg);
+    }
+    if (wasPaused && !newPause) {
+      _processQueueIfNeeded();
+    }
+  }
+
+  void toggleLocalPauseAutoUpload(bool pause) {
+    final wasPaused = state.pauseAutoUpload;
+    state = state.copyWith(pauseAutoUpload: pause);
+    if (wasPaused && !pause) {
+      _processQueueIfNeeded();
+    }
+  }
+
+  void triggerRoomQueueUpload() {
+    if (state.role == RecordRole.master && state.roomId != null) {
+      final msg = RecordMessage(
+        type: RecordMessageType.triggerQueueUpload,
+        data: {},
+      );
+      _send(msg);
+    }
+    state = state.copyWith(pauseAutoUpload: false);
+    retryAllFailedAndProcessQueue();
+  }
+
+  void _syncQueueStatusToRoom() {
+    if (state.roomId == null || state.status == RecordStatus.idle) return;
+    final pendingCount = state.pendingQueueCount;
+    final uploadingNow = state.uploadQueue.any((i) => i.status == PendingUploadStatus.uploading);
+    final msg = RecordMessage(
+      type: RecordMessageType.updateQueueStatus,
+      data: {
+        'pendingUploadCount': pendingCount,
+        'isUploading': uploadingNow,
+      },
+    );
+    _send(msg);
+  }
+
+  void enqueueVideoUpload({
+    required Uint8List bytes,
+    required String filename,
+    required String mimeType,
+    RecordingMetadataSnapshot? snapshot,
+  }) {
+    final snap = snapshot ??
+        state.lastCompletedRecordingMeta ??
+        RecordingMetadataSnapshot(
+          runSessionId: state.currentRecordingSessionId,
+          runnerId: state.runnerId,
+          runnerName: state.runnerName,
+          recordedAt: state.currentRecordedAt ?? DateTime.now(),
+          cameraIndex: state.myCameraIndex ?? 0,
+          expectedCameraCount: state.expectedCameraCount > 0 ? state.expectedCameraCount : 1,
+          fps: state.fps,
+          trackWidth: state.trackWidth,
+          runningDirection: state.runningDirection,
+          note: state.note,
+          anchorResult: state.anchorResult,
+        );
+    final item = PendingVideoUploadItem(
+      id: '${DateTime.now().microsecondsSinceEpoch}_cam${snap.cameraIndex}',
+      snapshot: snap,
+      bytes: bytes,
+      filename: filename,
+      mimeType: mimeType,
+      status: PendingUploadStatus.queued,
+    );
+    state = state.copyWith(uploadQueue: [...state.uploadQueue, item]);
+    QueueStorageHelper.saveItem(item);
+    QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+    _syncQueueStatusToRoom();
+    if (!state.pauseAutoUpload) {
+      _processQueueIfNeeded();
+    }
+  }
+
+  void retryAllFailedAndProcessQueue() {
+    final updated = state.uploadQueue.map((item) {
+      if (item.status == PendingUploadStatus.failed) {
+        final next = item.copyWith(status: PendingUploadStatus.queued, clearError: true);
+        QueueStorageHelper.saveItem(next);
+        return next;
+      }
+      return item;
+    }).toList();
+    state = state.copyWith(uploadQueue: updated);
+    QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+    _syncQueueStatusToRoom();
+    _processQueueIfNeeded(forceEvenIfPaused: true);
+  }
+
+  Future<void> uploadSingleQueueItem(String itemId) async {
+    final idx = state.uploadQueue.indexWhere((i) => i.id == itemId);
+    if (idx == -1) return;
+    final target = state.uploadQueue[idx];
+    if (target.status == PendingUploadStatus.uploading ||
+        target.status == PendingUploadStatus.completed) {
+      return;
+    }
+    final updated = List<PendingVideoUploadItem>.from(state.uploadQueue);
+    updated[idx] = target.copyWith(status: PendingUploadStatus.queued, clearError: true);
+    state = state.copyWith(uploadQueue: updated);
+    QueueStorageHelper.saveItem(updated[idx]);
+    _syncQueueStatusToRoom();
+    await _uploadQueueItem(updated[idx]);
+  }
+
+  void removeQueueItem(String itemId) {
+    final updated = state.uploadQueue.where((i) => i.id != itemId).toList();
+    state = state.copyWith(uploadQueue: updated);
+    QueueStorageHelper.deleteItem(itemId);
+    QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+    _syncQueueStatusToRoom();
+  }
+
+  void clearCompletedQueueItems() {
+    final completedIds = state.uploadQueue
+        .where((i) => i.status == PendingUploadStatus.completed)
+        .map((i) => i.id)
+        .toList();
+    for (final id in completedIds) {
+      QueueStorageHelper.deleteItem(id);
+    }
+    final updated = state.uploadQueue
+        .where((i) => i.status != PendingUploadStatus.completed)
+        .toList();
+    state = state.copyWith(uploadQueue: updated);
+    QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+    _syncQueueStatusToRoom();
+  }
+
+  Future<void> _processQueueIfNeeded({bool forceEvenIfPaused = false}) async {
+    if (_isQueueWorkerRunning) return;
+    _isQueueWorkerRunning = true;
+    try {
+      while (mounted) {
+        if (!forceEvenIfPaused && state.pauseAutoUpload) {
+          break;
+        }
+        // 若正在錄影中，暫緩啟動新的大檔案上傳，避免搶佔錄影效能與頻寬，待停止錄影後再自動接續
+        if (state.status == RecordStatus.recording) {
+          await Future.delayed(const Duration(seconds: 1));
+          continue;
+        }
+        final nextIdx = state.uploadQueue.indexWhere(
+          (i) => i.status == PendingUploadStatus.queued,
+        );
+        if (nextIdx == -1) {
+          break;
+        }
+        final item = state.uploadQueue[nextIdx];
+        await _uploadQueueItem(item);
+      }
+    } finally {
+      _isQueueWorkerRunning = false;
+      if (mounted) {
+        state = state.copyWith(
+          isProcessingQueue: state.uploadQueue.any((i) => i.status == PendingUploadStatus.uploading),
+        );
+        _syncQueueStatusToRoom();
+      }
+    }
+  }
+
+  Future<void> _uploadQueueItem(PendingVideoUploadItem item) async {
+    if (!mounted) return;
+    final currentIdx = state.uploadQueue.indexWhere((i) => i.id == item.id);
+    if (currentIdx == -1) return;
+    if (state.uploadQueue[currentIdx].status == PendingUploadStatus.uploading ||
+        state.uploadQueue[currentIdx].status == PendingUploadStatus.completed) {
+      return;
+    }
+
+    void updateItemStatus(PendingUploadStatus s, {String? error}) {
+      if (!mounted) return;
+      final list = List<PendingVideoUploadItem>.from(state.uploadQueue);
+      final i = list.indexWhere((e) => e.id == item.id);
+      if (i != -1) {
+        list[i] = list[i].copyWith(status: s, errorMessage: error, clearError: error == null);
+        state = state.copyWith(
+          uploadQueue: list,
+          isProcessingQueue: list.any((e) => e.status == PendingUploadStatus.uploading),
+        );
+        if (s == PendingUploadStatus.completed) {
+          QueueStorageHelper.deleteItem(item.id);
+        } else {
+          QueueStorageHelper.saveItem(list[i]);
+        }
+        QueueStorageHelper.setBeforeUnloadProtection(state.pendingQueueCount > 0);
+        _syncQueueStatusToRoom();
+      }
+    }
+
+    updateItemStatus(PendingUploadStatus.uploading);
+
+    try {
+      final backend = _ref.read(backendProvider);
+      final snap = item.snapshot;
+      final uploadFile = UploadVideoFile(
+        bytes: item.bytes,
+        filename: item.filename,
+        mimeType: item.mimeType,
+      );
+
+      final tempVideoId = await backend.uploadVideo(snap.cameraIndex, uploadFile);
+
+      String? actualRunnerId = snap.runnerId;
+      if (actualRunnerId == null && snap.runnerName != null && snap.runnerName!.isNotEmpty) {
+        actualRunnerId = await backend.addRunner(snap.runnerName!);
+      }
+      if (actualRunnerId == null) {
+        throw Exception('Runner not specified');
+      }
+
+      final status = await backend.uploadSeperatelyNew(
+        actualRunnerId,
+        snap.recordedAt,
+        snap.expectedCameraCount,
+        snap.fps,
+        snap.note,
+        snap.cameraIndex,
+        tempVideoId,
+        snap.anchorResult,
+        trackWidth: snap.trackWidth,
+        runningDirection: snap.runningDirection,
+        runSessionId: snap.runSessionId,
+      );
+
+      updateItemStatus(PendingUploadStatus.completed);
+
+      if (status.isAllUploaded && state.roomId != null) {
+        notifyUploadComplete(
+          status.runSessionId,
+          runnerId: actualRunnerId,
+          isAllUploaded: true,
+        );
+      }
+    } catch (e) {
+      updateItemStatus(PendingUploadStatus.failed, error: e.toString());
+    }
+  }
+
   void leaveRoom({bool resetState = true}) {
     try {
       final msg = RecordMessage(type: RecordMessageType.leaveRoom, data: {});
@@ -596,6 +938,8 @@ class RecordController extends StateNotifier<RecordState> {
             activeCameraName: state.activeCameraName,
             activeCameraSpecs: state.activeCameraSpecs,
             isPhysicallyReady: state.isPhysicallyReady,
+            uploadQueue: state.uploadQueue,
+            isProcessingQueue: state.isProcessingQueue,
           );
           fetchMyRooms();
         }
@@ -609,6 +953,8 @@ class RecordController extends StateNotifier<RecordState> {
       activeCameraName: state.activeCameraName,
       activeCameraSpecs: state.activeCameraSpecs,
       isPhysicallyReady: state.isPhysicallyReady,
+      uploadQueue: state.uploadQueue,
+      isProcessingQueue: state.isProcessingQueue,
     );
   }
 

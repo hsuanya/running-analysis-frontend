@@ -351,6 +351,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraOccupied => 'In use';
 
   @override
+  String get slowNetworkMode =>
+      'Slow Network Mode (Background / Deferred Upload)';
+
+  @override
+  String get slowNetworkModeDesc =>
+      'Unlock immediately after stopping recording so you can record the next runner right away; videos are queued locally for background or manual upload';
+
+  @override
+  String get slowNetworkModeActiveBadge =>
+      'Slow Network Mode active (videos are queued after recording without blocking the next run)';
+
+  @override
+  String get pauseAutoUploadToggle =>
+      'Pause auto-upload (save locally first, upload manually after all runs)';
+
+  @override
+  String get stopRecordingAndQueue => 'Stop Recording (Save to Queue)';
+
+  @override
+  String get uploadQueueTitle => 'Local Video Upload Queue';
+
+  @override
+  String get uploadAllQueued => 'Upload All';
+
+  @override
+  String get notifyAllDevicesUpload => 'Trigger Upload on All Devices';
+
+  @override
+  String get clearCompletedUploads => 'Clear Completed';
+
+  @override
+  String get saveVideoToLocal => 'Save Backup';
+
+  @override
+  String get videoSavedSuccess => 'Video backup download triggered';
+
+  @override
+  String get uploadNow => 'Upload Now';
+
+  @override
+  String get retryUpload => 'Retry';
+
+  @override
+  String get queueStatusQueued => 'Queued';
+
+  @override
+  String get queueStatusPaused => 'Saved Locally (Paused)';
+
+  @override
+  String get queueStatusUploading => 'Uploading...';
+
+  @override
+  String get queueStatusCompleted => 'Uploaded';
+
+  @override
+  String get queueStatusFailed => 'Upload Failed';
+
+  @override
+  String devicePendingUploads(int count) {
+    return 'Pending: $count video(s)';
+  }
+
+  @override
+  String deviceUploadingBadge(int count) {
+    return 'Uploading ($count)';
+  }
+
+  @override
+  String get videoSavedToLocalQueuePaused =>
+      'Video saved to local queue (auto-upload paused; ready for next runner)';
+
+  @override
+  String get videoEnqueuedBackgroundUpload =>
+      'Video added to background upload queue (ready for next runner)';
+
+  @override
   String get duplicateCameraPosition => 'Duplicate camera position';
 
   @override

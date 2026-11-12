@@ -764,6 +764,138 @@ abstract class AppLocalizations {
   /// **'已使用'**
   String get cameraOccupied;
 
+  /// No description provided for @slowNetworkMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'網路慢模式（背景／稍後上傳）'**
+  String get slowNetworkMode;
+
+  /// No description provided for @slowNetworkModeDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'結束錄影後立即解鎖可拍下一位選手，影片先存入待傳佇列於背景排隊或稍後手動上傳'**
+  String get slowNetworkModeDesc;
+
+  /// No description provided for @slowNetworkModeActiveBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'網路慢模式已啟用（結束錄影後將直接存入佇列，不阻塞下一趟錄影）'**
+  String get slowNetworkModeActiveBadge;
+
+  /// No description provided for @pauseAutoUploadToggle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暫停自動上傳（先僅暫存本機，等拍完再手動一鍵上傳）'**
+  String get pauseAutoUploadToggle;
+
+  /// No description provided for @stopRecordingAndQueue.
+  ///
+  /// In zh, this message translates to:
+  /// **'結束錄影（存入待傳佇列）'**
+  String get stopRecordingAndQueue;
+
+  /// No description provided for @uploadQueueTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本機待上傳影片佇列'**
+  String get uploadQueueTitle;
+
+  /// No description provided for @uploadAllQueued.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部開始上傳'**
+  String get uploadAllQueued;
+
+  /// No description provided for @notifyAllDevicesUpload.
+  ///
+  /// In zh, this message translates to:
+  /// **'通知所有裝置開始上傳'**
+  String get notifyAllDevicesUpload;
+
+  /// No description provided for @clearCompletedUploads.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除已完成'**
+  String get clearCompletedUploads;
+
+  /// No description provided for @saveVideoToLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'下載備份'**
+  String get saveVideoToLocal;
+
+  /// No description provided for @videoSavedSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已觸發影片儲存／下載'**
+  String get videoSavedSuccess;
+
+  /// No description provided for @uploadNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即上傳'**
+  String get uploadNow;
+
+  /// No description provided for @retryUpload.
+  ///
+  /// In zh, this message translates to:
+  /// **'重試上傳'**
+  String get retryUpload;
+
+  /// No description provided for @queueStatusQueued.
+  ///
+  /// In zh, this message translates to:
+  /// **'排隊等待中'**
+  String get queueStatusQueued;
+
+  /// No description provided for @queueStatusPaused.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暫存（待手動上傳）'**
+  String get queueStatusPaused;
+
+  /// No description provided for @queueStatusUploading.
+  ///
+  /// In zh, this message translates to:
+  /// **'上傳中...'**
+  String get queueStatusUploading;
+
+  /// No description provided for @queueStatusCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已上傳完成'**
+  String get queueStatusCompleted;
+
+  /// No description provided for @queueStatusFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'上傳失敗'**
+  String get queueStatusFailed;
+
+  /// No description provided for @devicePendingUploads.
+  ///
+  /// In zh, this message translates to:
+  /// **'待上傳: {count} 部'**
+  String devicePendingUploads(int count);
+
+  /// No description provided for @deviceUploadingBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'背景上傳中 ({count})'**
+  String deviceUploadingBadge(int count);
+
+  /// No description provided for @videoSavedToLocalQueuePaused.
+  ///
+  /// In zh, this message translates to:
+  /// **'已將影片存入待傳佇列（目前暫停自動上傳，可立即錄下一位）'**
+  String get videoSavedToLocalQueuePaused;
+
+  /// No description provided for @videoEnqueuedBackgroundUpload.
+  ///
+  /// In zh, this message translates to:
+  /// **'已將影片加入背景佇列上傳（可立即錄下一位）'**
+  String get videoEnqueuedBackgroundUpload;
+
   /// No description provided for @duplicateCameraPosition.
   ///
   /// In zh, this message translates to:

@@ -203,12 +203,13 @@ class FakeBackendRepo implements BackendInterface {
     AnchorResult? anchors, {
     double trackWidth = 1.22,
     String runningDirection = 'left_to_right',
+    String? runSessionId,
   }) {
     return Future.delayed(
       const Duration(seconds: 1),
       () => UploadSeperatelyStatus(
         runnerId: runnerId,
-        runSessionId: 'videoId1',
+        runSessionId: runSessionId ?? 'videoId1',
         isAllUploaded: false,
         unuploadedCameraIndexes: [0, 4],
       ),

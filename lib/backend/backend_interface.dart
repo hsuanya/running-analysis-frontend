@@ -36,6 +36,7 @@ abstract class BackendInterface {
     AnchorResult? anchors, {
     double trackWidth = 1.22,
     String runningDirection = 'left_to_right',
+    String? runSessionId,
   });
   Future<UploadSeperatelyStatus> uploadSeperatelySelect(
     String runnerId,

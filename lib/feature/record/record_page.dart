@@ -12,7 +12,9 @@ import 'package:frontend/feature/record/record_enums.dart';
 import 'package:frontend/feature/record/record_state.dart';
 import 'package:frontend/feature/record/widget/record_camera_view.dart';
 import 'package:frontend/feature/record/camera/camera_name_helper.dart';
+import 'package:frontend/feature/record/camera/video_saver_helper.dart';
 import 'package:frontend/feature/record/widget/record_tour_placeholder_view.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/feature/upload/upload_controller.dart';
 import 'package:frontend/feature/upload/widget/upload_enums.dart';
 import 'package:frontend/utils/locale_provider.dart';
@@ -664,6 +666,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                           },
                         ),
                       ),
+                      if (state.uploadQueue.isNotEmpty)
+                        _buildUploadQueueSection(state, controller),
                     ],
                   ),
                 ),
@@ -1005,6 +1009,37 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                 ],
                               ),
                             ],
+                            if (state.slowNetworkMode) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF93C5FD)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.cloud_queue_rounded,
+                                      size: 18,
+                                      color: Color(0xFF1D4ED8),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        l10n.slowNetworkModeActiveBadge,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          color: Color(0xFF1E3A8A),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -1154,6 +1189,13 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                             ? localizeCameraName(camName, l10n)
                                             : null;
 
+                                        final int pendingCount = isThisDevice
+                                            ? state.pendingQueueCount
+                                            : member.pendingUploadCount;
+                                        final bool isUploadingNow = isThisDevice
+                                            ? state.isProcessingQueue
+                                            : member.isUploading;
+
                                         return Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
@@ -1184,6 +1226,57 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                                                     fontSize: 11,
                                                     color: Theme.of(context).colorScheme.primary,
                                                     fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            if (pendingCount > 0)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 4),
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: isUploadingNow
+                                                        ? const Color(0xFFDBEAFE)
+                                                        : const Color(0xFFFEF3C7),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      if (isUploadingNow) ...[
+                                                        const SizedBox(
+                                                          width: 10,
+                                                          height: 10,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 1.8,
+                                                            color: Color(0xFF1D4ED8),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 5),
+                                                      ] else ...[
+                                                        const Icon(
+                                                          Icons.schedule_send_rounded,
+                                                          size: 12,
+                                                          color: Color(0xFFB45309),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                      ],
+                                                      Text(
+                                                        isUploadingNow
+                                                            ? l10n.deviceUploadingBadge(pendingCount)
+                                                            : l10n.devicePendingUploads(pendingCount),
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: isUploadingNow
+                                                              ? const Color(0xFF1E40AF)
+                                                              : const Color(0xFF92400E),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
@@ -1271,7 +1364,9 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                l10n.stopRecordingAndUpload,
+                                state.slowNetworkMode
+                                    ? l10n.stopRecordingAndQueue
+                                    : l10n.stopRecordingAndUpload,
                                 maxLines: 1,
                                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
@@ -1465,6 +1560,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                               : const RecordCameraView(),
                         ),
                       ],
+                      if (state.uploadQueue.isNotEmpty)
+                        _buildUploadQueueSection(state, controller),
                       if (state.role == RecordRole.slave) ...[
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
@@ -1870,6 +1967,428 @@ class _RecordPageState extends ConsumerState<RecordPage> {
                 ),
               ),
             ],
+          ),
+          const Divider(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: state.slowNetworkMode ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: state.slowNetworkMode
+                    ? const Color(0xFF60A5FA)
+                    : Colors.grey.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_queue_rounded,
+                      size: 20,
+                      color: state.slowNetworkMode ? const Color(0xFF1D4ED8) : Colors.black54,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.slowNetworkMode,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: state.slowNetworkMode
+                                  ? const Color(0xFF1E3A8A)
+                                  : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.slowNetworkModeDesc,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: state.slowNetworkMode,
+                      onChanged: (v) {
+                        controller.setSlowNetworkMode(
+                          slowNetworkMode: v,
+                          pauseAutoUpload: v ? state.pauseAutoUpload : false,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                if (state.slowNetworkMode) ...[
+                  const Divider(height: 16),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => controller.setSlowNetworkMode(
+                      pauseAutoUpload: !state.pauseAutoUpload,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: state.pauseAutoUpload,
+                              onChanged: (v) {
+                                if (v != null) {
+                                  controller.setSlowNetworkMode(pauseAutoUpload: v);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.pauseAutoUploadToggle,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1E3A8A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (state.members.any((m) => m.pendingUploadCount > 0) ||
+                      state.pendingQueueCount > 0) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1D4ED8),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () => controller.triggerRoomQueueUpload(),
+                        icon: const Icon(Icons.cloud_upload_rounded, size: 18),
+                        label: Text(
+                          l10n.notifyAllDevicesUpload,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUploadQueueSection(RecordState state, RecordController controller) {
+    final l10n = context.l10n;
+    final runners = ref.watch(uploadRunnerListProvider).value ?? const <RunnerInfo>[];
+    final hasPendingOrFailed = state.uploadQueue.any(
+      (i) => i.status == PendingUploadStatus.queued || i.status == PendingUploadStatus.failed,
+    );
+    final hasCompleted = state.uploadQueue.any(
+      (i) => i.status == PendingUploadStatus.completed,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(width: 2.5, color: Theme.of(context).primaryColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.video_library_rounded, size: 20, color: Color(0xFF1E40AF)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${l10n.uploadQueueTitle} (${state.uploadQueue.length})',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (hasPendingOrFailed)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1D4ED8),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: const Size(0, 34),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
+                      onPressed: state.isProcessingQueue
+                          ? null
+                          : () {
+                              controller.toggleLocalPauseAutoUpload(false);
+                              controller.retryAllFailedAndProcessQueue();
+                            },
+                      icon: const Icon(Icons.cloud_upload_rounded, size: 15),
+                      label: Text(
+                        l10n.uploadAllQueued,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  if (hasCompleted)
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: const Size(0, 34),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
+                      onPressed: () => controller.clearCompletedQueueItems(),
+                      icon: const Icon(Icons.cleaning_services_outlined, size: 14),
+                      label: Text(
+                        l10n.clearCompletedUploads,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.uploadQueue.length,
+            separatorBuilder: (_, __) => const Divider(height: 12),
+            itemBuilder: (context, index) {
+              final item = state.uploadQueue[index];
+              final snap = item.snapshot;
+              String runnerLabel = snap.runnerName ?? '';
+              if (runnerLabel.isEmpty && snap.runnerId != null) {
+                final found = runners.where((r) => r.id == snap.runnerId).firstOrNull;
+                runnerLabel = found?.name ?? snap.runnerId!.substring(0, 6);
+              }
+              if (runnerLabel.isEmpty) {
+                runnerLabel = 'Runner';
+              }
+              final timeStr = DateFormat('HH:mm:ss').format(snap.recordedAt);
+              final sizeStr = '${item.sizeInMb.toStringAsFixed(1)} MB';
+
+              Color badgeBg;
+              Color badgeFg;
+              String statusLabel;
+              switch (item.status) {
+                case PendingUploadStatus.queued:
+                  badgeBg = state.pauseAutoUpload
+                      ? const Color(0xFFFEF3C7)
+                      : const Color(0xFFE0F2FE);
+                  badgeFg = state.pauseAutoUpload
+                      ? const Color(0xFF92400E)
+                      : const Color(0xFF0369A1);
+                  statusLabel = state.pauseAutoUpload
+                      ? l10n.queueStatusPaused
+                      : l10n.queueStatusQueued;
+                  break;
+                case PendingUploadStatus.uploading:
+                  badgeBg = const Color(0xFFDBEAFE);
+                  badgeFg = const Color(0xFF1D4ED8);
+                  statusLabel = l10n.queueStatusUploading;
+                  break;
+                case PendingUploadStatus.completed:
+                  badgeBg = const Color(0xFFDCFCE7);
+                  badgeFg = const Color(0xFF15803D);
+                  statusLabel = l10n.queueStatusCompleted;
+                  break;
+                case PendingUploadStatus.failed:
+                  badgeBg = const Color(0xFFFEE2E2);
+                  badgeFg = const Color(0xFFB91C1C);
+                  statusLabel = l10n.queueStatusFailed;
+                  break;
+              }
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '$runnerLabel • ${l10n.camera} ${snap.cameraIndex + 1}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (item.status == PendingUploadStatus.uploading) ...[
+                                SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.8,
+                                    color: badgeFg,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                              ],
+                              Text(
+                                statusLabel,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: badgeFg,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$timeStr • $sizeStr${snap.note.isNotEmpty ? ' • ${snap.note}' : ''}',
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                    ),
+                    if (item.errorMessage != null && item.errorMessage!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          item.errorMessage!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: Colors.red),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        if (item.status == PendingUploadStatus.queued ||
+                            item.status == PendingUploadStatus.failed)
+                          SizedBox(
+                            height: 30,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                foregroundColor: Colors.black87,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () => controller.uploadSingleQueueItem(item.id),
+                              icon: const Icon(Icons.cloud_upload_outlined, size: 14),
+                              label: Text(
+                                item.status == PendingUploadStatus.failed
+                                    ? l10n.retryUpload
+                                    : l10n.uploadNow,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        SizedBox(
+                          height: 30,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              final saved = await VideoSaverHelper.saveVideo(
+                                bytes: item.bytes,
+                                filename: item.filename,
+                                mimeType: item.mimeType,
+                              );
+                              if (saved && context.mounted) {
+                                toastification.show(
+                                  context: context,
+                                  title: Text(l10n.videoSavedSuccess),
+                                  type: ToastificationType.success,
+                                  style: ToastificationStyle.minimal,
+                                  alignment: Alignment.bottomCenter,
+                                  autoCloseDuration: const Duration(seconds: 3),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.download_rounded, size: 14),
+                            label: Text(
+                              l10n.saveVideoToLocal,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (item.status != PendingUploadStatus.uploading)
+                          SizedBox(
+                            height: 30,
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                              onPressed: () => controller.removeQueueItem(item.id),
+                              icon: const Icon(Icons.delete_outline, size: 15),
+                              label: Text(
+                                l10n.delete,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

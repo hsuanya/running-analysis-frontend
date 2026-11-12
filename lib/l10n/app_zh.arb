@@ -132,6 +132,42 @@
     }
   },
   "cameraOccupied": "已使用",
+  "slowNetworkMode": "網路慢模式（背景／稍後上傳）",
+  "slowNetworkModeDesc": "結束錄影後立即解鎖可拍下一位選手，影片先存入待傳佇列於背景排隊或稍後手動上傳",
+  "slowNetworkModeActiveBadge": "網路慢模式已啟用（結束錄影後將直接存入佇列，不阻塞下一趟錄影）",
+  "pauseAutoUploadToggle": "暫停自動上傳（先僅暫存本機，等拍完再手動一鍵上傳）",
+  "stopRecordingAndQueue": "結束錄影（存入待傳佇列）",
+  "uploadQueueTitle": "本機待上傳影片佇列",
+  "uploadAllQueued": "全部開始上傳",
+  "notifyAllDevicesUpload": "通知所有裝置開始上傳",
+  "clearCompletedUploads": "清除已完成",
+  "saveVideoToLocal": "下載備份",
+  "videoSavedSuccess": "已觸發影片儲存／下載",
+  "uploadNow": "立即上傳",
+  "retryUpload": "重試上傳",
+  "queueStatusQueued": "排隊等待中",
+  "queueStatusPaused": "已暫存（待手動上傳）",
+  "queueStatusUploading": "上傳中...",
+  "queueStatusCompleted": "已上傳完成",
+  "queueStatusFailed": "上傳失敗",
+  "devicePendingUploads": "待上傳: {count} 部",
+  "@devicePendingUploads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceUploadingBadge": "背景上傳中 ({count})",
+  "@deviceUploadingBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoSavedToLocalQueuePaused": "已將影片存入待傳佇列（目前暫停自動上傳，可立即錄下一位）",
+  "videoEnqueuedBackgroundUpload": "已將影片加入背景佇列上傳（可立即錄下一位）",
   "duplicateCameraPosition": "相機位置重複",
   "duplicateCameraPositionWarning": "此相機位置與其他裝置重複，請更換相機位置",
   "duplicateCameraPositionError": "相機位置重複（{cameras}），請先調整各裝置的相機位置",

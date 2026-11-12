@@ -2,6 +2,8 @@ enum RecordRole { master, slave, none }
 
 enum RecordStatus { idle, connecting, ready, recording, uploading, finished }
 
+enum PendingUploadStatus { queued, uploading, completed, failed }
+
 class RecordMember {
   final String id;
   final int? cameraIndex;
@@ -9,6 +11,8 @@ class RecordMember {
   final bool isMaster;
   final String? cameraName;
   final String? cameraSpecs;
+  final int pendingUploadCount;
+  final bool isUploading;
 
   RecordMember({
     required this.id,
@@ -17,6 +21,8 @@ class RecordMember {
     this.isMaster = false,
     this.cameraName,
     this.cameraSpecs,
+    this.pendingUploadCount = 0,
+    this.isUploading = false,
   });
 
   factory RecordMember.fromJson(Map<String, dynamic> json) {
@@ -27,6 +33,8 @@ class RecordMember {
       isMaster: json['isMaster'] ?? false,
       cameraName: json['cameraName'],
       cameraSpecs: json['cameraSpecs'],
+      pendingUploadCount: (json['pendingUploadCount'] as num?)?.toInt() ?? 0,
+      isUploading: json['isUploading'] == true,
     );
   }
 }
@@ -53,6 +61,9 @@ enum RecordMessageType {
   kickMember,
   kicked,
   updateCameraInfo,
+  setSlowNetworkMode,
+  updateQueueStatus,
+  triggerQueueUpload,
 }
 
 class RecordMessage {

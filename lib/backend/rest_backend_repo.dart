@@ -132,12 +132,14 @@ class RestBackendRepo implements BackendInterface {
     AnchorResult? anchors, {
     double trackWidth = 1.22,
     String runningDirection = 'left_to_right',
+    String? runSessionId,
   }) async {
     final response = await NetUtils().reqeustData(
       API.uploadSeperatelyNew[1],
       method: API.uploadSeperatelyNew[0],
       postData: {
         "runnerId": runnerId,
+        if (runSessionId != null && runSessionId.isNotEmpty) "runSessionId": runSessionId,
         "date": DateFormat('yyyy-MM-dd HH:mm:ss').format(date),
         "cameraCount": cameraCount,
         "fps": fps,

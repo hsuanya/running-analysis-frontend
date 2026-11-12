@@ -346,6 +346,76 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraOccupied => '已使用';
 
   @override
+  String get slowNetworkMode => '網路慢模式（背景／稍後上傳）';
+
+  @override
+  String get slowNetworkModeDesc => '結束錄影後立即解鎖可拍下一位選手，影片先存入待傳佇列於背景排隊或稍後手動上傳';
+
+  @override
+  String get slowNetworkModeActiveBadge => '網路慢模式已啟用（結束錄影後將直接存入佇列，不阻塞下一趟錄影）';
+
+  @override
+  String get pauseAutoUploadToggle => '暫停自動上傳（先僅暫存本機，等拍完再手動一鍵上傳）';
+
+  @override
+  String get stopRecordingAndQueue => '結束錄影（存入待傳佇列）';
+
+  @override
+  String get uploadQueueTitle => '本機待上傳影片佇列';
+
+  @override
+  String get uploadAllQueued => '全部開始上傳';
+
+  @override
+  String get notifyAllDevicesUpload => '通知所有裝置開始上傳';
+
+  @override
+  String get clearCompletedUploads => '清除已完成';
+
+  @override
+  String get saveVideoToLocal => '下載備份';
+
+  @override
+  String get videoSavedSuccess => '已觸發影片儲存／下載';
+
+  @override
+  String get uploadNow => '立即上傳';
+
+  @override
+  String get retryUpload => '重試上傳';
+
+  @override
+  String get queueStatusQueued => '排隊等待中';
+
+  @override
+  String get queueStatusPaused => '已暫存（待手動上傳）';
+
+  @override
+  String get queueStatusUploading => '上傳中...';
+
+  @override
+  String get queueStatusCompleted => '已上傳完成';
+
+  @override
+  String get queueStatusFailed => '上傳失敗';
+
+  @override
+  String devicePendingUploads(int count) {
+    return '待上傳: $count 部';
+  }
+
+  @override
+  String deviceUploadingBadge(int count) {
+    return '背景上傳中 ($count)';
+  }
+
+  @override
+  String get videoSavedToLocalQueuePaused => '已將影片存入待傳佇列（目前暫停自動上傳，可立即錄下一位）';
+
+  @override
+  String get videoEnqueuedBackgroundUpload => '已將影片加入背景佇列上傳（可立即錄下一位）';
+
+  @override
   String get duplicateCameraPosition => '相機位置重複';
 
   @override

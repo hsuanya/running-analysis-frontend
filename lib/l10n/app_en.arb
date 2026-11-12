@@ -125,6 +125,42 @@
     }
   },
   "cameraOccupied": "In use",
+  "slowNetworkMode": "Slow Network Mode (Background / Deferred Upload)",
+  "slowNetworkModeDesc": "Unlock immediately after stopping recording so you can record the next runner right away; videos are queued locally for background or manual upload",
+  "slowNetworkModeActiveBadge": "Slow Network Mode active (videos are queued after recording without blocking the next run)",
+  "pauseAutoUploadToggle": "Pause auto-upload (save locally first, upload manually after all runs)",
+  "stopRecordingAndQueue": "Stop Recording (Save to Queue)",
+  "uploadQueueTitle": "Local Video Upload Queue",
+  "uploadAllQueued": "Upload All",
+  "notifyAllDevicesUpload": "Trigger Upload on All Devices",
+  "clearCompletedUploads": "Clear Completed",
+  "saveVideoToLocal": "Save Backup",
+  "videoSavedSuccess": "Video backup download triggered",
+  "uploadNow": "Upload Now",
+  "retryUpload": "Retry",
+  "queueStatusQueued": "Queued",
+  "queueStatusPaused": "Saved Locally (Paused)",
+  "queueStatusUploading": "Uploading...",
+  "queueStatusCompleted": "Uploaded",
+  "queueStatusFailed": "Upload Failed",
+  "devicePendingUploads": "Pending: {count} video(s)",
+  "@devicePendingUploads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceUploadingBadge": "Uploading ({count})",
+  "@deviceUploadingBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoSavedToLocalQueuePaused": "Video saved to local queue (auto-upload paused; ready for next runner)",
+  "videoEnqueuedBackgroundUpload": "Video added to background upload queue (ready for next runner)",
   "duplicateCameraPosition": "Duplicate camera position",
   "duplicateCameraPositionWarning": "This camera position is duplicated with another device. Please change it.",
   "duplicateCameraPositionError": "Duplicate camera position ({cameras}). Please adjust camera positions before recording.",
