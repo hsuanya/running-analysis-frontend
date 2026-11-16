@@ -351,6 +351,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraOccupied => 'In use';
 
   @override
+  String get keyboardDone => 'Done';
+
+  @override
   String get slowNetworkMode =>
       'Slow Network Mode (Background / Deferred Upload)';
 

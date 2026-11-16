@@ -346,6 +346,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cameraOccupied => '已使用';
 
   @override
+  String get keyboardDone => '完成';
+
+  @override
   String get slowNetworkMode => '網路慢模式（背景／稍後上傳）';
 
   @override

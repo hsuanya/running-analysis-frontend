@@ -125,6 +125,7 @@
     }
   },
   "cameraOccupied": "In use",
+  "keyboardDone": "Done",
   "slowNetworkMode": "Slow Network Mode (Background / Deferred Upload)",
   "slowNetworkModeDesc": "Unlock immediately after stopping recording so you can record the next runner right away; videos are queued locally for background or manual upload",
   "slowNetworkModeActiveBadge": "Slow Network Mode active (videos are queued after recording without blocking the next run)",

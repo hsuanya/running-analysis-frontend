@@ -5,6 +5,7 @@ import 'package:frontend/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/utils/locale_provider.dart';
 import 'package:frontend/utils/router.dart';
+import 'package:frontend/widget/keyboard_dismiss_wrapper.dart';
 import 'package:toastification/toastification.dart';
 
 void main() {
@@ -67,6 +68,7 @@ class MyApp extends ConsumerWidget {
           inputDecorationTheme: InputDecorationTheme(hoverColor: Colors.transparent),
         ),
         routerConfig: router,
+        builder: (context, child) => KeyboardDismissWrapper(child: child ?? const SizedBox.shrink()),
       ),
     );
   }

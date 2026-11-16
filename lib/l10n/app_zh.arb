@@ -132,6 +132,7 @@
     }
   },
   "cameraOccupied": "已使用",
+  "keyboardDone": "完成",
   "slowNetworkMode": "網路慢模式（背景／稍後上傳）",
   "slowNetworkModeDesc": "結束錄影後立即解鎖可拍下一位選手，影片先存入待傳佇列於背景排隊或稍後手動上傳",
   "slowNetworkModeActiveBadge": "網路慢模式已啟用（結束錄影後將直接存入佇列，不阻塞下一趟錄影）",

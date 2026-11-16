@@ -764,6 +764,12 @@ abstract class AppLocalizations {
   /// **'已使用'**
   String get cameraOccupied;
 
+  /// No description provided for @keyboardDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get keyboardDone;
+
   /// No description provided for @slowNetworkMode.
   ///
   /// In zh, this message translates to:
