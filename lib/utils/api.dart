@@ -36,6 +36,16 @@ class API {
     "$baseUrl/run_session/$runSessionId/video",
   ];
 
+  static List getRunSessionFocusVideo(String runSessionId) => [
+    DioMethod.get,
+    "$baseUrl/run_session/$runSessionId/focus_video",
+  ];
+
+  static List getRunSessionFocusTrack(String runSessionId) => [
+    DioMethod.get,
+    "$baseUrl/run_session/$runSessionId/focus_track",
+  ];
+
   static List getRunSessionPdf(String runSessionId) => [
     DioMethod.get,
     "$baseUrl/run_session/$runSessionId/pdf",
